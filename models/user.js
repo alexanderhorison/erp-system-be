@@ -57,10 +57,6 @@ module.exports = (sequelize, DataTypes) => {
       RoleId: {
         type: DataTypes.INTEGER,
         validate: {
-          notNull: {
-            args: true,
-            msg: "Role Tidak boleh kosong",
-          },
           notEmpty: {
             args: true,
             msg: "Role Tidak boleh kosong",
