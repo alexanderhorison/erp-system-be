@@ -17,7 +17,7 @@ class MenuController {
           description: item.description,
         });
       }
-      res.status(200).json(responses(true, "Menu berhasil dibuat"));
+      res.status(201).json(responses(true, "Menu berhasil dibuat"));
     } catch (error) {
       return res
         .status(error.code || 500)
