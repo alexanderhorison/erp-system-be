@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MasterDataProductController = require("../../controllers/master_data/MasterDataProductController");
+const MasterDataProductController = require("../../controllers/masterData/MasterDataProductController");
 
 router.get("/all", MasterDataProductController.getAllProduct);
 router.post("/create", MasterDataProductController.createProduct);

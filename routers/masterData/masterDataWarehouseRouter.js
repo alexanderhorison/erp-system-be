@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MasterDataWarehouseController = require("../../controllers/master_data/MasterDataWarehouseController");
+const MasterDataWarehouseController = require("../../controllers/masterData/MasterDataWarehouseController");
 
 router.get("/all", MasterDataWarehouseController.getAllWarehouse);
 router.post("/create", MasterDataWarehouseController.createWarehouse);

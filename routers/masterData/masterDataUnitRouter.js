@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MasterDataUnitController = require("../../controllers/master_data/MasterDataUnitController");
+const MasterDataUnitController = require("../../controllers/masterData/MasterDataUnitController");
 
 router.get("/all", MasterDataUnitController.getAllUnit);
 router.post("/create", MasterDataUnitController.createUnit);

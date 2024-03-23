@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MasterDataTypeController = require("../../controllers/master_data/MasterDataTypeController");
+const MasterDataTypeController = require("../../controllers/masterData/MasterDataTypeController");
 
 router.get("/all", MasterDataTypeController.getAllType);
 router.post("/create", MasterDataTypeController.createType);

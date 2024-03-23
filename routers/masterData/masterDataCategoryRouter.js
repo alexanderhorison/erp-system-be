@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MasterDataCategoryController = require("../../controllers/master_data/MasterDataCategoryController");
+const MasterDataCategoryController = require("../../controllers/masterData/MasterDataCategoryController");
 
 router.get("/all", MasterDataCategoryController.getAllCategory);
 router.post("/create", MasterDataCategoryController.createCategory);
