@@ -1,0 +1,72 @@
+[
+    {
+        "name": "Gudang Garam Surya 16",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Djarum Super",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Sampoerna A Mild",
+        "description": "",
+        "CategoryId": 2,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Dji Sam Soe",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Marlboro Red",
+        "description": "",
+        "CategoryId": 1,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Sampoerna Kretek",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "L.A. Lights",
+        "description": "",
+        "CategoryId": 2,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Surya Pro Mild",
+        "description": "",
+        "CategoryId": 2,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Djarum Coklat",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    },
+    {
+        "name": "Gudang Garam Merah",
+        "description": "",
+        "CategoryId": 3,
+        "TypeId": 1,
+        "image": ""
+    }
+]

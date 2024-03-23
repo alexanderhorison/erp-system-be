@@ -1,0 +1,18 @@
+[
+    {
+        "name": "Filter",
+        "description": "Kategori ini mencakup rokok dengan filter di ujungnya yang dirancang untuk menyaring sebagian asap dan partikel-partikel yang dihasilkan saat merokok. Filter rokok bertujuan untuk mengurangi risiko paparan terhadap zat-zat berbahaya dalam asap rokok."
+    },
+    {
+        "name": "Mild",
+        "description": "Kategori ini mencakup rokok dengan kadar tar dan nikotin yang rendah dibandingkan dengan rokok konvensional. Sigaret mild sering dianggap lebih ringan dan lebih halus untuk dikonsumsi."
+    },
+    {
+        "name": "Kretek",
+        "description": "Kategori ini mencakup rokok yang terbuat dari campuran tembakau, cengkeh, dan bahan-bahan lainnya. Kretek dikenal dengan aroma khasnya yang berasal dari cengkeh."
+    },
+    {
+        "name": "Other",
+        "description": "Other"
+    }
+]
