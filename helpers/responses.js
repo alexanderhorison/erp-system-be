@@ -9,6 +9,14 @@ function responses(success, message, data = "") {
   return response;
 }
 
+function throwValidation(code, message = "failed") {
+  return {
+    code: code,
+    message: message,
+  };
+}
+
 module.exports = {
   responses,
-}
+  throwValidation,
+};

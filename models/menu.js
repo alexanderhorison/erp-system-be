@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Menu",
       paranoid: true,
+      defaultScope: {
+        where: {
+          deletedAt: null, // Always exclude soft-deleted users by default
+        },
+      },
     }
   );
   return Menu;

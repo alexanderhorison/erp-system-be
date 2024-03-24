@@ -71,8 +71,16 @@ module.exports = (sequelize, DataTypes) => {
         beforeCreate: (user) => {
           user.password = encrypt(user.password);
         },
+        beforeUpdate: (user) => {
+          user.password = encrypt(user.password);
+        },
       },
       paranoid: true,
+      defaultScope: {
+        where: {
+          deletedAt: null, // Always exclude soft-deleted users by default
+        },
+      },
     }
   );
   return User;

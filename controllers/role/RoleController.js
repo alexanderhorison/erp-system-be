@@ -1,4 +1,4 @@
-const { responses } = require("../../helpers/response");
+const { responses } = require("../../helpers/responses");
 const { Role, Menu, User } = require("../../models");
 
 class RoleController {

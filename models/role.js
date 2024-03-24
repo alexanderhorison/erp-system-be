@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Role.hasMany(models.User, {foreignKey: "RoleId"});
+      Role.hasMany(models.User, { foreignKey: "RoleId" });
     }
   }
   Role.init(
@@ -30,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Role",
       paranoid: true,
+      defaultScope: {
+        where: {
+          deletedAt: null, // Always exclude soft-deleted users by default
+        },
+      },
     }
   );
   return Role;
