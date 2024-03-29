@@ -9,8 +9,7 @@ const { Op } = require("sequelize");
 class MasterDataProductController {
     static async createProduct(req, res) {
         try {
-            const { name, description, CategoryId, TypeId, image } =
-                req.body;
+            const { name, description, CategoryId, TypeId, image } = req.body;
 
             const existingProduct = await Master_Product.findOne({
                 where: { name: name },
@@ -44,7 +43,6 @@ class MasterDataProductController {
                 data: newProduct,
             });
         } catch (error) {
-            console.log(error);
             return res
                 .status(error.code || 500)
                 .json({ success: false, message: error.message });
@@ -56,7 +54,6 @@ class MasterDataProductController {
             const productId = req.params.productId;
             const { name, description, CategoryId, TypeId, is_active, image } =
                 req.body;
-
             const existingProduct = await Master_Product.findByPk(productId);
 
             if (!existingProduct) {
@@ -134,13 +131,26 @@ class MasterDataProductController {
                 include: [
                     {
                         model: Type,
+                        paranoid: false,
                     },
                     {
                         model: Category,
+                        paranoid: false,
+                        attributes: ["name"],
                     },
                 ],
             });
-            res.status(200).json(data);
+            const result = data.map((item) => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                category: item.Category.name,
+                type: item.Type.name,
+            }));
+            res.status(200).json({
+                status: "success",
+                data: result,
+            });
         } catch (error) {
             res.status(error.code || 500).json(error.message, error);
         }
@@ -151,7 +161,16 @@ class MasterDataProductController {
             const productId = req.params.productId;
 
             const product = await Master_Product.findByPk(productId, {
-                include: [Category, Type],
+                include: [
+                    {
+                        model: Type,
+                        paranoid: false,
+                    },
+                    {
+                        model: Category,
+                        paranoid: false,
+                    },
+                ],
             });
 
             if (!product) {
@@ -161,9 +180,16 @@ class MasterDataProductController {
                 };
             }
 
+            let result = {
+                name: product.name,
+                CategoryId: product.Category.id,
+                TypeId: product.Type.id,
+                description: product.description,
+            };
+
             return res.status(200).json({
                 success: true,
-                data: product,
+                data: result,
             });
         } catch (error) {
             return res

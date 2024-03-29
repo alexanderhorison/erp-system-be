@@ -1,6 +1,4 @@
-const {
-    Warehouse,
-} = require("../../models");
+const { Warehouse } = require("../../models");
 
 class MasterDataWarehouseController {
     static async createWarehouse(req, res) {
@@ -39,9 +37,8 @@ class MasterDataWarehouseController {
     static async updateWarehouse(req, res) {
         try {
             const warehouseId = req.params.warehouseId;
-            const { name, description, location } =
-                req.body;
-
+            const { name, description, location } = req.body;
+            console.log(req.body);
             const existingWarehouse = await Warehouse.findByPk(warehouseId);
 
             if (!existingWarehouse) {
@@ -76,9 +73,10 @@ class MasterDataWarehouseController {
             const warehouse = await Warehouse.findByPk(warehouseId);
 
             if (!warehouse) {
-                return res
-                    .status(404)
-                    .json({ success: false, message: "Gudang tidak ditemukan" });
+                return res.status(404).json({
+                    success: false,
+                    message: "Gudang tidak ditemukan",
+                });
             }
 
             const deleteWarehouse = await Warehouse.destroy({
@@ -99,7 +97,12 @@ class MasterDataWarehouseController {
     static async getAllWarehouse(req, res) {
         try {
             const data = await Warehouse.findAll();
-            res.status(200).json(data);
+            const result = data.map((item) => ({
+                id: item.id,
+                name: item.name,
+                location: item.location,
+            }));
+            res.status(200).json({ success: true, data: result });
         } catch (error) {
             res.status(error.code || 500).json(error.message, error);
         }
@@ -118,9 +121,15 @@ class MasterDataWarehouseController {
                 };
             }
 
+            const result = {
+                id: warehouse.id,
+                name: warehouse.name,
+                location: warehouse.location,
+            };
+
             return res.status(200).json({
                 success: true,
-                data: warehouse,
+                data: result,
             });
         } catch (error) {
             return res

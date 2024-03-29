@@ -96,7 +96,12 @@ class MasterDataCategoryController {
     static async getAllCategory(req, res) {
         try {
             const data = await Category.findAll();
-            res.status(200).json(data);
+            const result = data.map((item) => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+            }));
+            res.status(200).json({ data: result });
         } catch (error) {
             res.status(error.code || 500).json(error.message, error);
         }
