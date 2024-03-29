@@ -96,7 +96,12 @@ class MasterDataTypeController {
     static async getAllType(req, res) {
         try {
             const data = await Type.findAll();
-            res.status(200).json(data);
+            const result = data.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description
+            }))
+            res.status(200).json({ data: result });
         } catch (error) {
             res.status(error.code || 500).json(error.message, error);
         }
@@ -115,9 +120,15 @@ class MasterDataTypeController {
                 };
             }
 
+            const result = {
+                id: type.id,
+                name: type.name,
+                description: type.description
+            }
+
             return res.status(200).json({
                 success: true,
-                data: type,
+                data: result,
             });
         } catch (error) {
             return res

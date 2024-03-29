@@ -96,7 +96,12 @@ class MasterDataUnitController {
     static async getAllUnit(req, res) {
         try {
             const data = await Unit.findAll();
-            res.status(200).json(data);
+            const result = data.map((item) => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+            }));
+            res.status(200).json({ success: true, data: result });
         } catch (error) {
             res.status(error.code || 500).json(error.message, error);
         }
@@ -115,14 +120,21 @@ class MasterDataUnitController {
                 };
             }
 
+            const result = {
+                id: unit.id,
+                name: unit.name,
+                description: unit.description,
+            };
+
             return res.status(200).json({
                 success: true,
-                data: unit,
+                data: result,
             });
         } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
+            res.status(error.code || 500).json({
+                success: false,
+                message: error.message,
+            });
         }
     }
 }
