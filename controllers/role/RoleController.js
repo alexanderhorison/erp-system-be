@@ -123,7 +123,7 @@ class RoleController {
   static async getAllRole(req, res) {
     try {
       const getRoles = await Role.findAll({
-        attributes: ["id", "name", "description", "MenuId"],
+        attributes: ["id", "name", "description", "MenuId", "createdAt"],
       });
 
       return res.status(200).json(responses(true, "berhasil", getRoles));
