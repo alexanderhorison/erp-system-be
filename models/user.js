@@ -76,11 +76,6 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       paranoid: true,
-      defaultScope: {
-        where: {
-          deletedAt: null, // Always exclude soft-deleted users by default
-        },
-      },
     }
   );
   return User;

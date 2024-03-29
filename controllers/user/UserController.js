@@ -5,9 +5,7 @@ const { responses, throwValidation } = require("../../helpers/responses");
 class UserController {
   static async createUser(req, res) {
     try {
-      const { name, description, email, user_name, password, RoleId } =
-        req.body;
-
+      const { name, description, email, user_name, RoleId } = req.body;
       // validation input
       await UserController.validationPayloadUser(req.body);
 
@@ -19,7 +17,7 @@ class UserController {
         description,
         email,
         user_name,
-        password,
+        password: process.env.DEFAULT_PASSWORD || "qwerty",
         RoleId,
       });
 
@@ -39,7 +37,7 @@ class UserController {
   static async updateUser(req, res) {
     try {
       const userId = req.params.userId;
-      const { name, description, email, user_name, password, RoleId } =
+      const { name, description, email, user_name, RoleId } =
         req.body;
 
       // validation input
@@ -54,7 +52,7 @@ class UserController {
       const findExistUser = await User.findOne({
         where: { [Op.or]: [{ user_name }, { email }], id: { [Op.ne]: userId } },
       });
-      
+
       if (findExistUser) {
         throw throwValidation(400, "Username atau Email sudah terdaftar");
       }
@@ -64,7 +62,6 @@ class UserController {
         description,
         email,
         user_name,
-        password,
         RoleId,
       });
 
@@ -85,7 +82,7 @@ class UserController {
         throw throwValidation(404, "User tidak ditemukan");
       }
 
-      if (user.RoleId === 1){
+      if (user.RoleId === 1) {
         throw throwValidation(400, "User administrator tidak bisa dihapus");
       }
 
@@ -110,7 +107,10 @@ class UserController {
           "email",
           "user_name",
           "RoleId",
+          "deletedAt",
         ],
+        include: [{ model: Role, attributes: ["name", "description"] }],
+        paranoid: false,
       });
       res.status(200).json(responses(true, "Berhasil", getAllUser));
     } catch (error) {
@@ -155,12 +155,9 @@ class UserController {
 
   // validation input
   static async validationPayloadUser(payload) {
-    const { name, email, user_name, password, RoleId } = payload;
-    if (!name || !email || !user_name || !password || !RoleId) {
-      throw throwValidation(
-        400,
-        "nama, email, username, password, RoleId harus diisi"
-      );
+    const { name, email, user_name, RoleId } = payload;
+    if (!name || !email || !user_name || !RoleId) {
+      throw throwValidation(400, "nama, email, username, RoleId harus diisi");
     }
     const findRole = await Role.findByPk(RoleId);
     if (!findRole) {

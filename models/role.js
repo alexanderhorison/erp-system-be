@@ -30,11 +30,6 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Role",
       paranoid: true,
-      defaultScope: {
-        where: {
-          deletedAt: null, // Always exclude soft-deleted users by default
-        },
-      },
     }
   );
   return Role;
