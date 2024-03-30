@@ -1,142 +1,110 @@
-const { Warehouse } = require("../../models");
+const { responses } = require("../../helpers/responses");
+const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const MasterDataWarehouseService = require("../../services/masterData/MasterDataWarehouseService");
+const yup = require("yup");
 
 class MasterDataWarehouseController {
-    static async createWarehouse(req, res) {
-        try {
-            const { name, description, location } = req.body;
+  static async createWarehouse(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama gudang harus diisi"),
+        location: yup.string().required("Lokasi gudang harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const existingWarehouse = await Warehouse.findOne({
-                where: { name: name },
-            });
+      const body = await yupSchemaValidation(req.body, schema);
 
-            if (existingWarehouse) {
-                throw {
-                    code: 400,
-                    message: "Nama gudang sudah ada dalam database",
-                };
-            }
+      //! Sementara hardcode sebelum ada middleware
+      const user = { id: 1 };
 
-            const newWarehouse = await Warehouse.create({
-                name: name,
-                description: description,
-                location: location,
-            });
+      await MasterDataWarehouseService.create(body, user);
 
-            return res.status(201).json({
-                success: true,
-                message: "Gudang berhasil dibuat",
-                data: newWarehouse,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(201).json(responses(true, "Gudang berhasil ditambahkan"));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async updateWarehouse(req, res) {
-        try {
-            const warehouseId = req.params.warehouseId;
-            const { name, description, location } = req.body;
-            console.log(req.body);
-            const existingWarehouse = await Warehouse.findByPk(warehouseId);
+  static async updateWarehouse(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id gudang kosong");
+      const schemaBody = yup.object({
+        id: yup.number().required("Id gudang harus diisi"),
+        name: yup.string().required("Nama gudang harus diisi"),
+        location: yup.string().required("Lokasi gudang harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            if (!existingWarehouse) {
-                throw {
-                    code: 404,
-                    message: "Gudang tidak ditemukan",
-                };
-            }
+      const warehouseId = await yupSchemaValidation(
+        req.params.id,
+        schemaParams
+      );
 
-            const updatedWarehouse = await existingWarehouse.update({
-                name: name,
-                description: description,
-                location: location,
-            });
+      const body = await yupSchemaValidation(req.body, schemaBody);
 
-            return res.status(200).json({
-                success: true,
-                message: "Gudang berhasil diupdate",
-                data: updatedWarehouse,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      const updateWarehouse = await MasterDataWarehouseService.update(
+        warehouseId,
+        body
+      );
+
+      res.status(200).json(responses(true, "Gudang berhasil diubah"));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async deleteWarehouse(req, res) {
-        try {
-            const warehouseId = req.params.warehouseId;
+  static async deleteWarehouse(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id gudang harus diisi");
+      const warehouseId = await yupSchemaValidation(
+        req.params.id,
+        schemaParams
+      );
 
-            const warehouse = await Warehouse.findByPk(warehouseId);
+      const user = { id: 1 };
 
-            if (!warehouse) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Gudang tidak ditemukan",
-                });
-            }
+      await MasterDataWarehouseService.delete(warehouseId, user);
 
-            const deleteWarehouse = await Warehouse.destroy({
-                where: { id: warehouseId },
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Gudang berhasil dihapus",
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Gudang berhasil dihapus"));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getAllWarehouse(req, res) {
-        try {
-            const data = await Warehouse.findAll();
-            const result = data.map((item) => ({
-                id: item.id,
-                name: item.name,
-                location: item.location,
-            }));
-            res.status(200).json({ success: true, data: result });
-        } catch (error) {
-            res.status(error.code || 500).json(error.message, error);
-        }
+  static async getAllWarehouse(req, res) {
+    try {
+      const data = await MasterDataWarehouseService.findAll();
+      res.status(200).json(responses(true, "Sukses Get Data Gudang", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getDetailWarehouse(req, res) {
-        try {
-            const warehouseId = req.params.warehouseId;
+  static async getDetailWarehouse(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id gudang harus diisi");
+      const warehouseId = await yupSchemaValidation(
+        req.params.id,
+        schemaParams
+      );
 
-            const warehouse = await Warehouse.findByPk(warehouseId);
+      const data = await MasterDataWarehouseService.findOne(warehouseId);
 
-            if (!warehouse) {
-                throw {
-                    code: 404,
-                    message: "Gudang tidak ditemukan",
-                };
-            }
-
-            const result = {
-                id: warehouse.id,
-                name: warehouse.name,
-                location: warehouse.location,
-            };
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Sukses Get Detail", data));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 }
 
 module.exports = MasterDataWarehouseController;

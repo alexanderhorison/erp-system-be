@@ -1,142 +1,106 @@
-const { Category, Type, Unit } = require("../../models");
+const { responses } = require("../../helpers/responses");
+const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const MasterDataUnitService = require("../../services/masterData/MasterDataUnitService");
+const yup = require("yup");
 
 class MasterDataUnitController {
-    static async createUnit(req, res) {
-        try {
-            const { name, description } = req.body;
+  static async createUnit(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama satuan harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const existingUnit = await Unit.findOne({
-                where: { name: name },
-            });
+      const body = await yupSchemaValidation(req.body, schema);
 
-            if (existingUnit) {
-                throw {
-                    code: 400,
-                    message: "Nama unit sudah ada dalam database",
-                };
-            }
+      const user = { id: 1 };
 
-            const newUnit = await Unit.create({
-                name: name,
-                description: description,
-            });
+      const newUnit = await MasterDataUnitService.create(body, user);
 
-            return res.status(201).json({
-                success: true,
-                message: "Unit berhasil dibuat",
-                data: newUnit,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(201).json(responses(true, "Satuan berhasil dibuat", newUnit));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async updateUnit(req, res) {
-        try {
-            const unitId = req.params.unitId;
-            const { name, description } = req.body;
+  static async updateUnit(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id unit kosong");
+      const schemaBody = yup.object({
+        id: yup.number().required("Id unit harus diisi"),
+        name: yup.string().required("Nama unit harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const unit = await Unit.findByPk(unitId);
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
 
-            if (!unit) {
-                throw {
-                    code: 404,
-                    message: "Unit tidak ditemukan",
-                };
-            }
+      const user = {
+        id: 1,
+      };
 
-            const updatedUnit = await unit.update({
-                name: name,
-                description: description,
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Unit berhasil diupdate",
-                data: updatedUnit,
-            });
-        } catch (error) {
-            console.log(error);
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      const updatedUnit = await MasterDataUnitService.update(id, body, user);
+      res
+        .status(200)
+        .json(responses(true, "Unit berhasil diupdate", updatedUnit));
+    } catch (error) {
+      console.log(error);
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async deleteUnit(req, res) {
-        try {
-            const unitId = req.params.unitId;
+  static async deleteUnit(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id satuan harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const unit = await Unit.findByPk(unitId);
+      const user = { id: 1 };
 
-            if (!unit) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Unit tidak ditemukan",
-                });
-            }
+      const deletedUnit = await MasterDataUnitService.delete(id, user);
 
-            const deleteUnit = await Unit.destroy({
-                where: { id: unitId },
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Unit berhasil dihapus",
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(200)
+        .json(responses(true, "Satuan berhasil dihapus", deletedUnit));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getAllUnit(req, res) {
-        try {
-            const data = await Unit.findAll();
-            const result = data.map((item) => ({
-                id: item.id,
-                name: item.name,
-                description: item.description,
-            }));
-            res.status(200).json({ success: true, data: result });
-        } catch (error) {
-            res.status(error.code || 500).json(error.message, error);
-        }
+  static async getAllUnit(req, res) {
+    try {
+      const data = await MasterDataUnitService.findAll();
+
+      res
+        .status(200)
+        .json(responses(true, "Success get all master data unit", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getDetailUnit(req, res) {
-        try {
-            const unitId = req.params.unitId;
+  static async getDetailUnit(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id satuan harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const unit = await Unit.findByPk(unitId);
+      const data = await MasterDataUnitService.findOne(id);
 
-            if (!unit) {
-                throw {
-                    code: 404,
-                    message: "Unit tidak ditemukan",
-                };
-            }
-
-            const result = {
-                id: unit.id,
-                name: unit.name,
-                description: unit.description,
-            };
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-            });
-        } catch (error) {
-            res.status(error.code || 500).json({
-                success: false,
-                message: error.message,
-            });
-        }
+      res.status(200).json(responses(true, "Success get detail unit ", data));
+    } catch (error) {
+      console.log(error);
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 }
 
 module.exports = MasterDataUnitController;

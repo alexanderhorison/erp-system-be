@@ -4,9 +4,9 @@ const MasterDataUnitController = require("../../controllers/masterData/MasterDat
 router.get("/all", MasterDataUnitController.getAllUnit);
 router.post("/create", MasterDataUnitController.createUnit);
 
-router.put("/:unitId", MasterDataUnitController.updateUnit);
-router.get("/:unitId", MasterDataUnitController.getDetailUnit);
-router.delete("/:unitId", MasterDataUnitController.deleteUnit);
+router.put("/:id", MasterDataUnitController.updateUnit);
+router.get("/:id", MasterDataUnitController.getDetailUnit);
+router.delete("/:id", MasterDataUnitController.deleteUnit);
 
 
 module.exports = router;

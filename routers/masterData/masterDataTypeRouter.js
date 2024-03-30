@@ -4,9 +4,9 @@ const MasterDataTypeController = require("../../controllers/masterData/MasterDat
 router.get("/all", MasterDataTypeController.getAllType);
 router.post("/create", MasterDataTypeController.createType);
 
-router.put("/:typeId", MasterDataTypeController.updateType);
-router.get("/:typeId", MasterDataTypeController.getDetailType);
-router.delete("/:typeId", MasterDataTypeController.deleteType);
+router.put("/:id", MasterDataTypeController.updateType);
+router.get("/:id", MasterDataTypeController.getDetailType);
+router.delete("/:id", MasterDataTypeController.deleteType);
 
 
 module.exports = router;

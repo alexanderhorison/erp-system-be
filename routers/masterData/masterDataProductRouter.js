@@ -4,9 +4,9 @@ const MasterDataProductController = require("../../controllers/masterData/Master
 router.get("/all", MasterDataProductController.getAllProduct);
 router.post("/create", MasterDataProductController.createProduct);
 
-router.put("/:productId", MasterDataProductController.updateProduct);
-router.get("/:productId", MasterDataProductController.getDetailProduct);
-router.delete("/:productId", MasterDataProductController.deleteProduct);
+router.put("/:id", MasterDataProductController.updateProduct);
+router.get("/:id", MasterDataProductController.getDetailProduct);
+router.delete("/:id", MasterDataProductController.deleteProduct);
 
 
 module.exports = router;

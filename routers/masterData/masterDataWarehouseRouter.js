@@ -4,9 +4,9 @@ const MasterDataWarehouseController = require("../../controllers/masterData/Mast
 router.get("/all", MasterDataWarehouseController.getAllWarehouse);
 router.post("/create", MasterDataWarehouseController.createWarehouse);
 
-router.put("/:warehouseId", MasterDataWarehouseController.updateWarehouse);
-router.get("/:warehouseId", MasterDataWarehouseController.getDetailWarehouse);
-router.delete("/:warehouseId", MasterDataWarehouseController.deleteWarehouse);
+router.put("/:id", MasterDataWarehouseController.updateWarehouse);
+router.get("/:id", MasterDataWarehouseController.getDetailWarehouse);
+router.delete("/:id", MasterDataWarehouseController.deleteWarehouse);
 
 
 module.exports = router;

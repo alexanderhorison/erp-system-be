@@ -1,202 +1,106 @@
-const {
-    Master_Product,
-    Type,
-    Category,
-    Master_Product_History,
-} = require("../../models");
-const { Op } = require("sequelize");
+const MasterDataProductService = require("../../services/masterData/MasterDataProductService");
+const { responses } = require("../../helpers/responses");
+const yup = require("yup");
+const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 
 class MasterDataProductController {
-    static async createProduct(req, res) {
-        try {
-            const { name, description, CategoryId, TypeId, image } = req.body;
+  static async createProduct(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama produk harus diisi"),
+        CategoryId: yup.number().required("Kategori harus diisi"),
+        TypeId: yup.number().required("Tipe harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const existingProduct = await Master_Product.findOne({
-                where: { name: name },
-            });
+      const body = await yupSchemaValidation(req.body, schema);
 
-            if (existingProduct) {
-                throw {
-                    code: 400,
-                    message: "Nama produk sudah ada dalam database",
-                };
-            }
+      const user = { id: 1 };
 
-            const newProduct = await Master_Product.create({
-                name: name,
-                description: description,
-                CategoryId: CategoryId,
-                TypeId: TypeId,
-                image: image,
-            });
+      const data = await MasterDataProductService.create(body, user);
 
-            // await Master_Product_History.create({
-            //     name: "Create",
-            //     data_before: JSON.stringify(existingProduct),
-            //     data_after: JSON.stringify(newProduct),
-            //     UserId: 1, //! Hardcode sementara
-            // });
-
-            return res.status(201).json({
-                success: true,
-                message: "Produk berhasil dibuat",
-                data: newProduct,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(201)
+        .json(responses(true, "Produk berhasil ditambahkan", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json({ success: false, message: error.message });
     }
+  }
 
-    static async updateProduct(req, res) {
-        try {
-            const productId = req.params.productId;
-            const { name, description, CategoryId, TypeId, is_active, image } =
-                req.body;
-            const existingProduct = await Master_Product.findByPk(productId);
+  static async updateProduct(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id tipe kosong");
+      const schema = yup.object({
+        name: yup.string().required("Nama produk harus diisi"),
+        CategoryId: yup.number().required("Kategori harus diisi"),
+        TypeId: yup.number().required("Tipe harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            if (!existingProduct) {
-                throw {
-                    code: 404,
-                    message: "Produk tidak ditemukan",
-                };
-            }
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schema);
 
-            const updatedProduct = await existingProduct.update({
-                name: name,
-                description: description,
-                CategoryId: CategoryId,
-                TypeId: TypeId,
-                is_active: is_active,
-                image: image || null,
-            });
+      const user = { id: 1 };
 
-            await Master_Product_History.create({
-                name: "Update",
-                data_before: JSON.stringify(existingProduct),
-                data_after: JSON.stringify(updatedProduct),
-                UserId: 1, //! Hardcode sementara
-            });
+      const data = await MasterDataProductService.update(id, body, user);
 
-            return res.status(200).json({
-                success: true,
-                message: "Product updated successfully",
-                data: updatedProduct,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Produk berhasil diubah", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async deleteProduct(req, res) {
-        try {
-            const productId = req.params.productId;
+  static async deleteProduct(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id tipe harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const product = await Master_Product.findByPk(productId);
+      const user = { id: 1 };
 
-            if (!product) {
-                return res
-                    .status(404)
-                    .json({ success: false, message: "Product not found" });
-            }
+      const data = await MasterDataProductService.delete(id, user);
 
-            const deleteProduct = await Master_Product.destroy({
-                where: { id: productId },
-            });
-
-            await Master_Product_History.create({
-                name: "Delete",
-                data_before: JSON.stringify(product),
-                data_after: JSON.stringify(deleteProduct),
-                UserId: 1, //! Hardcode sementara
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Product deleted successfully",
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Produk berhasil dihapus", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getAllProduct(req, res) {
-        try {
-            const data = await Master_Product.findAll({
-                include: [
-                    {
-                        model: Type,
-                        paranoid: false,
-                    },
-                    {
-                        model: Category,
-                        paranoid: false,
-                        attributes: ["name"],
-                    },
-                ],
-            });
-            const result = data.map((item) => ({
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                category: item.Category.name,
-                type: item.Type.name,
-            }));
-            res.status(200).json({
-                status: "success",
-                data: result,
-            });
-        } catch (error) {
-            res.status(error.code || 500).json(error.message, error);
-        }
+  static async getAllProduct(req, res) {
+    try {
+      const data = await MasterDataProductService.findAll();
+      res
+        .status(200)
+        .json(responses(true, "Success get all master produce", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getDetailProduct(req, res) {
-        try {
-            const productId = req.params.productId;
+  static async getDetailProduct(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id produk harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const product = await Master_Product.findByPk(productId, {
-                include: [
-                    {
-                        model: Type,
-                        paranoid: false,
-                    },
-                    {
-                        model: Category,
-                        paranoid: false,
-                    },
-                ],
-            });
+      const data = await MasterDataProductService.findOne(id);
 
-            if (!product) {
-                throw {
-                    code: 404,
-                    message: "Produk tidak ditemukan",
-                };
-            }
-
-            let result = {
-                name: product.name,
-                CategoryId: product.Category.id,
-                TypeId: product.Type.id,
-                description: product.description,
-            };
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      return res
+        .status(200)
+        .json(responses(true, "Success get detail master product", data));
+    } catch (error) {
+      console.log(error);
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 }
 
 module.exports = MasterDataProductController;
