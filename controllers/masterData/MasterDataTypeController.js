@@ -1,141 +1,101 @@
-const { Category, Type } = require("../../models");
+const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const yup = require("yup");
+const MasterDataTypeService = require("../../services/masterData/MasterDataTypeService");
+const { responses } = require("../../helpers/responses");
 
 class MasterDataTypeController {
-    static async createType(req, res) {
-        try {
-            const { name, description } = req.body;
+  static async createType(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama satuan harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const existingType = await Type.findOne({
-                where: { name: name },
-            });
+      const body = await yupSchemaValidation(req.body, schema);
 
-            if (existingType) {
-                throw {
-                    code: 400,
-                    message: "Nama tipe sudah ada dalam database",
-                };
-            }
+      const user = { id: 1 };
 
-            const newType = await Type.create({
-                name: name,
-                description: description,
-            });
+      const newType = await MasterDataTypeService.create(body, user);
 
-            return res.status(201).json({
-                success: true,
-                message: "Tipe berhasil dibuat",
-                data: newType,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(201)
+        .json(responses(true, "Tipe berhasil ditambahkan", newType));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async updateType(req, res) {
-        try {
-            const typeId = req.params.typeId;
-            const { name, description } = req.body;
+  static async updateType(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id tipe kosong");
+      const schemaBody = yup.object({
+        id: yup.number().required("Id tipe harus diisi"),
+        name: yup.string().required("Nama tipe harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const type = await Type.findByPk(typeId);
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
 
-            if (!type) {
-                throw {
-                    code: 404,
-                    message: "Tipe tidak ditemukan",
-                };
-            }
+      const user = {
+        id: 1,
+      };
 
-            const updatedType = await type.update({
-                name: name,
-                description: description,
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Tipe berhasil diupdate",
-                data: updatedType,
-            });
-        } catch (error) {
-            console.log(error);
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      const updatedType = await MasterDataTypeService.update(id, body, user);
+      res
+        .status(200)
+        .json(responses(true, "Tipe berhasil diupdate", updatedType));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async deleteType(req, res) {
-        try {
-            const typeId = req.params.typeId;
+  static async deleteType(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id tipe harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const type = await Type.findByPk(typeId);
+      const user = { id: 1 };
 
-            if (!type) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Tipe tidak ditemukan",
-                });
-            }
+      const deletedType = await MasterDataTypeService.delete(id, user);
 
-            const deleteType = await Type.destroy({
-                where: { id: typeId },
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Tipe berhasil dihapus",
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Tipe sukses dihapus", deletedType));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getAllType(req, res) {
-        try {
-            const data = await Type.findAll();
-            const result = data.map(item => ({
-                id: item.id,
-                name: item.name,
-                description: item.description
-            }))
-            res.status(200).json({ data: result });
-        } catch (error) {
-            res.status(error.code || 500).json(error.message, error);
-        }
+  static async getAllType(req, res) {
+    try {
+      const type = await MasterDataTypeService.findAll();
+      res.status(200).json(responses(true, "Success get all type", type));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getDetailType(req, res) {
-        try {
-            const typeId = req.params.typeId;
+  static async getDetailType(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id tipe harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const type = await Type.findByPk(typeId);
+      const data = await MasterDataTypeService.findOne(id);
 
-            if (!type) {
-                throw {
-                    code: 404,
-                    message: "Tipe tidak ditemukan",
-                };
-            }
-
-            const result = {
-                id: type.id,
-                name: type.name,
-                description: type.description
-            }
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res.status(200).json(responses(true, "Success get detail type", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 }
 
 module.exports = MasterDataTypeController;

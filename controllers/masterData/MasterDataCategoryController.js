@@ -1,135 +1,112 @@
-const { Category } = require("../../models");
+const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const yup = require("yup");
+const MasterDataCategoryService = require("../../services/masterData/MasterDataCategoryService");
+const { responses } = require("../../helpers/responses");
 
 class MasterDataCategoryController {
-    static async createCategory(req, res) {
-        try {
-            const { name, description } = req.body;
+  static async createCategory(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama kategori harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const existingCategory = await Category.findOne({
-                where: { name: name },
-            });
+      const body = await yupSchemaValidation(req.body, schema);
 
-            if (existingCategory) {
-                throw {
-                    code: 400,
-                    message: "Nama kategori sudah ada dalam database",
-                };
-            }
+      const user = { id: 1 };
+      console.log(body);
 
-            const newCategory = await Category.create({
-                name: name,
-                description: description,
-            });
+      const newCategory = await MasterDataCategoryService.create(body, user);
 
-            return res.status(201).json({
-                success: true,
-                message: "Kategori berhasil dibuat",
-                data: newCategory,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(201)
+        .json(responses(true, "Kategoru berhasil ditambahkan", newCategory));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async updateCategory(req, res) {
-        try {
-            const categoryId = req.params.categoryId;
-            const { name, description } = req.body;
+  static async updateCategory(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id kategori kosong");
+      const schemaBody = yup.object({
+        id: yup.number().required("Id kategori harus diisi"),
+        name: yup.string().required("Nama kategori harus diisi"),
+        description: yup.string().optional(),
+      });
 
-            const category = await Category.findByPk(categoryId);
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
 
-            if (!category) {
-                throw {
-                    code: 404,
-                    message: "Kategori tidak ditemukan",
-                };
-            }
+      const user = {
+        id: 1,
+      };
 
-            const updatedCategory = await category.update({
-                name: name,
-                description: description,
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Category updated successfully",
-                data: updatedCategory,
-            });
-        } catch (error) {
-            console.log(error);
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      const updatedCategory = await MasterDataCategoryService.update(
+        id,
+        body,
+        user
+      );
+      res
+        .status(200)
+        .json(responses(true, "Kategori berhasil diubah", updatedCategory));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async deleteCategory(req, res) {
-        try {
-            const categoryId = req.params.categoryId;
+  static async deleteCategory(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id kategori harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const category = await Category.findByPk(categoryId);
+      const user = { id: 1 };
 
-            if (!category) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Kategori tidak ditemukan",
-                });
-            }
+      const deletedCategory = await MasterDataCategoryService.delete(id, user);
 
-            const deleteCategory = await Category.destroy({
-                where: { id: categoryId },
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Kategori berhasil dihapus",
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(200)
+        .json(responses(true, "Kategori berhasil dihapus", deletedCategory));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getAllCategory(req, res) {
-        try {
-            const data = await Category.findAll();
-            const result = data.map((item) => ({
-                id: item.id,
-                name: item.name,
-                description: item.description,
-            }));
-            res.status(200).json({ data: result });
-        } catch (error) {
-            res.status(error.code || 500).json(error.message, error);
-        }
+  static async getAllCategory(req, res) {
+    try {
+      const category = await MasterDataCategoryService.findAll();
+      res
+        .status(200)
+        .json(responses(true, "Success get all category", category));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 
-    static async getDetailCategory(req, res) {
-        try {
-            const categoryId = req.params.categoryId;
+  static async getDetailCategory(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id kategori harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-            const category = await Category.findByPk(categoryId);
+      const data = await MasterDataCategoryService.findOne(id);
 
-            if (!category) {
-                throw {
-                    code: 404,
-                    message: "Kategori tidak ditemukan",
-                };
-            }
-
-            return res.status(200).json({
-                success: true,
-                data: category,
-            });
-        } catch (error) {
-            return res
-                .status(error.code || 500)
-                .json({ success: false, message: error.message });
-        }
+      res
+        .status(200)
+        .json(responses(true, "Success get detail category", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
     }
+  }
 }
 
 module.exports = MasterDataCategoryController;

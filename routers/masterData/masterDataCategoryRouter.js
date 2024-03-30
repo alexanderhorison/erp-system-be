@@ -4,8 +4,8 @@ const MasterDataCategoryController = require("../../controllers/masterData/Maste
 router.get("/all", MasterDataCategoryController.getAllCategory);
 router.post("/create", MasterDataCategoryController.createCategory);
 
-router.put("/:categoryId", MasterDataCategoryController.updateCategory);
-router.get("/:categoryId", MasterDataCategoryController.getDetailCategory);
-router.delete("/:categoryId", MasterDataCategoryController.deleteCategory);
+router.put("/:id", MasterDataCategoryController.updateCategory);
+router.get("/:id", MasterDataCategoryController.getDetailCategory);
+router.delete("/:id", MasterDataCategoryController.deleteCategory);
 
 module.exports = router;
