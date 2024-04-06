@@ -1,8 +1,12 @@
 const { Op } = require("sequelize");
-const { User, Role } = require("../../models");
+const { User, Role, Audit_Trail } = require("../../models");
 const { responses, throwValidation } = require("../../helpers/responses");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { compare } = require("../../helpers/bcrypt");
+const jwt = require("jsonwebtoken");
+const { auditTrailLog } = require("../../helpers/logger");
+const decrypt = require("../../helpers/decrypt");
 
 class UserService {
   static async createUser(req, res) {
@@ -189,6 +193,144 @@ class UserService {
       throw throwValidation(400, "Role tidak ditemukan");
     }
     return true;
+  }
+
+  // Login Service
+  static async login(req, res) {
+    try {
+      const schema = yup.object().shape({
+        auth: yup.string().required("Auth harus diisi"),
+      });
+      let request = await yupSchemaValidation(req.body, schema);
+      let body = {};
+
+      let decryptAuth = decrypt(request.auth);
+      body = JSON.parse(decryptAuth);
+      const user = await User.findOne({
+        where: {
+          email: body.email,
+        },
+        attributes: [
+          "id",
+          "name",
+          "description",
+          "email",
+          "password",
+          "user_name",
+          "RoleId",
+        ],
+        include: [{ model: Role, attributes: ["name", "MenuId"] }],
+      });
+
+      if (!user) {
+        throw throwValidation(400, "Email atau Password tidak valid");
+      }
+
+      const checkValidPassword = await compare(body.password, user.password);
+
+      if (!checkValidPassword) {
+        throw throwValidation(400, "Email atau Password tidak valid");
+      }
+
+      const token = jwt.sign(
+        {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          user_name: user.user_name,
+          RoleId: Number(user.RoleId),
+          MenuId: user.Role.MenuId,
+        },
+        process.env.TOKEN_KEY,
+        {
+          expiresIn: "20h",
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          user_name: user.user_name,
+          RoleId: Number(user.RoleId),
+          MenuId: user.Role.MenuId,
+        },
+        process.env.REFRESH_TOKEN_KEY,
+        { expiresIn: "7d" }
+      );
+
+      await Audit_Trail.create(auditTrailLog("login", user.name, "success"));
+      delete user.password;
+      res.status(200).json(
+        responses(true, "Berhasil", {
+          type: "bearer",
+          token: token,
+          refreshToken: refreshToken,
+          user_info: user,
+        })
+      );
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // Auth Me Token
+  static async authMe(req, res) {
+    try {
+      const token = req.headers.authorization;
+      jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+        if (err) {
+          if ("refreshToken" === "logout") {
+            res.status(401).json(responses(false, "Invalid User"));
+          } else {
+            const oldToken = jwt.decode(token, { complete: true });
+            const { id } = oldToken.payload;
+
+            const user = await User.findOne({
+              where: {
+                id,
+              },
+              attributes: [
+                "id",
+                "name",
+                "description",
+                "email",
+                "password",
+                "user_name",
+                "RoleId",
+              ],
+              include: [{ model: Role, attributes: ["name", "MenuId"] }],
+            });
+
+            const accessToken = jwt.sign({ id }, process.env.JWT_SECRET, {
+              expiresIn: "20h",
+            });
+            const refreshToken = jwt.sign(
+              {
+                id,
+              },
+              process.env.REFRESH_TOKEN_KEY,
+              { expiresIn: "7d" }
+            );
+            res.status(200).json(
+              responses(true, "Berhasil", {
+                type: "bearer",
+                token: accessToken,
+                refreshToken: refreshToken,
+                user_info: user,
+              })
+            );
+          }
+        }
+      });
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
   }
 }
 

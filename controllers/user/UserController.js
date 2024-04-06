@@ -17,6 +17,12 @@ class UserController {
   static async getUser(req, res) {
     return UserService.getUser(req, res);
   }
+  static async login(req, res) {
+    return UserService.login(req, res);
+  }
+  static async authMe(req, res) {
+    return UserService.authMe(req, res);
+  }
 }
 
 module.exports = UserController;
