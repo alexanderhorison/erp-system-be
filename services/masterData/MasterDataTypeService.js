@@ -21,7 +21,7 @@ class MasterDataTypeService {
         description: description,
       });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -45,7 +45,7 @@ class MasterDataTypeService {
 
       return updatedType;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -66,7 +66,7 @@ class MasterDataTypeService {
 
       return deleteType;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -80,7 +80,7 @@ class MasterDataTypeService {
       }));
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -103,7 +103,7 @@ class MasterDataTypeService {
 
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }

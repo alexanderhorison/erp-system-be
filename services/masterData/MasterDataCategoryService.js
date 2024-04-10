@@ -21,7 +21,7 @@ class MasterDataCategoryService {
         description: description,
       });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -45,7 +45,7 @@ class MasterDataCategoryService {
 
       return updatedCategory;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -66,7 +66,7 @@ class MasterDataCategoryService {
 
       return deleteCategory;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -80,7 +80,7 @@ class MasterDataCategoryService {
       }));
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -103,7 +103,7 @@ class MasterDataCategoryService {
 
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }
