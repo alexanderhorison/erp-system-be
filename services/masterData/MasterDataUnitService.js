@@ -2,23 +2,27 @@ const { Unit } = require("../../models");
 
 class MasterDataUnitService {
   static async create(data, user) {
-    const { name, description } = data;
-
-    const existingUnit = await Unit.findOne({
-      where: { name: name },
-    });
-
-    if (existingUnit) {
-      throw {
-        code: 400,
-        message: "Nama unit sudah ada dalam database",
-      };
+    try {
+      const { name, description } = data;
+  
+      const existingUnit = await Unit.findOne({
+        where: { name: name },
+      });
+  
+      if (existingUnit) {
+        throw {
+          code: 400,
+          message: "Nama unit sudah ada dalam database",
+        };
+      }
+  
+      return Unit.create({
+        name: name,
+        description: description,
+      });
+    } catch (error) {
+      throw error
     }
-
-    return Unit.create({
-      name: name,
-      description: description,
-    });
   }
 
   static async update(id, data, user) {
@@ -41,7 +45,7 @@ class MasterDataUnitService {
 
       return updatedUnit;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -62,7 +66,7 @@ class MasterDataUnitService {
 
       return deleteUnit;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -76,7 +80,7 @@ class MasterDataUnitService {
       }));
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -99,7 +103,7 @@ class MasterDataUnitService {
 
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }

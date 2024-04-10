@@ -37,7 +37,7 @@ class MasterDataProductService {
 
       return createdProduct;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -46,7 +46,6 @@ class MasterDataProductService {
       const { name, CategoryId, TypeId, description } = data;
 
       const existingProduct = await Master_Product.findByPk(id);
-      console.log(existingProduct);
       if (!existingProduct) {
         throw {
           code: 404,
@@ -70,8 +69,7 @@ class MasterDataProductService {
 
       return updatedProduct;
     } catch (error) {
-      console.log(error);
-      return error;
+      throw error;
     }
   }
 
@@ -99,7 +97,7 @@ class MasterDataProductService {
 
       return deleteProduct;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -129,7 +127,7 @@ class MasterDataProductService {
 
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -164,8 +162,7 @@ class MasterDataProductService {
 
       return result;
     } catch (error) {
-      console.log(error);
-      return error;
+      throw error;
     }
   }
 }

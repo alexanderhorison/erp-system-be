@@ -20,7 +20,7 @@ class MasterDataCategoryController {
 
       res
         .status(201)
-        .json(responses(true, "Kategoru berhasil ditambahkan", newCategory));
+        .json(responses(true, "Kategori berhasil ditambahkan", newCategory));
     } catch (error) {
       res
         .status(error.code || 500)

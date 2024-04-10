@@ -78,7 +78,7 @@ class MasterDataWarehouseService {
       }));
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -101,7 +101,7 @@ class MasterDataWarehouseService {
 
       return result;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }
