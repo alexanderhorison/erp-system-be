@@ -7,6 +7,7 @@ const { compare } = require("../../helpers/bcrypt");
 const jwt = require("jsonwebtoken");
 const { auditTrailLog } = require("../../helpers/logger");
 const decrypt = require("../../helpers/decrypt");
+const { generateFilter } = require("../../helpers/queryGenerator");
 
 class UserService {
   static async createUser(req, res) {
@@ -131,6 +132,16 @@ class UserService {
   }
   static async getAllUser(req, res) {
     try {
+      const { RoleId, status } = req.query;
+
+      let queryFilter = {};
+      if (req.query != {}) {
+        const filters = [
+          { column: "RoleId", operator: "=", value: RoleId },
+          { column: "deletedAt", operator: status, value: status },
+        ];
+        queryFilter = generateFilter(filters);
+      }
       const getAllUser = await User.findAll({
         attributes: [
           "id",
@@ -143,6 +154,7 @@ class UserService {
         ],
         include: [{ model: Role, attributes: ["name", "description"] }],
         paranoid: false,
+        where: queryFilter,
       });
       res.status(200).json(responses(true, "Berhasil", getAllUser));
     } catch (error) {
