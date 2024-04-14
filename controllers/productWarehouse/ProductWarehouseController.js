@@ -20,6 +20,7 @@ class ProductWarehouseController {
         .json(responses(false, error.message || error));
     }
   }
+
   // Get all product based on warehouseId
   static async getProductByWarehouse(req, res) {
     try {
@@ -33,7 +34,6 @@ class ProductWarehouseController {
         id,
       });
 
-
       res.status(200).json(responses(true, "Success get product", data));
     } catch (error) {
       return res
@@ -41,22 +41,21 @@ class ProductWarehouseController {
         .json(responses(false, error.message || error));
     }
   }
+
   // Insert product into warehouse (initiate product)
   static async create(req, res) {
     try {
-      const schema = yup.object({
-        ProductId: yup.number().required("Id produk tidak boleh kosong"),
-        WarehouseId: yup.number().required("Id gudang tidak boleh kosong"),
+      const object = yup.object({
+        MasterProductId: yup.number().required("Id produk tidak boleh kosong"),
         quantity: yup.number().required("Kuantiti tidak boleh kosong"),
         UnitId: yup.number().required("Unit id tidak boleh kosong"),
         minimum_stock: yup.number().required("Stok minimum tidak boleh kosong"),
-        description: yup.string().optional(),
-        info: yup.string().optional(),
       });
-
+      const schema = yup.array().of(object);
       const body = await yupSchemaValidation(req.body, schema);
-      const user = { id: 1 };
+      const user = { id: 1, WarehouseId: 2 };
 
+      console.log(body);
       const newProductWarehouse = await ProductWarehouseService.create(
         body,
         user
@@ -68,11 +67,13 @@ class ProductWarehouseController {
           responses(true, "Produk berhasil ditambahkan", newProductWarehouse)
         );
     } catch (error) {
+      console.log(error);
       return res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
   }
+
   // Adjust Product (PLUS or MINUS) stock product
   static async adjustProduct(req, res) {
     try {
@@ -85,19 +86,21 @@ class ProductWarehouseController {
         minimum_stock: yup.number().required("Stok minimum tidak boleh kosong"),
         adjustment_type: yup
           .string()
+          .oneOf(["PLUS", "MINUS"])
           .required("Tipe adjustment tidak boleh kosong"),
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = { id: 1 };
+      const user = { id: 1, WarehouseId: 2 };
 
-      const adjustProductWarehouse = await ProductWarehouseService.adjustProduct({
-        id,
-        body,
-        user,
-      });
+      const adjustProductWarehouse =
+        await ProductWarehouseService.adjustProduct({
+          id,
+          data: body,
+          user,
+        });
 
       res
         .status(200)

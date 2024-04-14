@@ -15,44 +15,48 @@ class ProductWarehouseService {
   static async create(data, user) {
     const transaction = await sq.transaction();
     try {
-      const exsistingData = await Product_Warehouse.findOne({
+      const listProduct = data.map((item) => item.MasterProductId);
+      const listUnit = data.map((item) => item.UnitId);
+
+      const exsistingData = await Product_Warehouse.findAll({
         where: {
-          ProductId: data.ProductId,
-          WarehouseId: data.WarehouseId,
-          UnitId: data.UnitId,
+          ProductId: listProduct,
+          UnitId: listUnit,
+          WarehouseId: user.WarehouseId,
         },
       });
 
-      if (exsistingData) {
+      if (exsistingData.length) {
         throw {
           code: 400,
           message: "Data sudah ada dalam database",
         };
       }
 
-      const newData = await Product_Warehouse.create(
-        {
-          ProductId: data.ProductId,
-          WarehouseId: data.WarehouseId,
-          quantity: data.quantity,
-          UnitId: data.UnitId,
-          minimum_stock: data.minimum_stock,
-          description: data?.description,
-          info: data?.info,
-        },
-        { transaction }
-      );
+      const createData = data.map((item) => {
+        return {
+          ...item,
+          ProductId: item.MasterProductId,
+          WarehouseId: user.WarehouseId,
+        };
+      });
 
-      const createHistoryAdjusment = await Stock_Adjustment_History.create(
-        {
-          ProductWarehouseId: newData.id,
-          quantity: newData.quantity,
+      const newData = await Product_Warehouse.bulkCreate(createData, {
+        transaction,
+      });
+
+      const createdHistory = newData.map((item) => {
+        return {
+          ProductWarehouseId: item.id,
+          quantity: item.quantity,
+          WarehouseId: item.WarehouseId,
           adjustment_type: "INITIATE",
-          WarehouseId: newData.WarehouseId,
           UserId: user.id,
-          description: newData?.description,
-          info: newData?.info,
-        },
+        };
+      });
+
+      const createHistoryAdjusment = await Stock_Adjustment_History.bulkCreate(
+        createdHistory,
         { transaction }
       );
 
@@ -66,8 +70,14 @@ class ProductWarehouseService {
 
   static async adjustProduct({ id, data, user }) {
     try {
+      const exsistingData = await Product_Warehouse.findByPk(id);
       console.log(id, data, user);
-
+      if (!exsistingData) {
+        throw {
+          code: 404,
+          message: "Produk tidak ditemukan",
+        };
+      }
       return data;
     } catch (error) {
       throw error;
@@ -154,7 +164,6 @@ class ProductWarehouseService {
       throw error;
     }
   }
-
 }
 
 module.exports = ProductWarehouseService;
