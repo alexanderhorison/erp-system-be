@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       description: DataTypes.STRING,
+      menuId: DataTypes.INTEGER,
     },
     {
       sequelize,
