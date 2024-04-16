@@ -252,6 +252,8 @@ class UserService {
           user_name: user.user_name,
           RoleId: Number(user.RoleId),
           MenuId: user.Role.MenuId,
+          WarehouseId: 1, //! Hardcode
+          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role 
         },
         process.env.TOKEN_KEY,
         {
@@ -267,6 +269,8 @@ class UserService {
           user_name: user.user_name,
           RoleId: Number(user.RoleId),
           MenuId: user.Role.MenuId,
+          WarehouseId: 1, //! Hardcode
+          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role 
         },
         process.env.REFRESH_TOKEN_KEY,
         { expiresIn: "7d" }
@@ -274,12 +278,22 @@ class UserService {
 
       await Audit_Trail.create(auditTrailLog("login", user.name, "success"));
       delete user.password;
+      const userLogin = {
+        id: user.id,
+        Role: user.Role,
+        name: user.name,
+        email: user.email,
+        user_name: user.user_name,
+        MenuId: user.Role.MenuId,
+        RoleId: Number(user.RoleId),
+        WarehouseId: 1, //! Hardcode
+      };
       res.status(200).json(
         responses(true, "Berhasil", {
           type: "bearer",
           token: token,
           refreshToken: refreshToken,
-          user_info: user,
+          user_info: userLogin, 
         })
       );
     } catch (error) {
@@ -337,7 +351,7 @@ class UserService {
             );
           }
         }
-        res.status(200).json(responses(true, "berhasil", decoded));
+        res.status(200).json(responses(true, "berhasil", {user_info: decoded})); // sementara biar sama kaya yang di login, kurang token dll..
       });
     } catch (error) {
       return res

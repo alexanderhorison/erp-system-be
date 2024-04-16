@@ -46,7 +46,6 @@ class MasterDataUnitController {
         .status(200)
         .json(responses(true, "Unit berhasil diupdate", updatedUnit));
     } catch (error) {
-      console.log(error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
@@ -95,7 +94,6 @@ class MasterDataUnitController {
 
       res.status(200).json(responses(true, "Success get detail unit ", data));
     } catch (error) {
-      console.log(error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));

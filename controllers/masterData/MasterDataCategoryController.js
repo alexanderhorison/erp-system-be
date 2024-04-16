@@ -14,7 +14,6 @@ class MasterDataCategoryController {
       const body = await yupSchemaValidation(req.body, schema);
 
       const user = { id: 1 };
-      console.log(body);
 
       const newCategory = await MasterDataCategoryService.create(body, user);
 

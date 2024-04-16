@@ -95,7 +95,6 @@ class MasterDataProductController {
         .status(200)
         .json(responses(true, "Success get detail master product", data));
     } catch (error) {
-      console.log(error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));

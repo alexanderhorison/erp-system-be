@@ -42,7 +42,6 @@ class MasterDataWarehouseService {
 
       return updatedWarehouse;
     } catch (error) {
-      console.log(error);
       return error;
     }
   }
