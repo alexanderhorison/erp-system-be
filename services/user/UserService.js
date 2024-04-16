@@ -293,7 +293,7 @@ class UserService {
   static async authMe(req, res) {
     try {
       const token = req.headers.authorization;
-      jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      jwt.verify(token, process.env.TOKEN_KEY, async (err, decoded) => {
         if (err) {
           if ("refreshToken" === "logout") {
             res.status(401).json(responses(false, "Invalid User"));
@@ -317,7 +317,7 @@ class UserService {
               include: [{ model: Role, attributes: ["name", "MenuId"] }],
             });
 
-            const accessToken = jwt.sign({ id }, process.env.JWT_SECRET, {
+            const accessToken = jwt.sign({ id }, process.env.TOKEN_KEY, {
               expiresIn: "20h",
             });
             const refreshToken = jwt.sign(
