@@ -337,6 +337,7 @@ class UserService {
             );
           }
         }
+        res.status(200).json(responses(true, "berhasil", decoded));
       });
     } catch (error) {
       return res
