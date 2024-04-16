@@ -53,9 +53,8 @@ class ProductWarehouseController {
       });
       const schema = yup.array().of(object);
       const body = await yupSchemaValidation(req.body, schema);
-      const user = { id: 1, WarehouseId: 2 };
+      const user = req.UserData;
 
-      console.log(body);
       const newProductWarehouse = await ProductWarehouseService.create(
         body,
         user
@@ -67,14 +66,13 @@ class ProductWarehouseController {
           responses(true, "Produk berhasil ditambahkan", newProductWarehouse)
         );
     } catch (error) {
-      console.log(error);
       return res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
   }
 
-  // Adjust Product (PLUS or MINUS) stock product
+  // Adjust Product (PLUS or MINUS or MINIMUM_STOCK) stock product
   static async adjustProduct(req, res) {
     try {
       const schemaParams = yup
@@ -82,18 +80,32 @@ class ProductWarehouseController {
         .required("Id produk gudang tidak boleh kosong");
 
       const schemaBody = yup.object({
-        quantity: yup.number().required("Kuantiti tidak boleh kosong"),
-        minimum_stock: yup.number().required("Stok minimum tidak boleh kosong"),
+        quantity: yup.number().when("adjustment_type", {
+          is: (val) => val !== "MINIMUM_STOCK",
+          then: () => yup.number().required("Kuantiti tidak boleh kosong"),
+          otherwise: () => yup.number(),
+        }),
+        quantityAdjustment: yup.number().when("adjustment_type", {
+          is: (val) => val !== "MINIMUM_STOCK",
+          then: () =>
+            yup.number().required("Jumlah adjustment tidak boleh kosong"),
+          otherwise: () => yup.number(),
+        }),
+        minimum_stock: yup.number().when("adjustment_type", {
+          is: (val) => val === "MINIMUM_STOCK",
+          then: () => yup.number().required("Stok minimum tidak boleh kosong"),
+          otherwise: () => yup.number().notRequired(),
+        }),
         adjustment_type: yup
           .string()
-          .oneOf(["PLUS", "MINUS"])
+          .oneOf(["PLUS", "MINUS", "MINIMUM_STOCK"])
           .required("Tipe adjustment tidak boleh kosong"),
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = { id: 1, WarehouseId: 2 };
+      const user = req.UserData;
 
       const adjustProductWarehouse =
         await ProductWarehouseService.adjustProduct({
@@ -105,7 +117,7 @@ class ProductWarehouseController {
       res
         .status(200)
         .json(
-          responses(true, "Produk berhasil diadjust", adjustProductWarehouse)
+          responses(true, `Produk berhasil di ubah`, adjustProductWarehouse)
         );
     } catch (error) {
       return res
@@ -123,6 +135,22 @@ class ProductWarehouseController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
       const data = await ProductWarehouseService.findOne({ id: id });
+
+      res.status(200).json(responses(true, "Success get product", data));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getListProduct(req, res) {
+    try {
+      const user = req.UserData;
+
+      const data = await ProductWarehouseService.findProductByWarehouseId({
+        id: user.WarehouseId,
+      });
 
       res.status(200).json(responses(true, "Success get product", data));
     } catch (error) {

@@ -1,15 +1,14 @@
 const {
   sequelize: sq,
   Master_Product,
-  Master_Product_History,
   Type,
   Category,
   Product_Warehouse,
-  Stock_Adjustment_History,
   Unit,
   Warehouse,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
+const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class ProductWarehouseService {
   static async create(data, user) {
@@ -55,10 +54,10 @@ class ProductWarehouseService {
         };
       });
 
-      const createHistoryAdjusment = await Stock_Adjustment_History.bulkCreate(
-        createdHistory,
-        { transaction }
-      );
+      await StockAdjustmentHistoryService.bulkCreate({
+        data: createdHistory,
+        transaction: transaction,
+      });
 
       await transaction.commit();
       return data;
@@ -69,17 +68,39 @@ class ProductWarehouseService {
   }
 
   static async adjustProduct({ id, data, user }) {
+    const transaction = await sq.transaction();
     try {
-      const exsistingData = await Product_Warehouse.findByPk(id);
-      console.log(id, data, user);
-      if (!exsistingData) {
+      const existingData = await Product_Warehouse.findByPk(id);
+      if (!existingData) {
         throw {
           code: 404,
           message: "Produk tidak ditemukan",
         };
       }
+      // Hanya ubah stock minimum
+      if (data.adjustment_type === "MINIMUM_STOCK") {
+        existingData.minimum_stock = data.minimum_stock;
+        await existingData.save({ transaction });
+      } else {
+        if (data.adjustment_type === "PLUS") {
+          existingData.quantity += data.quantityAdjustment;
+        }
+        if (data.adjustment_type === "MINUS") {
+          existingData.quantity -= data.quantityAdjustment;
+        }
+        await existingData.save({ transaction });
+        await StockAdjustmentHistoryService.createOne({
+          data: existingData,
+          user,
+          adjustment_type: data.adjustment_type,
+          quantity: data.quantityAdjustment,
+          transaction,
+        });
+      }
+      await transaction.commit();
       return data;
     } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }
@@ -141,22 +162,25 @@ class ProductWarehouseService {
       });
 
       const dataWarehouse = await MasterDataWarehouseService.findOne(id);
+      const temp = [];
 
-      const temp = data.map((item) => ({
-        ProductWarehouseId: item.id,
-        productName: item.Master_Product.name,
-        categoryName: item.Master_Product.Category.name,
-        typeName: item.Master_Product.Type.name,
-        unitName: item.Unit.name,
-        warehouseName: item.Warehouse.name,
-        quantity: item.quantity,
-        minimum_stock: item.minimum_stock,
-      }));
+      data.forEach((item) =>
+        temp.push({
+          ProductWarehouseId: item.id,
+          productName: item.Master_Product.name,
+          categoryName: item.Master_Product.Category.name,
+          typeName: item.Master_Product.Type.name,
+          unitName: item.Unit.name,
+          warehouseName: item.Warehouse.name,
+          quantity: item.quantity,
+          minimum_stock: item.minimum_stock,
+        })
+      );
 
       const result = {
         WarehouseId: dataWarehouse.id,
         warehouseName: dataWarehouse.name,
-        data: temp,
+        data: temp || [],
       };
 
       return result;
