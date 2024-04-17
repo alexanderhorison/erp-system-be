@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { User, Role, Audit_Trail } = require("../../models");
+const { User, Role, Audit_Trail, Warehouse } = require("../../models");
 const { responses, throwValidation } = require("../../helpers/responses");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
@@ -21,17 +21,32 @@ class UserService {
         description: yup.string().optional(),
         user_name: yup.string().required("Username harus diisi"),
         RoleId: yup.number().required("Otoritas harus diisi"),
+        WarehouseId: yup.string().when("RoleId", (RoleId, schema) => {
+          if (RoleId[0] == 3) {
+            return schema.required(
+              "Gudang harus diisi jika otoritas adalah admin gudang"
+            );
+          }
+          return schema;
+        }),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const { name, description, email, user_name, RoleId } = body;
+      const { name, description, email, user_name, RoleId, WarehouseId } = body;
 
       // validation input
       await UserService.validationRole(body);
 
       // validation check user email and username
       await UserService.checkUser({ email, user_name });
+
+      // Validation if Role id admin gudang
+      if (RoleId == 3 && WarehouseId) {
+        const checkWarehouse = await Warehouse.findByPk(WarehouseId);
+        if (!checkWarehouse)
+          throw throwValidation(400, "Gudang Tidak ditemukan");
+      }
 
       const newUser = await User.create({
         name,
@@ -40,6 +55,7 @@ class UserService {
         user_name,
         password: process.env.DEFAULT_PASSWORD || "qwerty",
         RoleId,
+        WarehouseId: WarehouseId || null,
       });
 
       res.status(201).json(
@@ -67,16 +83,31 @@ class UserService {
         description: yup.string().optional(),
         user_name: yup.string().required("Username harus diisi"),
         RoleId: yup.number().required("Otoritas harus diisi"),
+        WarehouseId: yup.string().when("RoleId", (RoleId, schema) => {
+          if (RoleId[0] == 3) {
+            return schema.required(
+              "Gudang harus diisi jika otoritas adalah admin gudang"
+            );
+          }
+          return schema;
+        }),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const { name, description, email, user_name, RoleId } = body;
+      const { name, description, email, user_name, RoleId, WarehouseId } = body;
 
       // validation input
       await UserService.validationRole(body);
 
       const user = await User.findByPk(userId);
+
+      // Validation if Role id admin gudang
+      if (RoleId == 3 && WarehouseId) {
+        const checkWarehouse = await Warehouse.findByPk(WarehouseId);
+        if (!checkWarehouse)
+          throw throwValidation(400, "Gudang Tidak ditemukan");
+      }
 
       if (!user) {
         throw throwValidation(400, "User Tidak ditemukan");
@@ -96,6 +127,7 @@ class UserService {
         email,
         user_name,
         RoleId,
+        WarehouseId: WarehouseId || null,
       });
 
       res.status(200).json(responses(true, "User berhasil diupdate"));
@@ -151,6 +183,7 @@ class UserService {
           "user_name",
           "RoleId",
           "deletedAt",
+          "WarehouseId",
         ],
         include: [{ model: Role, attributes: ["name", "description"] }],
         paranoid: false,
@@ -167,9 +200,8 @@ class UserService {
     try {
       const getUser = await User.findOne({
         where: { id: req.params.userId },
-        attributes: ["name", "email", "user_name", "RoleId"],
+        attributes: ["name", "email", "user_name", "RoleId", "WarehouseId"],
       });
-
       if (!getUser) {
         throw throwValidation(400, "User tidak ditemukan");
       }
@@ -230,6 +262,7 @@ class UserService {
           "password",
           "user_name",
           "RoleId",
+          "WarehouseId",
         ],
         include: [{ model: Role, attributes: ["name", "MenuId"] }],
       });
@@ -252,8 +285,8 @@ class UserService {
           user_name: user.user_name,
           RoleId: Number(user.RoleId),
           MenuId: user.Role.MenuId,
-          WarehouseId: 1, //! Hardcode
-          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role 
+          WarehouseId: user.WarehouseId,
+          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.TOKEN_KEY,
         {
@@ -269,8 +302,8 @@ class UserService {
           user_name: user.user_name,
           RoleId: Number(user.RoleId),
           MenuId: user.Role.MenuId,
-          WarehouseId: 1, //! Hardcode
-          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role 
+          WarehouseId: user.WarehouseId,
+          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.REFRESH_TOKEN_KEY,
         { expiresIn: "7d" }
@@ -286,14 +319,14 @@ class UserService {
         user_name: user.user_name,
         MenuId: user.Role.MenuId,
         RoleId: Number(user.RoleId),
-        WarehouseId: 1, //! Hardcode
+        WarehouseId: user.WarehouseId,
       };
       res.status(200).json(
         responses(true, "Berhasil", {
           type: "bearer",
           token: token,
           refreshToken: refreshToken,
-          user_info: userLogin, 
+          user_info: userLogin,
         })
       );
     } catch (error) {
@@ -327,6 +360,7 @@ class UserService {
                 "password",
                 "user_name",
                 "RoleId",
+                "WarehouseId",
               ],
               include: [{ model: Role, attributes: ["name", "MenuId"] }],
             });
@@ -341,17 +375,31 @@ class UserService {
               process.env.REFRESH_TOKEN_KEY,
               { expiresIn: "7d" }
             );
+
+            const userLogin = {
+              id: user.id,
+              Role: user.Role,
+              name: user.name,
+              email: user.email,
+              user_name: user.user_name,
+              MenuId: user.Role.MenuId,
+              RoleId: Number(user.RoleId),
+              WarehouseId: user.WarehouseId,
+            };
+
             res.status(200).json(
               responses(true, "Berhasil", {
                 type: "bearer",
                 token: accessToken,
                 refreshToken: refreshToken,
-                user_info: user,
+                user_info: userLogin,
               })
             );
           }
         }
-        res.status(200).json(responses(true, "berhasil", {user_info: decoded})); // sementara biar sama kaya yang di login, kurang token dll..
+        res
+          .status(200)
+          .json(responses(true, "berhasil", { user_info: decoded })); // sementara biar sama kaya yang di login, kurang token dll..
       });
     } catch (error) {
       return res

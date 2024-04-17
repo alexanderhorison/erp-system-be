@@ -13,6 +13,9 @@ module.exports = (sequelize, DataTypes) => {
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
       });
+      User.belongsTo(models.Warehouse, {
+        foreignKey: "WarehouseId",
+      });
     }
   }
   User.init(
@@ -62,6 +65,9 @@ module.exports = (sequelize, DataTypes) => {
             msg: "Role Tidak boleh kosong",
           },
         },
+      },
+      WarehouseId: {
+        type: DataTypes.INTEGER,
       },
     },
     {
