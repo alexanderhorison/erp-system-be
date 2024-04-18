@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       });
       Product_Warehouse.belongsTo(models.Unit);
       Product_Warehouse.belongsTo(models.Warehouse);
+      Product_Warehouse.hasMany(models.Product_Delivery_Order, {
+        foreignKey: "ProductWarehouseId",
+      });
     }
   }
   Product_Warehouse.init(

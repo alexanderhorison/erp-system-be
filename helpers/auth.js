@@ -84,16 +84,53 @@ class Auth {
       }
 
       let data = jwt.verify(token, process.env.TOKEN_KEY);
-      
+
       let user = await User.findOne({
         where: { email: data.email },
       });
 
       if (user.RoleId != 2) {
-        throw throwValidation(403, "Fitur ini hanya bisa diakses oleh kepala gudang");
+        throw throwValidation(
+          403,
+          "Fitur ini hanya bisa diakses oleh kepala gudang"
+        );
       }
 
       next();
+    } catch (error) {
+      res.status(500).json(responses(false, error.message, error));
+    }
+  }
+
+  static async AuthenticationRoleSuratJalan(req, res, next) {
+    try {
+      const { authorization } = req.headers;
+
+      if (!authorization) {
+        throw throwValidation(401, "Token not provided");
+      }
+
+      const [bearer, token] = authorization.split(" ");
+      if (!token || !bearer.toLowerCase().includes("bearer")) {
+        throw throwValidation(403, "Token invalid");
+      }
+
+      let data = jwt.verify(token, process.env.TOKEN_KEY);
+
+      let user = await User.findOne({
+        where: { email: data.email },
+      });
+
+      // Jika user adalah admin dan kepala gudang authorized
+      if ([1, 2].includes(user.RoleId)) {
+        next();
+      } else {
+        // User role bukan admin dan kepala gudang
+        throw throwValidation(
+          403,
+          "Fitur ini hanya bisa diakses oleh admin dan kepala gudang"
+        );
+      }
     } catch (error) {
       res.status(500).json(responses(false, error.message, error));
     }
