@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Product_Delivery_Order.belongsTo(models.Delivery_Order, {
-        foreignKey: "DeliveryOrderId",
+        foreignKey: "delivery_order_id",
+        targetKey: 'delivery_order_id',
       });
       Product_Delivery_Order.belongsTo(models.Product_Warehouse, {
         foreignKey: "ProductWarehouseId",
@@ -22,10 +23,12 @@ module.exports = (sequelize, DataTypes) => {
       DeliveryOrderId: DataTypes.INTEGER,
       ProductWarehouseId: DataTypes.INTEGER,
       quantity: DataTypes.INTEGER,
+      delivery_order_id: DataTypes.STRING,
     },
     {
       sequelize,
       modelName: "Product_Delivery_Order",
+      tableName: "Product_Delivery_Order", 
     }
   );
   return Product_Delivery_Order;

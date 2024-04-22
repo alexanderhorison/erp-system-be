@@ -10,12 +10,18 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Delivery_Order.belongsTo(models.Warehouse, {
+        as: "WarehouseOrigin",
         foreignKey: "WarehouseOriginId",
       });
       Delivery_Order.belongsTo(models.Warehouse, {
+        as: "WarehouseDestination",
         foreignKey: "WarehouseDestinationId",
-      })
-      Delivery_Order.hasMany(models.Product_Delivery_Order, { foreignKey: 'DeliveryOrderId' });
+      });
+      Delivery_Order.hasMany(models.Product_Delivery_Order, {
+        foreignKey: "delivery_order_id",
+        sourceKey: "delivery_order_id",
+      });
+      Delivery_Order.belongsTo(models.User, { foreignKey: "createdBy" });
     }
   }
   Delivery_Order.init(
@@ -24,7 +30,8 @@ module.exports = (sequelize, DataTypes) => {
       WarehouseOriginId: DataTypes.INTEGER,
       WarehouseDestinationId: DataTypes.INTEGER,
       createdBy: DataTypes.INTEGER,
-      notes: DataTypes.TEXT
+      notes: DataTypes.TEXT,
+      delivery_order_id: DataTypes.STRING,
     },
     {
       sequelize,
