@@ -6,6 +6,9 @@ router.use(Auth.AuthenticationRoleSuratJalan);
 router.get("/all", DeliveryOrderController.getAllDeliveryOrder);
 router.post("/create", DeliveryOrderController.createDeliveryOrder);
 
-router.get("/:userId", DeliveryOrderController.getDetailDeliveryOrder);
+// FOR ADD PRODUCT AT INVOICE
+router.post("/list-product", DeliveryOrderController.getInvoiceListProduct);
+
+router.get("/:id", DeliveryOrderController.getDetailDeliveryOrder);
 
 module.exports = router;
