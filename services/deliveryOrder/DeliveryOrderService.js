@@ -195,19 +195,37 @@ class DeliveryOrderService {
         include: [
           {
             model: Product_Delivery_Order,
-            // include: [
-            //   {
-            //     model: Product_Warehouse,
-            //     include: [
-            //       {
-            //         model: Master_Product
-            //       }
-            //     ]
-            //   }
-            // ]
-          }
-        ]
-      })
+            include: [
+              {
+                model: Product_Warehouse,
+                include: [
+                  {
+                    model: Master_Product,
+                  },
+                  {
+                    model: Unit,
+                    attributes: ["name"],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            model: Warehouse,
+            as: "WarehouseOrigin",
+            attributes: ["name", "location"],
+          },
+          {
+            model: Warehouse,
+            as: "WarehouseDestination",
+            attributes: ["name", "location"],
+          },
+          {
+            model: User,
+            attributes: ["name"],
+          },
+        ],
+      });
 
       return data;
     } catch (error) {
