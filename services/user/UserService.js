@@ -127,7 +127,7 @@ class UserService {
         email,
         user_name,
         RoleId,
-        WarehouseId: WarehouseId || null,
+        WarehouseId: RoleId  == 3 ? WarehouseId : null,
       });
 
       res.status(200).json(responses(true, "User berhasil diupdate"));

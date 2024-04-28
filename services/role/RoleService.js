@@ -28,8 +28,8 @@ class RoleService {
       }
 
       // Check menu exist
-      let menus = await Menu.findAll({ attributes: ["id"] });
-      menus = menus.map((menu) => menu.id);
+      let menus = await Menu.findAll({ attributes: ["id", "menuId"] });
+      menus = menus.map((menu) => menu.menuId);
       menuId.forEach((id) => {
         if (!menus.includes(id)) {
           throw throwValidation(404, "Salah satu menu tidak ditemukan");
@@ -68,8 +68,8 @@ class RoleService {
       const role = await Role.findByPk(roleId);
 
       // Check menu exist
-      let menus = await Menu.findAll({ attributes: ["id"] });
-      menus = menus.map((menu) => menu.id);
+      let menus = await Menu.findAll({ attributes: ["id", "menuId"] });
+      menus = menus.map((menu) => menu.menuId);
       menuId.forEach((id) => {
         if (!menus.includes(id)) {
           throw throwValidation(404, "Salah satu menu tidak ditemukan");

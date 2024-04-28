@@ -12,6 +12,7 @@ class MenuService {
           yup.object().shape({
             name: yup.string().required("Nama Menu harus diisi"),
             description: yup.string().optional(),
+            menuId: yup.number().required("Menu Id harus diisi")
           })
         )
         .min(1, "Data tidak valid");
@@ -22,6 +23,7 @@ class MenuService {
         await Menu.create({
           name: item.name,
           description: item.description,
+          menuId: item.menuId,
         });
       }
       res.status(201).json(responses(true, "Menu berhasil dibuat"));
@@ -90,7 +92,7 @@ class MenuService {
   static async getAllMenu(req, res) {
     try {
       const getMenus = await Menu.findAll({
-        attributes: ["id", "name", "description"],
+        attributes: ["id", "name", "description", "menuId"],
       });
 
       return res.status(200).json(responses(true, "berhasil", getMenus));
