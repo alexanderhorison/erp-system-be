@@ -21,8 +21,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "delivery_order_id",
         sourceKey: "delivery_order_id",
       });
-      Delivery_Order.belongsTo(models.User, { foreignKey: "createdBy" });
-      Delivery_Order.belongsTo(models.User, { foreignKey: "receivedBy" });
+      Delivery_Order.belongsTo(models.User, { foreignKey: "createdBy", as: "CreatedBy" });
+      Delivery_Order.belongsTo(models.User, { foreignKey: "receivedBy", as: "ReceivedBy" });
     }
   }
   Delivery_Order.init(

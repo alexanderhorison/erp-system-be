@@ -109,6 +109,17 @@ class DeliveryOrderService {
                 model: Role,
               },
             ],
+            as: "CreatedBy"
+          },
+          {
+            model: User,
+            paranoid: false,
+            include: [
+              {
+                model: Role,
+              },
+            ],
+            as: "ReceivedBy"
           },
           {
             model: Warehouse,
@@ -131,8 +142,8 @@ class DeliveryOrderService {
           delivery_order_id: item.delivery_order_id,
           createdAt: formatDate(item.createdAt),
           createdBy: {
-            name: item.User.name,
-            role_name: item.User.Role.name,
+            name: item.CreatedBy.name,
+            role_name: item.CreatedBy.Role.name,
           },
           warehouseOrigin: item.WarehouseOrigin.name,
           warehouseDestination: item.WarehouseDestination.name,
@@ -187,7 +198,6 @@ class DeliveryOrderService {
 
   static async getDetailDeliveryOrder(delivery_order_id) {
     try {
-      console.log(delivery_order_id);
       const data = await Delivery_Order.findOne({
         where: {
           delivery_order_id: delivery_order_id,
@@ -223,13 +233,18 @@ class DeliveryOrderService {
           {
             model: User,
             attributes: ["name"],
+            as: "CreatedBy"
+          },
+          {
+            model: User,
+            attributes: ["name"],
+            as: "ReceivedBy"
           },
         ],
       });
 
       return data;
     } catch (error) {
-      console.log(error);
       throwValidation(error.code, error.message);
     }
   }
