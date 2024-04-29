@@ -309,7 +309,7 @@ class UserService {
         { expiresIn: "7d" }
       );
 
-      await Audit_Trail.create(auditTrailLog("login", user.name, "success"));
+      // await Audit_Trail.create(auditTrailLog("login", user.name, "success"));
       delete user.password;
       const userLogin = {
         id: user.id,
