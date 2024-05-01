@@ -51,13 +51,21 @@ class ProductWarehouseController {
         UnitId: yup.number().required("Unit id tidak boleh kosong"),
         minimum_stock: yup.number().required("Stok minimum tidak boleh kosong"),
       });
+
+      const schemaParams = yup.object({
+        WarehouseId: yup.number().required("Id gudang tidak boleh kosong")
+      })
+
       const schema = yup.array().of(object);
       const body = await yupSchemaValidation(req.body, schema);
+      const params = await yupSchemaValidation(req.params, schemaParams)
       const user = req.UserData;
+      const WarehouseId = params.WarehouseId
 
       const newProductWarehouse = await ProductWarehouseService.create(
         body,
-        user
+        user,
+        WarehouseId,
       );
 
       res

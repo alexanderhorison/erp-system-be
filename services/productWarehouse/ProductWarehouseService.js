@@ -11,7 +11,7 @@ const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseSer
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class ProductWarehouseService {
-  static async create(data, user) {
+  static async create(data, user, WarehouseId) {
     const transaction = await sq.transaction();
     try {
       const listProduct = data.map((item) => item.MasterProductId);
@@ -21,7 +21,7 @@ class ProductWarehouseService {
         where: {
           ProductId: listProduct,
           UnitId: listUnit,
-          WarehouseId: user.WarehouseId,
+          WarehouseId: WarehouseId,
         },
       });
 
@@ -36,7 +36,7 @@ class ProductWarehouseService {
         return {
           ...item,
           ProductId: item.MasterProductId,
-          WarehouseId: user.WarehouseId,
+          WarehouseId: WarehouseId,
         };
       });
 

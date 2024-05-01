@@ -4,7 +4,7 @@ const ProductWarehouseController = require("../../controllers/productWarehouse/P
 router.get("/", ProductWarehouseController.getAllWarehouse);
 router.get("/list", ProductWarehouseController.getListProduct)
 router.get("/warehouse/:id", ProductWarehouseController.getProductByWarehouse);
-router.post("/create", ProductWarehouseController.create);
+router.post("/create/:WarehouseId", ProductWarehouseController.create);
 
 
 router.get("/:id", ProductWarehouseController.getProductWarehouse);
