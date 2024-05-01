@@ -135,6 +135,25 @@ class Auth {
       res.status(500).json(responses(false, error.message, error));
     }
   }
+
+  static async AuthenticationRoleSuratJalanReceive(req, res, next) {
+    try {
+      const user = req.UserData;
+      
+      // Jika user adalah admin dan kepala gudang authorized
+      if ([3].includes(user.RoleId)) {
+        next();
+      } else {
+        // User role bukan Admin Gudang
+        throw throwValidation(
+          403,
+          "Fitur ini hanya bisa diakses oleh Admin Gudang"
+        );
+      }
+    } catch (error) {
+      res.status(500).json(responses(false, error.message, error));
+    }
+  }
 }
 
 module.exports = Auth;

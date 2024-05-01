@@ -99,7 +99,7 @@ class DeliveryOrderService {
 
   static async getAllDeliveryOrder(payload) {
     try {
-      const data = await Delivery_Order.findAll({
+      let queryOption = {
         include: [
           {
             model: User,
@@ -134,8 +134,15 @@ class DeliveryOrderService {
             paranoid: false,
           },
         ],
-      });
+      }
 
+      if (payload.user.RoleId == 3){
+        queryOption.where = {
+          WarehouseDestinationId: payload.user.WarehouseId
+        }
+      }
+
+      const data = await Delivery_Order.findAll(queryOption);
       const result = data.map((item) => {
         return {
           id: item.delivery_order_id,

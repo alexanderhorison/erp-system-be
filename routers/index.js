@@ -6,6 +6,7 @@ const routerRole = require("./role");
 const routerProductWarehouse = require("./productWarehouse");
 const Auth = require("../helpers/auth");
 const routerDeliveryOrder = require("./deliveryOrder");
+const routerDeliveryOrderReceive = require("./deliveryOrderReceive");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -31,4 +32,6 @@ router.use("/product-warehouse", routerProductWarehouse);
 // Delivery Order
 router.use("/delivery-order", routerDeliveryOrder);
 
+// Delivery Order Receive
+router.use("/delivery-order-receive", routerDeliveryOrderReceive);
 module.exports = router;
