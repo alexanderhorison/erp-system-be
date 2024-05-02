@@ -83,7 +83,7 @@ class UserService {
         description: yup.string().optional(),
         user_name: yup.string().required("Username harus diisi"),
         RoleId: yup.number().required("Otoritas harus diisi"),
-        WarehouseId: yup.string().when("RoleId", (RoleId, schema) => {
+        WarehouseId: yup.string().nullable().when("RoleId", (RoleId, schema) => {
           if (RoleId[0] == 3) {
             return schema.required(
               "Gudang harus diisi jika otoritas adalah admin gudang"
