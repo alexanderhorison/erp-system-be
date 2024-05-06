@@ -5,7 +5,7 @@ const Auth = require("../../helpers/auth");
 
 router.use(Auth.AuthenticationRoleSuratJalanReceive);
 
-// Update Surat Jalan
+// Update or terima Surat Jalan
 router.put("/:deliveryOrderId", DeliveryOrderReceiveController.updateDeliveryOrder);
 
 module.exports = router;

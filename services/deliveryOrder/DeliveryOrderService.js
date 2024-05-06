@@ -61,7 +61,7 @@ class DeliveryOrderService {
           adjustment_type: "MINUS",
           WarehouseId: data.WarehouseOriginId,
           UserId: user.id,
-          info: "DELIVERY ORDER",
+          info: "DELIVERY ORDER CREATE",
           delivery_order_id: createdDeliveryOrder.delivery_order_id,
         });
       });
