@@ -19,6 +19,7 @@ class UserService {
           .email("Email tidak valid")
           .required("Email harus diisi"),
         description: yup.string().optional(),
+        password: yup.string().required("Password harus diisi"),
         user_name: yup.string().required("Username harus diisi"),
         RoleId: yup.number().required("Otoritas harus diisi"),
         WarehouseId: yup.string().when("RoleId", (RoleId, schema) => {
@@ -33,7 +34,17 @@ class UserService {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const { name, description, email, user_name, RoleId, WarehouseId } = body;
+      const {
+        name,
+        description,
+        email,
+        password,
+        user_name,
+        RoleId,
+        WarehouseId,
+      } = body;
+
+      let decryptPassword = decrypt(password);
 
       // validation input
       await UserService.validationRole(body);
@@ -53,7 +64,7 @@ class UserService {
         description,
         email,
         user_name,
-        password: process.env.DEFAULT_PASSWORD || "qwerty",
+        password: decryptPassword,
         RoleId,
         WarehouseId: WarehouseId || null,
       });
@@ -127,7 +138,7 @@ class UserService {
         email,
         user_name,
         RoleId,
-        WarehouseId: RoleId  == 3 ? WarehouseId : null,
+        WarehouseId: RoleId == 3 ? WarehouseId : null,
       });
 
       res.status(200).json(responses(true, "User berhasil diupdate"));
