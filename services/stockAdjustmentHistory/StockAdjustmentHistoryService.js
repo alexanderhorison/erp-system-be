@@ -6,6 +6,8 @@ class StockAdjustmentHistoryService {
     user,
     adjustment_type,
     quantity,
+    info = null,
+    delivery_order_id = null,
     transaction,
   }) {
     try {
@@ -14,6 +16,8 @@ class StockAdjustmentHistoryService {
         quantity: quantity,
         WarehouseId: data.WarehouseId,
         adjustment_type: adjustment_type,
+        info,
+        delivery_order_id,
         UserId: user.id,
       };
 
