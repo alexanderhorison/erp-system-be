@@ -94,19 +94,31 @@ class UserService {
         description: yup.string().optional(),
         user_name: yup.string().required("Username harus diisi"),
         RoleId: yup.number().required("Otoritas harus diisi"),
-        WarehouseId: yup.string().nullable().when("RoleId", (RoleId, schema) => {
-          if (RoleId[0] == 3) {
-            return schema.required(
-              "Gudang harus diisi jika otoritas adalah admin gudang"
-            );
-          }
-          return schema;
-        }),
+        WarehouseId: yup
+          .string()
+          .nullable()
+          .when("RoleId", (RoleId, schema) => {
+            if (RoleId[0] == 3) {
+              return schema.required(
+                "Gudang harus diisi jika otoritas adalah admin gudang"
+              );
+            }
+            return schema;
+          }),
+        password: yup.string().optional(),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const { name, description, email, user_name, RoleId, WarehouseId } = body;
+      const {
+        name,
+        description,
+        email,
+        user_name,
+        RoleId,
+        WarehouseId,
+        password,
+      } = body;
 
       // validation input
       await UserService.validationRole(body);
@@ -132,14 +144,27 @@ class UserService {
         throw throwValidation(400, "Username atau Email sudah terdaftar");
       }
 
-      await user.update({
-        name,
-        description,
-        email,
-        user_name,
-        RoleId,
-        WarehouseId: RoleId == 3 ? WarehouseId : null,
-      });
+      if (password) {
+        let decryptPassword = decrypt(password);
+        await user.update({
+          name,
+          description,
+          email,
+          password: decryptPassword,
+          user_name,
+          RoleId,
+          WarehouseId: RoleId == 3 ? WarehouseId : null,
+        });
+      } else {
+        await user.update({
+          name,
+          description,
+          email,
+          user_name,
+          RoleId,
+          WarehouseId: RoleId == 3 ? WarehouseId : null,
+        });
+      }
 
       res.status(200).json(responses(true, "User berhasil diupdate"));
     } catch (error) {
