@@ -136,7 +136,7 @@ class DeliveryOrderService {
         ],
       }
 
-      if (payload.user.RoleId == 3){
+      if (payload.user.RoleId == 3) {
         queryOption.where = {
           WarehouseDestinationId: payload.user.WarehouseId
         }
@@ -184,6 +184,12 @@ class DeliveryOrderService {
           {
             model: Master_Product,
             paranoid: false,
+            include: [
+              {
+                model: Category,
+                paranoid: false,
+              }
+            ]
           },
         ],
       });
@@ -192,6 +198,7 @@ class DeliveryOrderService {
         return {
           ProductWarehouseId: item.id,
           productName: `${item.Master_Product.name} - ${item.Unit.name}`,
+          categoryName: item.Master_Product.Category.name,
           quantity: item.quantity,
           MasterProductId: item.Master_Product.id,
         };
