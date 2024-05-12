@@ -378,29 +378,27 @@ class UserService {
       const token = req.headers.authorization;
       jwt.verify(token, process.env.TOKEN_KEY, async (err, decoded) => {
         if (err) {
-          if ("refreshToken" === "logout") {
-            res.status(401).json(responses(false, "Invalid User"));
-          } else {
-            const oldToken = jwt.decode(token, { complete: true });
-            const { id } = oldToken.payload;
+          res.status(500).json(responses(false, err.message));
+        } else {
+          const { id } = decoded;
+          const user = await User.findOne({
+            where: {
+              id,
+            },
+            attributes: [
+              "id",
+              "name",
+              "description",
+              "email",
+              "password",
+              "user_name",
+              "RoleId",
+              "WarehouseId",
+            ],
+            include: [{ model: Role, attributes: ["name", "MenuId"] }],
+          });
 
-            const user = await User.findOne({
-              where: {
-                id,
-              },
-              attributes: [
-                "id",
-                "name",
-                "description",
-                "email",
-                "password",
-                "user_name",
-                "RoleId",
-                "WarehouseId",
-              ],
-              include: [{ model: Role, attributes: ["name", "MenuId"] }],
-            });
-
+          if (user) {
             const accessToken = jwt.sign({ id }, process.env.TOKEN_KEY, {
               expiresIn: "20h",
             });
@@ -411,7 +409,6 @@ class UserService {
               process.env.REFRESH_TOKEN_KEY,
               { expiresIn: "7d" }
             );
-
             const userLogin = {
               id: user.id,
               Role: user.Role,
@@ -422,7 +419,6 @@ class UserService {
               RoleId: Number(user.RoleId),
               WarehouseId: user.WarehouseId,
             };
-
             res.status(200).json(
               responses(true, "Berhasil", {
                 type: "bearer",
@@ -431,11 +427,10 @@ class UserService {
                 user_info: userLogin,
               })
             );
+          } else {
+            res.status(404).json(responses(false, "Pengguna Tidak Ditemukan"));
           }
         }
-        res
-          .status(200)
-          .json(responses(true, "berhasil", { user_info: decoded })); // sementara biar sama kaya yang di login, kurang token dll..
       });
     } catch (error) {
       return res
