@@ -155,6 +155,8 @@ class DeliveryOrderService {
           warehouseOrigin: item.WarehouseOrigin.name,
           warehouseDestination: item.WarehouseDestination.name,
           status: item.status,
+          dateCreated: item.createdAt,
+          dateReceived: item.receivedAt,
         };
       });
 
