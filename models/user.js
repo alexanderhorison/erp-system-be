@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       User.hasMany(models.Delivery_Order, { foreignKey: "createdBy" });
       User.hasMany(models.Delivery_Order, { foreignKey: "receivedBy" });
+      User.hasMany(models.Master_Transformation, { foreignKey: "createdBy" });
     }
   }
   User.init(
