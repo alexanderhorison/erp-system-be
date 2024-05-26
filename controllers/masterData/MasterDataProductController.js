@@ -100,6 +100,130 @@ class MasterDataProductController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async createProductTransformation(req, res) {
+    try {
+      const schema = yup.object({
+        MasterProductId: yup.number().required("Master Produk harus ada"),
+        UnitFromId: yup.number().required("Asal satuan produk harus ada"),
+        amount_from: yup
+          .number()
+          .required("Jumlah asal konversi produk harus ada"),
+        UnitToId: yup.number().required("Tujuan satuan produk harus ada"),
+        amount_to: yup
+          .number()
+          .required("Jumlah tujuan konversi produk harus ada"),
+        info1: yup.string().optional(),
+        info2: yup.string().optional(),
+      });
+
+      const body = await yupSchemaValidation(req.body, schema);
+
+      const user = req.UserData;
+
+      await MasterDataProductService.createProductTransformasi(body, user.id);
+
+      res
+        .status(200)
+        .json(responses(true, `Berhasil membuat rumus transformasi`));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // Get All rumus transformasi
+  static async getAllProductTransformation(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id produk harus diisi");
+      const productId = await yupSchemaValidation(
+        req.params.productId,
+        schemaParams
+      );
+
+      const getAllTransformation =
+        await MasterDataProductService.getAllProductTransformasi(productId);
+
+      res.status(200).json(responses(true, `Berhasil`, getAllTransformation));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async updateProductTransformation(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id transformasi kosong");
+      const schema = yup.object({
+        MasterProductId: yup.number().required("Master Produk harus ada"),
+        UnitFromId: yup.number().required("Asal satuan produk harus ada"),
+        amount_from: yup
+          .number()
+          .required("Jumlah asal konversi produk harus ada"),
+        UnitToId: yup.number().required("Tujuan satuan produk harus ada"),
+        amount_to: yup
+          .number()
+          .required("Jumlah tujuan konversi produk harus ada"),
+        product_transformation_id: yup
+          .string()
+          .required("Produk Transformasi Id harus ada"),
+        info1: yup.string().optional(),
+        info2: yup.string().optional(),
+      });
+
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schema);
+
+      await MasterDataProductService.updateProductTransformasi(id, body);
+
+      res
+        .status(200)
+        .json(responses(true, `Berhasil memperbarui rumus transformasi`));
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async deleteProductTransformation(req, res) {
+    try {
+      const getAllTransformation = null;
+
+      res
+        .status(200)
+        .json(
+          responses(
+            true,
+            `Berhasil menghapus rumus transformasi`,
+            getAllTransformation
+          )
+        );
+    } catch (error) {
+      return res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getDetailProductTransformation(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id produk harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const data = await MasterDataProductService.getDetailTransformasi(id);
+
+      return res
+        .status(200)
+        .json(responses(true, "Success get detail produk transformasi", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = MasterDataProductController;

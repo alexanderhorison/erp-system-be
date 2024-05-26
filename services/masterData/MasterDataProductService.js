@@ -3,7 +3,14 @@ const {
   Master_Product_History,
   Type,
   Category,
+  Master_Transformation,
+  Unit,
+  sequelize: sq,
 } = require("../../models");
+const {
+  generateProductTransformationId,
+} = require("../../helpers/transformationIdGenerator");
+const { Op } = require("sequelize");
 
 class MasterDataProductService {
   static async create(data, user) {
@@ -154,10 +161,229 @@ class MasterDataProductService {
       }
 
       const result = {
+        id: product.id,
         name: product.name,
         CategoryId: product.Category.id,
         TypeId: product.Type.id,
         description: product.description,
+      };
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllProductTransformasi(productId) {
+    try {
+      const data = await Master_Transformation.findAll({
+        attributes: [
+          "id",
+          "MasterProductId",
+          "info",
+          "product_transformation_id",
+          // Add other columns you need from Master_Transformation
+        ],
+        include: [
+          {
+            model: Unit,
+            paranoid: false,
+            attributes: ["name"],
+            as: "UnitFrom",
+          },
+          {
+            model: Unit,
+            paranoid: false,
+            attributes: ["name"],
+            as: "UnitTo",
+          },
+          {
+            model: Master_Product,
+            paranoid: false,
+            attributes: ["id", "name"],
+          },
+        ],
+        where: {
+          MasterProductId: productId,
+          deletedAt: null,
+        },
+        raw: true,
+      });
+
+      // Ini bisa di enhance dengan penambahan field di db kolom active jadi hanya get yang active
+      // Filter double data by product_transformation_id
+      const filterUniqueTransformationId = data.reduce((acc, item) => {
+        const found = acc.find(
+          (existingItem) =>
+            existingItem.product_transformation_id ===
+            item.product_transformation_id
+        );
+        if (!found) {
+          acc.push({
+            id: item.id,
+            MasterProductId: item.MasterProductId,
+            info: item.info,
+            product_transformation_id: item.product_transformation_id,
+          });
+        }
+        return acc;
+      }, []);
+
+      return filterUniqueTransformationId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async createProductTransformasi(data, userId) {
+    const transaction = await sq.transaction();
+    try {
+      const {
+        MasterProductId,
+        UnitFromId,
+        amount_from,
+        UnitToId,
+        amount_to,
+        info1,
+        info2,
+      } = data;
+
+      const product_transformation_id = await generateProductTransformationId();
+
+      // Data 1
+      const productTransformasiData1 = {
+        MasterProductId,
+        UnitFromId,
+        amount_from,
+        UnitToId,
+        amount_to,
+        info: info1 || "",
+        createdBy: userId,
+        product_transformation_id,
+      };
+
+      // Data 2
+      const productTransformasiData2 = {
+        MasterProductId,
+        UnitFromId: UnitToId,
+        UnitToId: UnitFromId,
+        amount_from: amount_to,
+        amount_to: amount_from,
+        info: info2 || "",
+        createdBy: userId,
+        product_transformation_id,
+      };
+
+      // Pembuatan Product Transformasi Data
+      await Master_Transformation.create(productTransformasiData1);
+      await Master_Transformation.create(productTransformasiData2);
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async updateProductTransformasi(id, data) {
+    const transaction = await sq.transaction();
+    try {
+      const {
+        MasterProductId,
+        UnitFromId,
+        amount_from,
+        UnitToId,
+        amount_to,
+        product_transformation_id,
+        info1,
+        info2,
+      } = data;
+
+      const existingTransformasi = await Master_Transformation.findByPk(id);
+
+      if (!existingTransformasi) {
+        throw {
+          code: 404,
+          message: "rumus transformasi tidak ditemukan",
+        };
+      }
+
+      // Data 1
+      const updateTransformasiData1 = {
+        UnitFromId,
+        amount_from,
+        UnitToId,
+        amount_to,
+        info: info1,
+      };
+
+      await existingTransformasi.update(updateTransformasiData1);
+
+      const existingTransformasi2 = await Master_Transformation.findOne({
+        where: {
+          product_transformation_id,
+          id: { [Op.ne]: id },
+        },
+      });
+
+      // Data 2
+      const updateTransformasiData2 = {
+        UnitFromId: UnitToId,
+        UnitToId: UnitFromId,
+        amount_from: amount_to,
+        amount_to: amount_from,
+        info: info2,
+      };
+
+      await existingTransformasi2.update(updateTransformasiData2);
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async getDetailTransformasi(id) {
+    try {
+      const transformasi = await Master_Transformation.findByPk(id, {
+        include: [
+          {
+            model: Unit,
+            paranoid: false,
+            attributes: ["id", "name"],
+            as: "UnitFrom",
+          },
+          {
+            model: Unit,
+            paranoid: false,
+            attributes: ["id", "name"],
+            as: "UnitTo",
+          },
+          {
+            model: Master_Product,
+            paranoid: false,
+            attributes: ["id", "name"],
+          },
+        ],
+      });
+
+      if (!transformasi) {
+        throw {
+          code: 404,
+          message: "Rumus Transformasi tidak ditemukan",
+        };
+      }
+
+      const result = {
+        id: transformasi.id,
+        MasterProductId: transformasi.MasterProductId,
+        UnitFromId: transformasi.UnitFromId,
+        UnitToId: transformasi.UnitToId,
+        amount_to: transformasi.amount_to,
+        product_transformation_id: transformasi.product_transformation_id,
       };
 
       return result;

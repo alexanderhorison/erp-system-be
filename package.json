@@ -25,6 +25,8 @@
     "start:dev": "nodemon app.js",
     "db:create": "npx sequelize db:create",
     "db:migrate": "npx sequelize db:migrate",
+    "db:create:model": "npx sequelize model:generate --name Master_Transformation --attributes MasterProductId:integer,UnitFromId:integer",
+    "db:create:migration": "npx sequelize migration:generate --name=alter-master-transformation",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:seed:all": "npx sequelize db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo",
