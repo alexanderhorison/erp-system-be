@@ -9,6 +9,7 @@ class StockAdjustmentHistoryService {
     info = null,
     delivery_order_id = null,
     transaction,
+    description = null,
   }) {
     try {
       const createdHistory = {
@@ -19,6 +20,7 @@ class StockAdjustmentHistoryService {
         info,
         delivery_order_id,
         UserId: user.id,
+        description,
       };
 
       const createHistoryAdjusment = await Stock_Adjustment_History.create(

@@ -12,8 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Master_Transformation.belongsTo(models.Master_Product, { foreignKey: 'MasterProductId' });
-      Master_Transformation.belongsTo(models.Unit, { as: "UnitFromId", foreignKey: 'UnitFromId' });
-      Master_Transformation.belongsTo(models.Unit, { as: "UnitToId", foreignKey: 'UnitToId' });
+      Master_Transformation.belongsTo(models.Unit, { as: "UnitFrom", foreignKey: 'UnitFromId' });
+      Master_Transformation.belongsTo(models.Unit, { as: "UnitTo", foreignKey: 'UnitToId' });
       Master_Transformation.belongsTo(models.User, { foreignKey: 'createdBy' });
     }
   }
@@ -29,5 +29,5 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Master_Transformation',
   });
-  return MasterTransformation;
+  return Master_Transformation;
 };

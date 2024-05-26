@@ -62,7 +62,7 @@ class DeliveryOrderReceiveService {
         })
 
         if (!destinationProduct) {
-          // INITIATE
+          // INITIATE JIKA TIDAK ADA PRODUK DI WAREHOUSE DESTINASI
           const initiated = await Product_Warehouse.create({
             ProductId: masterProduct.id,
             WarehouseId: origin.WarehouseDestinationId,
@@ -82,8 +82,7 @@ class DeliveryOrderReceiveService {
           })
 
         } else {
-          // IN
-          console.log("MASUK SINI");
+          // IN JIKA ADA, LANGSUNG TAMBAHKAN
           destinationProduct.quantity += product.quantity
           destinationProduct.save({ transaction })
 
@@ -102,8 +101,9 @@ class DeliveryOrderReceiveService {
       // UPDATE STATUS DELIVERY
       origin.status = "DONE"
       origin.receivedAt = new Date()
-      origin.receivedBy = user.id,
-        await origin.save({ transaction })
+      origin.receivedBy = user.id
+
+      await origin.save({ transaction })
 
       transaction.commit()
       return;
