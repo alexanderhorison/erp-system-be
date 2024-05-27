@@ -391,6 +391,29 @@ class MasterDataProductService {
       throw error;
     }
   }
+
+  static async deleteProductTransformasi(id) {
+    try {
+      const transformasi = await Master_Transformation.findByPk(id);
+
+      if (!transformasi) {
+        throw {
+          code: 404,
+          message: "rumus transformasi tidak ditemukan",
+        };
+      }
+
+      const product_transformation_id = transformasi.product_transformation_id;
+
+      const deleteTransformation = await Master_Transformation.destroy({
+        where: { product_transformation_id },
+      });
+
+      return deleteTransformation;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = MasterDataProductService;

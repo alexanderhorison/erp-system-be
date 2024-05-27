@@ -190,15 +190,17 @@ class MasterDataProductController {
 
   static async deleteProductTransformation(req, res) {
     try {
-      const getAllTransformation = null;
+      const schemaParams = yup.number().required("Id transformasi kosong");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
 
+      await MasterDataProductService.deleteProductTransformasi(id)
+      
       res
         .status(200)
         .json(
           responses(
             true,
             `Berhasil menghapus rumus transformasi`,
-            getAllTransformation
           )
         );
     } catch (error) {
