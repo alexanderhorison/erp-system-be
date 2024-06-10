@@ -81,7 +81,9 @@ module.exports = (sequelize, DataTypes) => {
           user.password = encrypt(user.password);
         },
         beforeUpdate: (user) => {
-          user.password = encrypt(user.password);
+          if (user.changed('password')){
+            user.password = encrypt(user.password);
+          }
         },
       },
       paranoid: true,
