@@ -73,7 +73,7 @@ class MasterDataProductController {
 
   static async getAllProduct(req, res) {
     try {
-      const data = await MasterDataProductService.findAll();
+      const data = await MasterDataProductService.findAll(req);
       res
         .status(200)
         .json(responses(true, "Success get all master produce", data));

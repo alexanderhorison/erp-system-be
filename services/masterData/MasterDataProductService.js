@@ -3,6 +3,7 @@ const {
   Master_Product_History,
   Type,
   Category,
+  Company,
   Master_Transformation,
   Unit,
   sequelize: sq,
@@ -11,6 +12,7 @@ const {
   generateProductTransformationId,
 } = require("../../helpers/transformationIdGenerator");
 const { Op } = require("sequelize");
+const { generateFilter } = require('../../helpers/queryGenerator');
 
 class MasterDataProductService {
   static async create(data, user) {
@@ -108,20 +110,39 @@ class MasterDataProductService {
     }
   }
 
-  static async findAll() {
+  static async findAll(req) {
     try {
+      const { CategoryId, TypeId, CompanyId } = req.query;
+
+      let queryFilter = {};
+
+      if (req.query != {}){
+        const filters = [
+          { column: "CategoryId", operator: "=", value: CategoryId },
+          { column: "TypeId", operator: "=", value: TypeId },
+          { column: "CompanyId", operator: "=", value: CompanyId },
+        ]
+        queryFilter = generateFilter(filters)
+      }
+
       const data = await Master_Product.findAll({
         include: [
           {
             model: Type,
             paranoid: false,
+            attributes: ["name"],
           },
           {
             model: Category,
             paranoid: false,
             attributes: ["name"],
           },
+          {
+            model: Company,
+            attributes: ["name"],
+          },
         ],
+        where: queryFilter
       });
 
       const result = data.map((item) => ({
@@ -130,6 +151,7 @@ class MasterDataProductService {
         description: item.description,
         category: item.Category.name,
         type: item.Type.name,
+        company: item.Company ? item.Company.name : '',
       }));
 
       return result;
