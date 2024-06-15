@@ -65,7 +65,7 @@ class MasterDataCompanyService {
         where: { CompanyId: id },
       });
 
-      if (!existProduct) {
+      if (existProduct) {
         throw {
           code: 400,
           message:

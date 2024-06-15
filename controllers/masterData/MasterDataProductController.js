@@ -11,6 +11,7 @@ class MasterDataProductController {
         CategoryId: yup.number().required("Kategori harus diisi"),
         TypeId: yup.number().required("Tipe harus diisi"),
         description: yup.string().optional(),
+        CompanyId: yup.number().required("Company harus diisi"),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -37,6 +38,7 @@ class MasterDataProductController {
         CategoryId: yup.number().required("Kategori harus diisi"),
         TypeId: yup.number().required("Tipe harus diisi"),
         description: yup.string().optional(),
+        CompanyId: yup.number().required("Company harus diisi"),
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);

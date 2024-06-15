@@ -17,7 +17,7 @@ const { generateFilter } = require('../../helpers/queryGenerator');
 class MasterDataProductService {
   static async create(data, user) {
     try {
-      const { name, CategoryId, TypeId, description } = data;
+      const { name, CategoryId, TypeId, description, CompanyId } = data;
 
       const existingProduct = await Master_Product.findOne({
         where: { name: name },
@@ -35,6 +35,7 @@ class MasterDataProductService {
         CategoryId: CategoryId,
         TypeId: TypeId,
         description: description,
+        CompanyId: CompanyId
       });
 
       await Master_Product_History.create({
@@ -52,7 +53,7 @@ class MasterDataProductService {
 
   static async update(id, data, user) {
     try {
-      const { name, CategoryId, TypeId, description } = data;
+      const { name, CategoryId, TypeId, description, CompanyId } = data;
 
       const existingProduct = await Master_Product.findByPk(id);
       if (!existingProduct) {
@@ -67,6 +68,7 @@ class MasterDataProductService {
         description: description,
         CategoryId: CategoryId,
         TypeId: TypeId,
+        CompanyId: CompanyId
       });
 
       await Master_Product_History.create({
@@ -172,6 +174,9 @@ class MasterDataProductService {
             model: Category,
             paranoid: false,
           },
+          {
+            model: Company,
+          },
         ],
       });
 
@@ -188,6 +193,7 @@ class MasterDataProductService {
         CategoryId: product.Category.id,
         TypeId: product.Type.id,
         description: product.description,
+        CompanyId: product.Company.id
       };
 
       return result;
