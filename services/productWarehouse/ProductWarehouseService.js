@@ -177,6 +177,8 @@ class ProductWarehouseService {
         })
       );
 
+      temp.sort((a, b) => a.quantity - b.quantity);
+
       const result = {
         WarehouseId: dataWarehouse.id,
         warehouseName: dataWarehouse.name,
