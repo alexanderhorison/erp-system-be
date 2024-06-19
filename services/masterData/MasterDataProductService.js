@@ -235,6 +235,7 @@ class MasterDataProductService {
           MasterProductId: productId,
           deletedAt: null,
         },
+        order: [["id", "ASC"]],
         raw: true,
       });
 
