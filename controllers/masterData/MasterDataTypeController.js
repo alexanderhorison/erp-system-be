@@ -13,7 +13,7 @@ class MasterDataTypeController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const newType = await MasterDataTypeService.create(body, user);
 
@@ -39,9 +39,7 @@ class MasterDataTypeController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = {
-        id: 1,
-      };
+      const user = req.userData;
 
       const updatedType = await MasterDataTypeService.update(id, body, user);
       res
@@ -59,7 +57,7 @@ class MasterDataTypeController {
       const schemaParams = yup.number().required("Id tipe harus diisi");
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const deletedType = await MasterDataTypeService.delete(id, user);
 

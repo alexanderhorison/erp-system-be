@@ -1,27 +1,27 @@
 const {
   sequelize: sq,
   Master_Product,
-  Type,
-  Category,
-  Product_Warehouse,
-  Unit,
-  Warehouse,
+  Master_Type,
+  Master_Category,
+  Warehouse_Product,
+  Master_Unit,
+  Master_Warehouse,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class ProductWarehouseService {
-  static async create(data, user, WarehouseId) {
+  static async create(data, user, warehouseId) {
     const transaction = await sq.transaction();
     try {
-      const listProduct = data.map((item) => item.MasterProductId);
-      const listUnit = data.map((item) => item.UnitId);
+      const listProduct = data.map((item) => item.masterProductId);
+      const listUnit = data.map((item) => item.unitId);
 
-      const exsistingData = await Product_Warehouse.findAll({
+      const exsistingData = await Warehouse_Product.findAll({
         where: {
-          ProductId: listProduct,
-          UnitId: listUnit,
-          WarehouseId: WarehouseId,
+          productId: listProduct,
+          unitId: listUnit,
+          warehouseId: warehouseId,
         },
       });
 
@@ -35,22 +35,22 @@ class ProductWarehouseService {
       const createData = data.map((item) => {
         return {
           ...item,
-          ProductId: item.MasterProductId,
-          WarehouseId: WarehouseId,
+          productId: item.masterProductId,
+          warehouseId: warehouseId,
         };
       });
 
-      const newData = await Product_Warehouse.bulkCreate(createData, {
+      const newData = await Warehouse_Product.bulkCreate(createData, {
         transaction,
       });
 
       const createdHistory = newData.map((item) => {
         return {
-          ProductWarehouseId: item.id,
+          productWarehouseId: item.id,
           quantity: item.quantity,
-          WarehouseId: item.WarehouseId,
-          adjustment_type: "INITIATE",
-          UserId: user.id,
+          warehouseId: item.warehouseId,
+          adjustmentType: "INITIATE",
+          userId: user.id,
         };
       });
 
@@ -70,7 +70,7 @@ class ProductWarehouseService {
   static async adjustProduct({ id, data, user }) {
     const transaction = await sq.transaction();
     try {
-      const existingData = await Product_Warehouse.findByPk(id);
+      const existingData = await Warehouse_Product.findByPk(id);
       if (!existingData) {
         throw {
           code: 404,
@@ -78,21 +78,21 @@ class ProductWarehouseService {
         };
       }
       // Hanya ubah stock minimum
-      if (data.adjustment_type === "MINIMUM_STOCK") {
-        existingData.minimum_stock = data.minimum_stock;
+      if (data.adjustmentType === "MINIMUM_STOCK") {
+        existingData.minimumStock = data.minimumStock;
         await existingData.save({ transaction });
       } else {
-        if (data.adjustment_type === "PLUS") {
+        if (data.adjustmentType === "PLUS") {
           existingData.quantity += data.quantityAdjustment;
         }
-        if (data.adjustment_type === "MINUS") {
+        if (data.adjustmentType === "MINUS") {
           existingData.quantity -= data.quantityAdjustment;
         }
         await existingData.save({ transaction });
         await StockAdjustmentHistoryService.createOne({
           data: existingData,
           user,
-          adjustment_type: data.adjustment_type,
+          adjustmentType: data.adjustmentType,
           quantity: data.quantityAdjustment,
           transaction,
         });
@@ -107,17 +107,17 @@ class ProductWarehouseService {
 
   static async findOne({ id }) {
     try {
-      const data = await Product_Warehouse.findOne({
+      const data = await Warehouse_Product.findOne({
         where: {
           id: id,
         },
         include: [
           {
             model: Master_Product,
-            include: [Category, Type],
+            include: [Master_Category, Master_Type],
           },
-          Unit,
-          Warehouse,
+          Master_Unit,
+          Master_Warehouse,
         ],
       });
 
@@ -131,33 +131,34 @@ class ProductWarehouseService {
       const result = {
         id: data.id,
         productName: data.Master_Product.name,
-        categoryName: data.Master_Product.Category.name,
-        typeName: data.Master_Product.Type.name,
-        unitName: data.Unit.name,
-        warehouseName: data.Warehouse.name,
+        categoryName: data.Master_Product.Master_Category.name,
+        typeName: data.Master_Product.Master_Type.name,
+        unitName: data.Master_Unit.name,
+        warehouseName: data.Master_Warehouse.name,
         quantity: data.quantity,
-        minimum_stock: data.minimum_stock,
+        minimumStock: data.minimumStock,
       };
 
       return result;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
 
   static async findProductByWarehouseId({ id }) {
     try {
-      const data = await Product_Warehouse.findAll({
+      const data = await Warehouse_Product.findAll({
         where: {
-          WarehouseId: id,
+          warehouseId: id,
         },
         include: [
           {
             model: Master_Product,
-            include: [Category, Type],
+            include: [Master_Category, Master_Type],
           },
-          Unit,
-          Warehouse,
+          Master_Unit,
+          Master_Warehouse,
         ],
       });
 
@@ -166,21 +167,21 @@ class ProductWarehouseService {
 
       data.forEach((item) =>
         temp.push({
-          ProductWarehouseId: item.id,
+          productWarehouseId: item.id,
           productName: item.Master_Product.name,
-          categoryName: item.Master_Product.Category.name,
-          typeName: item.Master_Product.Type.name,
-          unitName: item.Unit.name,
-          warehouseName: item.Warehouse.name,
+          categoryName: item.Master_Product.Master_Category.name,
+          typeName: item.Master_Product.Master_Type.name,
+          unitName: item.Master_Unit.name,
+          warehouseName: item.Master_Warehouse.name,
           quantity: item.quantity,
-          minimum_stock: item.minimum_stock,
+          minimumStock: item.minimumStock,
         })
       );
 
       temp.sort((a, b) => a.quantity - b.quantity);
 
       const result = {
-        WarehouseId: dataWarehouse.id,
+        warehouseId: dataWarehouse.id,
         warehouseName: dataWarehouse.name,
         data: temp || [],
       };

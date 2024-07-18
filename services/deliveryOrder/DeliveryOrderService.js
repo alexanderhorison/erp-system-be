@@ -1,16 +1,14 @@
 const {
   sequelize: sq,
   Master_Product,
-  Master_Product_History,
-  Type,
-  Category,
-  Product_Warehouse,
-  Unit,
+  Master_Category,
+  Master_Unit,
+  Master_User,
+  Master_Warehouse,
+  Master_Role,
+  Warehouse_Product,
   Delivery_Order,
-  Product_Delivery_Order,
-  User,
-  Warehouse,
-  Role,
+  Delivery_Order_Product,
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
@@ -19,21 +17,22 @@ const {
 } = require("../../helpers/deliveryOrderIdGenerator");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 const { formatDate } = require("../../helpers/formatDate");
+
 class DeliveryOrderService {
   static async createDeliveryOrder(payload) {
     const transaction = await sq.transaction();
     try {
       const { data, user } = payload;
 
-      const delivery_order_id = await generateDeliveryOrderId();
+      const deliveryOrderId = await generateDeliveryOrderId();
 
       const deliveryOrderData = {
         status: "PENDING",
-        WarehouseOriginId: data.WarehouseOriginId,
-        WarehouseDestinationId: data.WarehouseDestinationId,
+        warehouseOriginId: data.warehouseOriginId,
+        warehouseDestinationId: data.warehouseDestinationId,
         notes: data.notes || "",
         createdBy: user.id,
-        delivery_order_id: delivery_order_id,
+        deliveryOrderId: deliveryOrderId,
       };
 
       // BUAT SURAT JALAN
@@ -50,32 +49,32 @@ class DeliveryOrderService {
 
       listProduct.forEach((item) => {
         deliveryOrderProduct.push({
-          delivery_order_id: createdDeliveryOrder.delivery_order_id,
-          ProductWarehouseId: item.ProductWarehouseId,
+          deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
+          productWarehouseId: item.productWarehouseId,
           quantity: item.qty,
         });
 
         stockjustmentHistory.push({
-          ProductWarehouseId: item.ProductWarehouseId,
+          productWarehouseId: item.productWarehouseId,
           quantity: item.qty,
           adjustment_type: "MINUS",
-          WarehouseId: data.WarehouseOriginId,
-          UserId: user.id,
+          warehouseId: data.warehouseOriginId,
+          userId: user.id,
           info: "DELIVERY ORDER CREATE",
-          delivery_order_id: createdDeliveryOrder.delivery_order_id,
+          deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
         });
       });
 
       // BUAT PRODUK YANG TERDAPAT PADA SURAT JALAN
       const createdDeliveryOrderProduct =
-        await Product_Delivery_Order.bulkCreate(deliveryOrderProduct, {
+        await Delivery_Order_Product.bulkCreate(deliveryOrderProduct, {
           transaction,
         });
 
       // PENGURANGAN STOCK PADA WAREHOUSE ORIGIN
       for await (const item of deliveryOrderProduct) {
-        const existingData = await Product_Warehouse.findByPk(
-          item.ProductWarehouseId,
+        const existingData = await Warehouse_Product.findByPk(
+          item.productWarehouseId,
           { transaction }
         );
         existingData.quantity -= item.quantity;
@@ -92,7 +91,6 @@ class DeliveryOrderService {
       return;
     } catch (error) {
       await transaction.rollback();
-      console.log(error);
       throwValidation(error.code, error.message);
     }
   }
@@ -102,35 +100,35 @@ class DeliveryOrderService {
       let queryOption = {
         include: [
           {
-            model: User,
+            model: Master_User,
             paranoid: false,
             include: [
               {
-                model: Role,
+                model: Master_Role,
               },
             ],
-            as: "CreatedBy"
+            as: "createdBy"
           },
           {
-            model: User,
+            model: Master_User,
             paranoid: false,
             include: [
               {
-                model: Role,
+                model: Master_Role,
               },
             ],
-            as: "ReceivedBy"
+            as: "receivedBy"
           },
           {
-            model: Warehouse,
-            as: "WarehouseOrigin",
-            foreignKey: "WarehouseOriginId",
+            model: Master_Warehouse,
+            as: "warehouseOrigin",
+            foreignKey: "warehouseOriginId",
             paranoid: false,
           },
           {
-            model: Warehouse,
-            as: "WarehouseDestination",
-            foreignKey: "WarehouseDestinationId",
+            model: Master_Warehouse,
+            as: "warehouseDestination",
+            foreignKey: "warehouseDestinationId",
             paranoid: false,
           },
         ],
@@ -138,22 +136,22 @@ class DeliveryOrderService {
 
       if (payload.user.RoleId == 3) {
         queryOption.where = {
-          WarehouseDestinationId: payload.user.WarehouseId
+          warehouseDestinationId: payload.user.warehouseId
         }
       }
 
       const data = await Delivery_Order.findAll(queryOption);
       const result = data.map((item) => {
         return {
-          id: item.delivery_order_id,
-          delivery_order_id: item.delivery_order_id,
+          id: item.deliveryOrderId,
+          deliveryOrderId: item.deliveryOrderId,
           createdAt: formatDate(item.createdAt),
           createdBy: {
-            name: item.CreatedBy.name,
-            role_name: item.CreatedBy.Role.name,
+            name: item.createdBy.name,
+            roleName: item.createdBy.Master_Role.name,
           },
-          warehouseOrigin: item.WarehouseOrigin.name,
-          warehouseDestination: item.WarehouseDestination.name,
+          warehouseOrigin: item.warehouseOrigin.name,
+          warehouseDestination: item.warehouseDestination.name,
           status: item.status,
           dateCreated: item.createdAt,
           dateReceived: item.receivedAt,
@@ -162,21 +160,20 @@ class DeliveryOrderService {
 
       return result;
     } catch (error) {
-      console.log(error);
       throwValidation(error.code, error.message);
     }
   }
 
   // FOR ADD PRODUCT AT DELIVERY ORDER
-  static async getInvoiceListProduct(WarehouseId) {
+  static async getInvoiceListProduct(warehouseId) {
     try {
-      const data = await Product_Warehouse.findAll({
+      const data = await Warehouse_Product.findAll({
         where: {
-          WarehouseId: WarehouseId,
+          warehouseId: warehouseId,
         },
         include: [
           {
-            model: Unit,
+            model: Master_Unit,
             paranoid: false,
           },
           {
@@ -188,7 +185,7 @@ class DeliveryOrderService {
             paranoid: false,
             include: [
               {
-                model: Category,
+                model: Master_Category,
                 paranoid: false,
               }
             ]
@@ -198,11 +195,11 @@ class DeliveryOrderService {
 
       const result = data.map((item) => {
         return {
-          ProductWarehouseId: item.id,
-          productName: `${item.Master_Product.name} - ${item.Unit.name}`,
-          categoryName: item.Master_Product.Category.name,
+          productWarehouseId: item.id,
+          productName: `${item.Master_Product.name} - ${item.Master_Unit.name}`,
+          categoryName: item.Master_Product.Master_Category.name,
           quantity: item.quantity,
-          MasterProductId: item.Master_Product.id,
+          masterProductId: item.Master_Product.id,
         };
       });
 
@@ -212,24 +209,24 @@ class DeliveryOrderService {
     }
   }
 
-  static async getDetailDeliveryOrder(delivery_order_id) {
+  static async getDetailDeliveryOrder(deliveryOrderId) {
     try {
       const data = await Delivery_Order.findOne({
         where: {
-          delivery_order_id: delivery_order_id,
+          deliveryOrderId: deliveryOrderId,
         },
         include: [
           {
-            model: Product_Delivery_Order,
+            model: Delivery_Order_Product,
             include: [
               {
-                model: Product_Warehouse,
+                model: Warehouse_Product,
                 include: [
                   {
                     model: Master_Product,
                   },
                   {
-                    model: Unit,
+                    model: Master_Unit,
                     attributes: ["name"],
                   },
                 ],
@@ -237,24 +234,24 @@ class DeliveryOrderService {
             ],
           },
           {
-            model: Warehouse,
-            as: "WarehouseOrigin",
+            model: Master_Warehouse,
+            as: "warehouseOrigin",
             attributes: ["name", "location"],
           },
           {
-            model: Warehouse,
-            as: "WarehouseDestination",
+            model: Master_Warehouse,
+            as: "warehouseDestination",
             attributes: ["name", "location"],
           },
           {
-            model: User,
+            model: Master_User,
             attributes: ["name"],
-            as: "CreatedBy"
+            as: "createdBy"
           },
           {
-            model: User,
+            model: Master_User,
             attributes: ["name"],
-            as: "ReceivedBy"
+            as: "receivedBy"
           },
         ],
       });

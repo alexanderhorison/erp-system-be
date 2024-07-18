@@ -15,7 +15,7 @@ class ProductWarehouseController {
         .status(201)
         .json(responses(true, "Success get data all warehouse", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -36,7 +36,7 @@ class ProductWarehouseController {
 
       res.status(200).json(responses(true, "Success get product", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -46,26 +46,26 @@ class ProductWarehouseController {
   static async create(req, res) {
     try {
       const object = yup.object({
-        MasterProductId: yup.number().required("Id produk tidak boleh kosong"),
+        masterProductId: yup.number().required("Id produk tidak boleh kosong"),
         quantity: yup.number().required("Kuantiti tidak boleh kosong"),
-        UnitId: yup.number().required("Unit id tidak boleh kosong"),
-        minimum_stock: yup.number().required("Stok minimum tidak boleh kosong"),
+        unitId: yup.number().required("Unit id tidak boleh kosong"),
+        minimumStock: yup.number().required("Stok minimum tidak boleh kosong"),
       });
 
       const schemaParams = yup.object({
-        WarehouseId: yup.number().required("Id gudang tidak boleh kosong")
+        warehouseId: yup.number().required("Id gudang tidak boleh kosong")
       })
 
       const schema = yup.array().of(object);
       const body = await yupSchemaValidation(req.body, schema);
       const params = await yupSchemaValidation(req.params, schemaParams)
-      const user = req.UserData;
-      const WarehouseId = params.WarehouseId
+      const user = req.userData;
+      const warehouseId = params.warehouseId
 
       const newProductWarehouse = await ProductWarehouseService.create(
         body,
         user,
-        WarehouseId,
+        warehouseId,
       );
 
       res
@@ -74,7 +74,7 @@ class ProductWarehouseController {
           responses(true, "Produk berhasil ditambahkan", newProductWarehouse)
         );
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -88,23 +88,23 @@ class ProductWarehouseController {
         .required("Id produk gudang tidak boleh kosong");
 
       const schemaBody = yup.object({
-        quantity: yup.number().when("adjustment_type", {
+        quantity: yup.number().when("adjustmentType", {
           is: (val) => val !== "MINIMUM_STOCK",
           then: () => yup.number().required("Kuantiti tidak boleh kosong"),
           otherwise: () => yup.number(),
         }),
-        quantityAdjustment: yup.number().when("adjustment_type", {
+        quantityAdjustment: yup.number().when("adjustmentType", {
           is: (val) => val !== "MINIMUM_STOCK",
           then: () =>
             yup.number().required("Jumlah adjustment tidak boleh kosong"),
           otherwise: () => yup.number(),
         }),
-        minimum_stock: yup.number().when("adjustment_type", {
+        minimumStock: yup.number().when("adjustmentType", {
           is: (val) => val === "MINIMUM_STOCK",
           then: () => yup.number().required("Stok minimum tidak boleh kosong"),
           otherwise: () => yup.number().notRequired(),
         }),
-        adjustment_type: yup
+        adjustmentType: yup
           .string()
           .oneOf(["PLUS", "MINUS", "MINIMUM_STOCK"])
           .required("Tipe adjustment tidak boleh kosong"),
@@ -113,7 +113,7 @@ class ProductWarehouseController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = req.UserData;
+      const user = req.userData;
 
       const adjustProductWarehouse =
         await ProductWarehouseService.adjustProduct({
@@ -128,7 +128,7 @@ class ProductWarehouseController {
           responses(true, `Produk berhasil di ubah`, adjustProductWarehouse)
         );
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -146,7 +146,7 @@ class ProductWarehouseController {
 
       res.status(200).json(responses(true, "Success get product", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -154,15 +154,15 @@ class ProductWarehouseController {
 
   static async getListProduct(req, res) {
     try {
-      const user = req.UserData;
+      const user = req.userData;
 
       const data = await ProductWarehouseService.findProductByWarehouseId({
-        id: user.WarehouseId,
+        id: user.warehouseId,
       });
 
       res.status(200).json(responses(true, "Success get product", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }

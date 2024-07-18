@@ -15,13 +15,13 @@ class DeliveryOrderReceiveController {
         schemaParams
       );
 
-      const user = req.UserData;
+      const user = req.userData;
 
       await DeliveryOrderReceiveService.updateDeliveryOrder(deliveryOrderId, user);
 
       res.status(200).json(responses(true, `Berhasil menerima surat jalan`));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }

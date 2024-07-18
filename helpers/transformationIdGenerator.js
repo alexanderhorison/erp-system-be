@@ -1,4 +1,4 @@
-const { Master_Transformation } = require("../models");
+const { Master_Product_Transformation } = require("../models");
 
 async function generateProductTransformationId(digits = 8) {
   try {
@@ -11,8 +11,8 @@ async function generateProductTransformationId(digits = 8) {
         minNumber + Math.random() * (maxNumber - minNumber + 1)
       );
       productTransformationId = `T-${tempId}`;
-      const exsisting = await Master_Transformation.findOne({
-        where: { product_transformation_id: productTransformationId },
+      const exsisting = await Master_Product_Transformation.findOne({
+        where: { productTransformationId: productTransformationId },
       });
       exsisting ? (notDuplicate = true) : (notDuplicate = false);
     } while (notDuplicate);

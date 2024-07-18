@@ -1,10 +1,10 @@
-const { Warehouse } = require("../../models");
+const { Master_Warehouse } = require("../../models");
 
 class MasterDataWarehouseService {
   static async create(data, user) {
     const { name, description, location } = data;
 
-    const existingWarehouse = await Warehouse.findOne({
+    const existingWarehouse = await Master_Warehouse.findOne({
       where: { name: name },
     });
 
@@ -15,7 +15,7 @@ class MasterDataWarehouseService {
       };
     }
 
-    return Warehouse.create({
+    return Master_Warehouse.create({
       name: name,
       description: description,
       location: location,
@@ -25,7 +25,7 @@ class MasterDataWarehouseService {
   static async update(id, data, user) {
     try {
       const { name, description, location } = data;
-      const existingWarehouse = await Warehouse.findByPk(id);
+      const existingWarehouse = await Master_Warehouse.findByPk(id);
 
       if (!existingWarehouse) {
         throw {
@@ -48,7 +48,7 @@ class MasterDataWarehouseService {
 
   static async delete(id, user) {
     try {
-      const warehouse = await Warehouse.findByPk(id);
+      const warehouse = await Master_Warehouse.findByPk(id);
 
       if (!warehouse) {
         return res.status(404).json({
@@ -57,7 +57,7 @@ class MasterDataWarehouseService {
         });
       }
 
-      const deleteWarehouse = await Warehouse.destroy({
+      const deleteWarehouse = await Master_Warehouse.destroy({
         where: { id: id },
       });
 
@@ -69,7 +69,7 @@ class MasterDataWarehouseService {
 
   static async findAll() {
     try {
-      const data = await Warehouse.findAll();
+      const data = await Master_Warehouse.findAll();
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
@@ -83,7 +83,7 @@ class MasterDataWarehouseService {
 
   static async findOne(id) {
     try {
-      const warehouse = await Warehouse.findByPk(id);
+      const warehouse = await Master_Warehouse.findByPk(id);
 
       if (!warehouse) {
         throw {

@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { User, Role, Audit_Trail, Warehouse } = require("../../models");
+const { Master_User, Master_Role, Audit_Trail, Master_Warehouse } = require("../../models");
 const { responses, throwValidation } = require("../../helpers/responses");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
@@ -20,10 +20,10 @@ class UserService {
           .required("Email harus diisi"),
         description: yup.string().optional(),
         password: yup.string().required("Password harus diisi"),
-        user_name: yup.string().required("Username harus diisi"),
-        RoleId: yup.number().required("Otoritas harus diisi"),
-        WarehouseId: yup.string().when("RoleId", (RoleId, schema) => {
-          if (RoleId[0] == 3) {
+        userName: yup.string().required("Username harus diisi"),
+        roleId: yup.number().required("Otoritas harus diisi"),
+        warehouseId: yup.string().when("roleId", (roleId, schema) => {
+          if (roleId[0] == 3) {
             return schema.required(
               "Gudang harus diisi jika otoritas adalah admin gudang"
             );
@@ -39,41 +39,40 @@ class UserService {
         description,
         email,
         password,
-        user_name,
-        RoleId,
-        WarehouseId,
+        userName,
+        roleId,
+        warehouseId,
       } = body;
 
       let decryptPassword = decrypt(password);
-
       // validation input
       await UserService.validationRole(body);
 
       // validation check user email and username
-      await UserService.checkUser({ email, user_name });
+      await UserService.checkUser({ email, userName });
 
       // Validation if Role id admin gudang
-      if (RoleId == 3 && WarehouseId) {
-        const checkWarehouse = await Warehouse.findByPk(WarehouseId);
+      if (roleId == 3 && warehouseId) {
+        const checkWarehouse = await Master_Warehouse.findByPk(warehouseId);
         if (!checkWarehouse)
           throw throwValidation(400, "Gudang Tidak ditemukan");
       }
 
-      const newUser = await User.create({
+      const newUser = await Master_User.create({
         name,
         description,
         email,
-        user_name,
+        userName,
         password: decryptPassword,
-        RoleId,
-        WarehouseId: WarehouseId || null,
+        roleId,
+        warehouseId: warehouseId || null,
       });
 
       res.status(201).json(
         responses(true, "User berhasil dibuat", {
           name: newUser.name,
           email: newUser.email,
-          username: newUser.user_name,
+          username: newUser.userName,
         })
       );
     } catch (error) {
@@ -92,13 +91,13 @@ class UserService {
           .email("Email tidak valid")
           .required("Email harus diisi"),
         description: yup.string().optional(),
-        user_name: yup.string().required("Username harus diisi"),
-        RoleId: yup.number().required("Otoritas harus diisi"),
-        WarehouseId: yup
+        userName: yup.string().required("Username harus diisi"),
+        roleId: yup.number().required("Otoritas harus diisi"),
+        warehouseId: yup
           .string()
           .nullable()
-          .when("RoleId", (RoleId, schema) => {
-            if (RoleId[0] == 3) {
+          .when("roleId", (roleId, schema) => {
+            if (roleId[0] == 3) {
               return schema.required(
                 "Gudang harus diisi jika otoritas adalah admin gudang"
               );
@@ -114,20 +113,20 @@ class UserService {
         name,
         description,
         email,
-        user_name,
-        RoleId,
-        WarehouseId,
+        userName,
+        roleId,
+        warehouseId,
         password,
       } = body;
 
       // validation input
       await UserService.validationRole(body);
 
-      const user = await User.findByPk(userId);
+      const user = await Master_User.findByPk(userId);
 
       // Validation if Role id admin gudang
-      if (RoleId == 3 && WarehouseId) {
-        const checkWarehouse = await Warehouse.findByPk(WarehouseId);
+      if (roleId == 3 && warehouseId) {
+        const checkWarehouse = await Master_Warehouse.findByPk(warehouseId);
         if (!checkWarehouse)
           throw throwValidation(400, "Gudang Tidak ditemukan");
       }
@@ -136,8 +135,8 @@ class UserService {
         throw throwValidation(400, "User Tidak ditemukan");
       }
       // find user that not with the userId
-      const findExistUser = await User.findOne({
-        where: { [Op.or]: [{ user_name }, { email }], id: { [Op.ne]: userId } },
+      const findExistUser = await Master_User.findOne({
+        where: { [Op.or]: [{ userName }, { email }], id: { [Op.ne]: userId } },
       });
 
       if (findExistUser) {
@@ -151,18 +150,18 @@ class UserService {
           description,
           email,
           password: decryptPassword,
-          user_name,
-          RoleId,
-          WarehouseId: RoleId == 3 ? WarehouseId : null,
+          userName,
+          roleId,
+          warehouseId: roleId == 3 ? warehouseId : null,
         });
       } else {
         await user.update({
           name,
           description,
           email,
-          user_name,
-          RoleId,
-          WarehouseId: RoleId == 3 ? WarehouseId : null,
+          userName,
+          roleId,
+          warehouseId: roleId == 3 ? warehouseId : null,
         });
       }
 
@@ -177,13 +176,13 @@ class UserService {
   static async deleteUser(req, res) {
     try {
       const userId = req.params.userId;
-      const user = await User.findByPk(userId);
+      const user = await Master_User.findByPk(userId);
 
       if (!user) {
         throw throwValidation(404, "User tidak ditemukan");
       }
 
-      if (user.RoleId === 1) {
+      if (user.roleId === 1) {
         throw throwValidation(400, "User administrator tidak bisa dihapus");
       }
 
@@ -200,28 +199,28 @@ class UserService {
   }
   static async getAllUser(req, res) {
     try {
-      const { RoleId, status } = req.query;
+      const { roleId, status } = req.query;
 
       let queryFilter = {};
       if (req.query != {}) {
         const filters = [
-          { column: "RoleId", operator: "=", value: RoleId },
+          { column: "roleId", operator: "=", value: roleId },
           { column: "deletedAt", operator: status, value: status },
         ];
         queryFilter = generateFilter(filters);
       }
-      const getAllUser = await User.findAll({
+      const getAllUser = await Master_User.findAll({
         attributes: [
           "id",
           "name",
           "description",
           "email",
-          "user_name",
-          "RoleId",
+          "userName",
+          "roleId",
           "deletedAt",
-          "WarehouseId",
+          "warehouseId",
         ],
-        include: [{ model: Role, attributes: ["name", "description"] }],
+        include: [{ model: Master_Role, attributes: ["name", "description"] }],
         paranoid: false,
         where: queryFilter,
       });
@@ -234,10 +233,11 @@ class UserService {
   }
   static async getUser(req, res) {
     try {
-      const getUser = await User.findOne({
+      const getUser = await Master_User.findOne({
         where: { id: req.params.userId },
-        attributes: ["name", "email", "user_name", "RoleId", "WarehouseId"],
+        attributes: ["name", "email", "userName", "roleId", "warehouseId"],
       });
+
       if (!getUser) {
         throw throwValidation(400, "User tidak ditemukan");
       }
@@ -252,10 +252,10 @@ class UserService {
 
   // validation check user email and username
   static async checkUser(payload) {
-    const { user_name, email } = payload;
+    const { userName, email } = payload;
 
-    const findUser = await User.findOne({
-      where: { [Op.or]: [{ user_name }, { email }] },
+    const findUser = await Master_User.findOne({
+      where: { [Op.or]: [{ userName }, { email }] },
     });
 
     if (findUser) {
@@ -267,8 +267,8 @@ class UserService {
 
   // validation input
   static async validationRole(payload) {
-    const { RoleId } = payload;
-    const findRole = await Role.findByPk(RoleId);
+    const { roleId } = payload;
+    const findRole = await Master_Role.findByPk(roleId);
     if (!findRole) {
       throw throwValidation(400, "Role tidak ditemukan");
     }
@@ -286,7 +286,7 @@ class UserService {
 
       let decryptAuth = decrypt(request.auth);
       body = JSON.parse(decryptAuth);
-      const user = await User.findOne({
+      const user = await Master_User.findOne({
         where: {
           email: body.email,
         },
@@ -296,11 +296,11 @@ class UserService {
           "description",
           "email",
           "password",
-          "user_name",
-          "RoleId",
-          "WarehouseId",
+          "userName",
+          "roleId",
+          "warehouseId",
         ],
-        include: [{ model: Role, attributes: ["name", "MenuId"] }],
+        include: [{ model: Master_Role, attributes: ["name", "menuId"] }],
       });
 
       if (!user) {
@@ -318,11 +318,11 @@ class UserService {
           id: user.id,
           name: user.name,
           email: user.email,
-          user_name: user.user_name,
-          RoleId: Number(user.RoleId),
-          MenuId: user.Role.MenuId,
-          WarehouseId: user.WarehouseId,
-          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role
+          userName: user.userName,
+          roleId: Number(user.roleId),
+          menuId: user.Master_Role.menuId,
+          warehouseId: user.warehouseId,
+          role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.TOKEN_KEY,
         {
@@ -335,11 +335,11 @@ class UserService {
           id: user.id,
           name: user.name,
           email: user.email,
-          user_name: user.user_name,
-          RoleId: Number(user.RoleId),
-          MenuId: user.Role.MenuId,
-          WarehouseId: user.WarehouseId,
-          Role: user.Role, // Di FE bagian menu ternyata looping menunya pake role
+          userName: user.userName,
+          roleId: Number(user.roleId),
+          menuId: user.Master_Role.menuId,
+          warehouseId: user.warehouseId,
+          role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.REFRESH_TOKEN_KEY,
         { expiresIn: "7d" }
@@ -349,20 +349,20 @@ class UserService {
       delete user.password;
       const userLogin = {
         id: user.id,
-        Role: user.Role,
+        role: user.Master_Role,
         name: user.name,
         email: user.email,
-        user_name: user.user_name,
-        MenuId: user.Role.MenuId,
-        RoleId: Number(user.RoleId),
-        WarehouseId: user.WarehouseId,
+        userName: user.userName,
+        menuId: user.Master_Role.menuId,
+        roleId: Number(user.roleId),
+        warehouseId: user.warehouseId,
       };
       res.status(200).json(
         responses(true, "Berhasil", {
           type: "bearer",
           token: token,
           refreshToken: refreshToken,
-          user_info: userLogin,
+          userInfo: userLogin,
         })
       );
     } catch (error) {
@@ -391,11 +391,11 @@ class UserService {
               "description",
               "email",
               "password",
-              "user_name",
-              "RoleId",
-              "WarehouseId",
+              "userName",
+              "roleId",
+              "warehouseId",
             ],
-            include: [{ model: Role, attributes: ["name", "MenuId"] }],
+            include: [{ model: Master_Role, attributes: ["name", "menuId"] }],
           });
 
           if (user) {
@@ -411,13 +411,13 @@ class UserService {
             );
             const userLogin = {
               id: user.id,
-              Role: user.Role,
+              role: user.Master_Role,
               name: user.name,
               email: user.email,
-              user_name: user.user_name,
-              MenuId: user.Role.MenuId,
-              RoleId: Number(user.RoleId),
-              WarehouseId: user.WarehouseId,
+              userName: user.userName,
+              menuId: user.Role.menuId,
+              roleId: Number(user.roleId),
+              warehouseId: user.warehouseId,
             };
             res.status(200).json(
               responses(true, "Berhasil", {

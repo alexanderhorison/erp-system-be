@@ -7,10 +7,10 @@ category.forEach(item => {
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    return queryInterface.bulkInsert('Categories', category, {})
+    return queryInterface.bulkInsert('Master_Categories', category, {})
   },
 
   async down (queryInterface, Sequelize) {
-    return queryInterface.bulkDelete('Categories', null, {})
+    return queryInterface.bulkDelete('Master_Categories', null, {})
   }
 };

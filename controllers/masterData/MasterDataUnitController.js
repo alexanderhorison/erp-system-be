@@ -13,7 +13,7 @@ class MasterDataUnitController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const newUnit = await MasterDataUnitService.create(body, user);
 
@@ -37,9 +37,7 @@ class MasterDataUnitController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = {
-        id: 1,
-      };
+      const user = req.userData;
 
       const updatedUnit = await MasterDataUnitService.update(id, body, user);
       res
@@ -57,7 +55,7 @@ class MasterDataUnitController {
       const schemaParams = yup.number().required("Id satuan harus diisi");
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const deletedUnit = await MasterDataUnitService.delete(id, user);
 

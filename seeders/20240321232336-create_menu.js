@@ -57,12 +57,12 @@ module.exports = {
       menu.createdAt = new Date();
       menu.updatedAt = new Date();
     });
-    await queryInterface.bulkInsert("Menus", menus, {});
+    await queryInterface.bulkInsert("Master_Menus", menus, {});
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete(
-      "Menus",
+      "Master_Menus",
       {
         name: [
           "Pengguna",

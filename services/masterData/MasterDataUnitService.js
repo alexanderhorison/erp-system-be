@@ -1,11 +1,11 @@
-const { Unit } = require("../../models");
+const { Master_Unit } = require("../../models");
 
 class MasterDataUnitService {
   static async create(data, user) {
     try {
       const { name, description } = data;
   
-      const existingUnit = await Unit.findOne({
+      const existingUnit = await Master_Unit.findOne({
         where: { name: name },
       });
   
@@ -16,7 +16,7 @@ class MasterDataUnitService {
         };
       }
   
-      return Unit.create({
+      return Master_Unit.create({
         name: name,
         description: description,
       });
@@ -29,7 +29,7 @@ class MasterDataUnitService {
     try {
       const { name, description } = data;
 
-      const existingUnit = await Unit.findByPk(id);
+      const existingUnit = await Master_Unit.findByPk(id);
 
       if (!existingUnit) {
         throw {
@@ -51,16 +51,16 @@ class MasterDataUnitService {
 
   static async delete(id, user) {
     try {
-      const unit = await Unit.findByPk(id);
+      const unit = await Master_Unit.findByPk(id);
 
       if (!unit) {
-        return res.status(404).json({
-          success: false,
+        throw {
+          code: 404,
           message: "Unit tidak ditemukan",
-        });
+        };
       }
 
-      const deleteUnit = await Unit.destroy({
+      const deleteUnit = await Master_Unit.destroy({
         where: { id: id },
       });
 
@@ -72,7 +72,7 @@ class MasterDataUnitService {
 
   static async findAll() {
     try {
-      const data = await Unit.findAll();
+      const data = await Master_Unit.findAll();
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
@@ -86,7 +86,7 @@ class MasterDataUnitService {
 
   static async findOne(id) {
     try {
-      const unit = await Unit.findByPk(id);
+      const unit = await Master_Unit.findByPk(id);
 
       if (!unit) {
         throw {

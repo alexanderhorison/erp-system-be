@@ -8,15 +8,15 @@ class MasterDataProductController {
     try {
       const schema = yup.object({
         name: yup.string().required("Nama produk harus diisi"),
-        CategoryId: yup.number().required("Kategori harus diisi"),
-        TypeId: yup.number().required("Tipe harus diisi"),
+        categoryId: yup.number().required("Kategori harus diisi"),
+        typeId: yup.number().required("Tipe harus diisi"),
         description: yup.string().optional(),
-        CompanyId: yup.number().required("Company harus diisi"),
+        companyId: yup.number().required("Company harus diisi"),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const data = await MasterDataProductService.create(body, user);
 
@@ -35,16 +35,16 @@ class MasterDataProductController {
       const schemaParams = yup.number().required("Id tipe kosong");
       const schema = yup.object({
         name: yup.string().required("Nama produk harus diisi"),
-        CategoryId: yup.number().required("Kategori harus diisi"),
-        TypeId: yup.number().required("Tipe harus diisi"),
+        categoryId: yup.number().required("Kategori harus diisi"),
+        typeId: yup.number().required("Tipe harus diisi"),
         description: yup.string().optional(),
-        CompanyId: yup.number().required("Company harus diisi"),
+        companyId: yup.number().required("Company harus diisi"),
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const data = await MasterDataProductService.update(id, body, user);
 
@@ -61,7 +61,7 @@ class MasterDataProductController {
       const schemaParams = yup.number().required("Id tipe harus diisi");
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const data = await MasterDataProductService.delete(id, user);
 
@@ -93,7 +93,7 @@ class MasterDataProductController {
 
       const data = await MasterDataProductService.findOne(id);
 
-      return res
+      res
         .status(200)
         .json(responses(true, "Success get detail master product", data));
     } catch (error) {
@@ -106,13 +106,13 @@ class MasterDataProductController {
   static async createProductTransformation(req, res) {
     try {
       const schema = yup.object({
-        MasterProductId: yup.number().required("Master Produk harus ada"),
-        UnitFromId: yup.number().required("Asal satuan produk harus ada"),
-        amount_from: yup
+        masterProductId: yup.number().required("Master Produk harus ada"),
+        unitFromId: yup.number().required("Asal satuan produk harus ada"),
+        amountFrom: yup
           .number()
           .required("Jumlah asal konversi produk harus ada"),
-        UnitToId: yup.number().required("Tujuan satuan produk harus ada"),
-        amount_to: yup
+        unitToId: yup.number().required("Tujuan satuan produk harus ada"),
+        amountTo: yup
           .number()
           .required("Jumlah tujuan konversi produk harus ada"),
         info1: yup.string().optional(),
@@ -121,7 +121,7 @@ class MasterDataProductController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = req.UserData;
+      const user = req.userData;
 
       await MasterDataProductService.createProductTransformasi(body, user.id);
 
@@ -129,7 +129,7 @@ class MasterDataProductController {
         .status(200)
         .json(responses(true, `Berhasil membuat rumus transformasi`));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -149,7 +149,7 @@ class MasterDataProductController {
 
       res.status(200).json(responses(true, `Berhasil`, getAllTransformation));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -159,16 +159,16 @@ class MasterDataProductController {
     try {
       const schemaParams = yup.number().required("Id transformasi kosong");
       const schema = yup.object({
-        MasterProductId: yup.number().required("Master Produk harus ada"),
-        UnitFromId: yup.number().required("Asal satuan produk harus ada"),
-        amount_from: yup
+        masterProductId: yup.number().required("Master Produk harus ada"),
+        unitFromId: yup.number().required("Asal satuan produk harus ada"),
+        amountFrom: yup
           .number()
           .required("Jumlah asal konversi produk harus ada"),
-        UnitToId: yup.number().required("Tujuan satuan produk harus ada"),
-        amount_to: yup
+        unitToId: yup.number().required("Tujuan satuan produk harus ada"),
+        amountTo: yup
           .number()
           .required("Jumlah tujuan konversi produk harus ada"),
-        product_transformation_id: yup
+        productTransformationId: yup
           .string()
           .required("Produk Transformasi Id harus ada"),
         info1: yup.string().optional(),
@@ -196,7 +196,7 @@ class MasterDataProductController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
       await MasterDataProductService.deleteProductTransformasi(id)
-      
+
       res
         .status(200)
         .json(

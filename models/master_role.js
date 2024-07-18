@@ -1,35 +1,35 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Menu extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
+  class Master_Role extends Model {
     static associate(models) {
       // define association here
+      Master_Role.hasMany(models.Master_User, { foreignKey: "roleId" });
     }
   }
-  Menu.init(
+
+  Master_Role.init(
     {
       name: {
         type: DataTypes.STRING,
         validate: {
           notEmpty: {
             args: true,
-            msg: "Nama Menu tidak boleh kosong",
+            msg: "Nama Master Role tidak boleh kosong",
           },
         },
       },
       description: DataTypes.STRING,
-      menuId: DataTypes.INTEGER,
+      menuId: DataTypes.ARRAY(DataTypes.INTEGER),
     },
     {
       sequelize,
-      modelName: "Menu",
+      modelName: "Master_Role",
       paranoid: true,
     }
   );
-  return Menu;
+
+  return Master_Role;
+
 };

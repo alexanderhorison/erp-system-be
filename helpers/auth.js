@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { Master_User } = require("../models");
 const { responses, throwValidation } = require("./responses");
 
 class Auth {
@@ -16,7 +16,7 @@ class Auth {
       }
 
       let data = jwt.verify(token, process.env.TOKEN_KEY);
-      let user = await User.findOne({
+      let user = await Master_User.findOne({
         where: { email: data.email },
       });
 
@@ -24,7 +24,7 @@ class Auth {
         throw new Error("Token invalid");
       }
 
-      req.UserData = data;
+      req.userData = data;
       next();
     } catch (error) {
       let isJWTError = [
@@ -56,11 +56,11 @@ class Auth {
 
       let data = jwt.verify(token, process.env.TOKEN_KEY);
 
-      let user = await User.findOne({
+      let user = await Master_User.findOne({
         where: { email: data.email },
       });
 
-      if (user.RoleId != 1) {
+      if (user.roleId != 1) {
         throw throwValidation(403, "Fitur ini hanya bisa diakses oleh admin");
       }
 
@@ -85,11 +85,11 @@ class Auth {
 
       let data = jwt.verify(token, process.env.TOKEN_KEY);
 
-      let user = await User.findOne({
+      let user = await Master_User.findOne({
         where: { email: data.email },
       });
 
-      if (user.RoleId != 2) {
+      if (user.roleId != 2) {
         throw throwValidation(
           403,
           "Fitur ini hanya bisa diakses oleh kepala gudang"
@@ -117,15 +117,15 @@ class Auth {
 
       let data = jwt.verify(token, process.env.TOKEN_KEY);
 
-      let user = await User.findOne({
+      let user = await Master_User.findOne({
         where: { email: data.email },
       });
 
       // Jika user adalah admin dan kepala gudang authorized
-      if ([1, 2].includes(user.RoleId)) {
+      if ([1, 2].includes(user.roleId)) {
         next();
       } else {
-        // User role bukan admin dan kepala gudang
+        // Master_User role bukan admin dan kepala gudang
         throw throwValidation(
           403,
           "Fitur ini hanya bisa diakses oleh admin dan kepala gudang"
@@ -138,13 +138,13 @@ class Auth {
 
   static async AuthenticationRoleSuratJalanReceive(req, res, next) {
     try {
-      const user = req.UserData;
+      const user = req.userData;
       
       // Jika user adalah admin dan kepala gudang authorized
-      if ([3].includes(user.RoleId)) {
+      if ([3].includes(user.roleId)) {
         next();
       } else {
-        // User role bukan Admin Gudang
+        // Master_User role bukan Admin Gudang
         throw throwValidation(
           403,
           "Fitur ini hanya bisa diakses oleh Admin Gudang"

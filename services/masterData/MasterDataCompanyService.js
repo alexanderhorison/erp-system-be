@@ -1,26 +1,27 @@
-const { Company, Master_Product } = require("../../models");
+const { Master_Company, Master_Product } = require("../../models");
 
 class MasterDataCompanyService {
   static async create(data) {
     try {
       const { name, description } = data;
 
-      const existingCompany = await Company.findOne({
+      const existingMasterCompany = await Master_Company.findOne({
         where: { name: name },
       });
 
-      if (existingCompany) {
+      if (existingMasterCompany) {
         throw {
           code: 400,
-          message: "Nama Company sudah ada dalam database",
+          message: "Nama Master Company sudah ada dalam database",
         };
       }
 
-      return Company.create({
+      return Master_Company.create({
         name: name,
         description: description,
       });
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
@@ -29,16 +30,16 @@ class MasterDataCompanyService {
     try {
       const { name, description } = data;
 
-      const existingCompany = await Company.findByPk(id);
+      const existingMasterCompany = await Master_Company.findByPk(id);
 
-      if (!existingCompany) {
+      if (!existingMasterCompany) {
         throw {
           code: 404,
           message: "Company tidak ditemukan",
         };
       }
 
-      const updatedCompany = await existingCompany.update({
+      const updatedCompany = await existingMasterCompany.update({
         name: name,
         description: description,
       });
@@ -51,7 +52,7 @@ class MasterDataCompanyService {
 
   static async delete(id) {
     try {
-      const company = await Company.findByPk(id);
+      const company = await Master_Company.findByPk(id);
 
       if (!company) {
         throw {
@@ -62,7 +63,7 @@ class MasterDataCompanyService {
 
       // find product that have company
       const existProduct = await Master_Product.findOne({
-        where: { CompanyId: id },
+        where: { companyId: id },
       });
 
       if (existProduct) {
@@ -73,7 +74,7 @@ class MasterDataCompanyService {
         };
       }
 
-      const deleteCompany = await Company.destroy({
+      const deleteCompany = await Master_Company.destroy({
         where: { id: id },
       });
 
@@ -85,7 +86,7 @@ class MasterDataCompanyService {
 
   static async findAll() {
     try {
-      const data = await Company.findAll();
+      const data = await Master_Company.findAll();
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
@@ -99,8 +100,8 @@ class MasterDataCompanyService {
 
   static async findOne(id) {
     try {
-      const company = await Company.findByPk(id);
-
+      const company = await Master_Company.findByPk(id);
+      console.log(company);
       if (!company) {
         throw {
           code: 404,
@@ -116,6 +117,7 @@ class MasterDataCompanyService {
 
       return result;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }

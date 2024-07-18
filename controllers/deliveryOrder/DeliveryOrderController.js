@@ -9,13 +9,13 @@ class DeliveryOrderController {
     try {
       // create schema validation yup
       const schema = yup.object().shape({
-        WarehouseOriginId: yup.number().required("Gudang asal harus diisi"),
-        WarehouseDestinationId: yup
+        warehouseOriginId: yup.number().required("Gudang asal harus diisi"),
+        warehouseDestinationId: yup
           .number()
           .required("Gudang tujuan harus diisi"),
         data: yup.array().of(
           yup.object().shape({
-            ProductWarehouseId: yup.number().typeError("Produk harus dipilih"),
+            productWarehouseId: yup.number().typeError("Produk harus dipilih"),
             qty: yup.number().typeError("Kuantiti harus diisi"),
           })
         ),
@@ -24,7 +24,7 @@ class DeliveryOrderController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = req.UserData;
+      const user = req.userData;
 
       const createOrder = await DeliveryOrderService.createDeliveryOrder({
         data: body,
@@ -43,13 +43,13 @@ class DeliveryOrderController {
 
   static async getAllDeliveryOrder(req, res) {
     try {
-      const user = req.UserData;
+      const user = req.userData;
       const getAllDeliveryOrder =
         await DeliveryOrderService.getAllDeliveryOrder({ user });
 
       res.status(200).json(responses(true, "Berhasil", getAllDeliveryOrder));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -58,15 +58,15 @@ class DeliveryOrderController {
   // FOR ADD PRODUCT AT DELIVERY ORDER
   static async getInvoiceListProduct(req, res) {
     try {
-      const WarehouseId = req.body.WarehouseId;
+      const warehouseId = req.body.warehouseId;
 
       const data = await DeliveryOrderService.getInvoiceListProduct(
-        WarehouseId
+        warehouseId
       );
 
       res.status(200).json(responses(true, "Berhasil", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -74,14 +74,13 @@ class DeliveryOrderController {
 
   static async getDetailDeliveryOrder(req, res) {
     try {
-      const delivery_order_id = req.params.id
+      const deliveryOrderId = req.params.id
       const getDetailDeliveryOrder =
-        await DeliveryOrderService.getDetailDeliveryOrder(delivery_order_id);
+        await DeliveryOrderService.getDetailDeliveryOrder(deliveryOrderId);
 
       res.status(200).json(responses(true, "Berhasil", getDetailDeliveryOrder));
     } catch (error) {
-      console.log(error);
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }

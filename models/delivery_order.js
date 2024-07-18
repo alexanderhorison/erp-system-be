@@ -1,38 +1,39 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
+
   class Delivery_Order extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
     static associate(models) {
       // define association here
-      Delivery_Order.belongsTo(models.Warehouse, {
-        as: "WarehouseOrigin",
-        foreignKey: "WarehouseOriginId",
+      Delivery_Order.belongsTo(models.Master_Warehouse, {
+        as: "warehouseOrigin",
+        foreignKey: "warehouseOriginId",
       });
-      Delivery_Order.belongsTo(models.Warehouse, {
-        as: "WarehouseDestination",
-        foreignKey: "WarehouseDestinationId",
+
+      Delivery_Order.belongsTo(models.Master_Warehouse, {
+        as: "warehouseDestination",
+        foreignKey: "warehouseDestinationId",
       });
-      Delivery_Order.hasMany(models.Product_Delivery_Order, {
-        foreignKey: "delivery_order_id",
-        sourceKey: "delivery_order_id",
+
+      Delivery_Order.hasMany(models.Delivery_Order_Product, {
+        foreignKey: "deliveryOrderId",
       });
-      Delivery_Order.belongsTo(models.User, { foreignKey: "createdBy", as: "CreatedBy" });
-      Delivery_Order.belongsTo(models.User, { foreignKey: "receivedBy", as: "ReceivedBy" });
+
+      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "createdBy" });
+
+      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "receivedBy" });
     }
   }
+
   Delivery_Order.init(
     {
       status: DataTypes.STRING,
-      WarehouseOriginId: DataTypes.INTEGER,
-      WarehouseDestinationId: DataTypes.INTEGER,
+      warehouseOriginId: DataTypes.INTEGER,
+      warehouseDestinationId: DataTypes.INTEGER,
       createdBy: DataTypes.INTEGER,
       notes: DataTypes.TEXT,
-      delivery_order_id: DataTypes.STRING,
+      deliveryOrderId: DataTypes.STRING,
       receivedAt: DataTypes.DATE,
       receivedBy: DataTypes.INTEGER,
     },
@@ -41,5 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "Delivery_Order",
     }
   );
+
   return Delivery_Order;
+
 };

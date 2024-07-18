@@ -1,5 +1,5 @@
 const { responses, throwValidation } = require("../../helpers/responses");
-const { Menu } = require("../../models");
+const { Master_Menu } = require("../../models");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 
@@ -20,13 +20,13 @@ class MenuService {
       const body = await yupSchemaValidation(req.body, schema);
 
       for (const item of body) {
-        await Menu.create({
+        await Master_Menu.create({
           name: item.name,
           description: item.description,
           menuId: item.menuId,
         });
       }
-      res.status(201).json(responses(true, "Menu berhasil dibuat"));
+      return res.status(201).json(responses(true, "Menu berhasil dibuat"));
     } catch (error) {
       return res
         .status(error.code || 500)
@@ -47,7 +47,7 @@ class MenuService {
 
       const { name, description } = body;
 
-      const menu = await Menu.findByPk(menuId);
+      const menu = await Master_Menu.findByPk(menuId);
 
       if (!menu) {
         throw throwValidation(404, "Menu tidak ditemukan");
@@ -71,7 +71,7 @@ class MenuService {
   static async deleteMenu(req, res) {
     try {
       const menuId = req.params.menuId;
-      const menu = await Menu.findByPk(menuId);
+      const menu = await Master_Menu.findByPk(menuId);
 
       if (!menu) {
         throw throwValidation(404, "Menu tidak ditemukan");
@@ -91,7 +91,7 @@ class MenuService {
 
   static async getAllMenu(req, res) {
     try {
-      const getMenus = await Menu.findAll({
+      const getMenus = await Master_Menu.findAll({
         attributes: ["id", "name", "description", "menuId"],
       });
 
@@ -107,7 +107,7 @@ class MenuService {
     try {
       const menuId = req.params.menuId;
 
-      const menu = await Menu.findByPk(menuId);
+      const menu = await Master_Menu.findByPk(menuId);
 
       if (!menu) {
         throw throwValidation(404, "Menu tidak ditemukan");

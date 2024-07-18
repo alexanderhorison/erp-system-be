@@ -4,7 +4,7 @@
 
 function auditTrailLog(
   action,
-  action_by,
+  actionBy,
   status,
   request = null,
   error = null
@@ -15,7 +15,7 @@ function auditTrailLog(
   return {
     date: new Date(),
     action,
-    action_by,
+    actionBy,
     status,
     request,
     error,

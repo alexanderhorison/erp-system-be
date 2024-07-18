@@ -2,26 +2,23 @@
 const { Model } = require("sequelize");
 const { encrypt } = require("../helpers/bcrypt");
 module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+  class Master_User extends Model {
+
     static associate(models) {
       // define association here
-      User.belongsTo(models.Role, {
-        foreignKey: "RoleId",
+      Master_User.belongsTo(models.Master_Role, {
+        foreignKey: "roleId",
       });
-      User.belongsTo(models.Warehouse, {
-        foreignKey: "WarehouseId",
+      Master_User.belongsTo(models.Master_Warehouse, {
+        foreignKey: "warehouseId",
       });
-      User.hasMany(models.Delivery_Order, { foreignKey: "createdBy" });
-      User.hasMany(models.Delivery_Order, { foreignKey: "receivedBy" });
-      User.hasMany(models.Master_Transformation, { foreignKey: "createdBy" });
+      Master_User.hasMany(models.Delivery_Order, { foreignKey: "createdBy" });
+      Master_User.hasMany(models.Delivery_Order, { foreignKey: "receivedBy" });
+      Master_User.hasMany(models.Master_Product_Transformation, { foreignKey: "createdBy" });
     }
   }
-  User.init(
+
+  Master_User.init(
     {
       name: {
         type: DataTypes.STRING,
@@ -42,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      user_name: {
+      userName: {
         type: DataTypes.STRING,
         validate: {
           notEmpty: {
@@ -60,7 +57,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      RoleId: {
+      roleId: {
         type: DataTypes.INTEGER,
         validate: {
           notEmpty: {
@@ -69,19 +66,19 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      WarehouseId: {
+      warehouseId: {
         type: DataTypes.INTEGER,
       },
     },
     {
       sequelize,
-      modelName: "User",
+      modelName: "Master_User",
       hooks: {
         beforeCreate: (user) => {
           user.password = encrypt(user.password);
         },
         beforeUpdate: (user) => {
-          if (user.changed('password')){
+          if (user.changed('password')) {
             user.password = encrypt(user.password);
           }
         },
@@ -89,5 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       paranoid: true,
     }
   );
-  return User;
+
+  return Master_User;
+
 };

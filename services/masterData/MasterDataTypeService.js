@@ -1,11 +1,11 @@
-const { Type } = require("../../models");
+const { Master_Type } = require("../../models");
 
 class MasterDataTypeService {
   static async create(data, user) {
     try {
       const { name, description } = data;
 
-      const existingType = await Type.findOne({
+      const existingType = await Master_Type.findOne({
         where: { name: name },
       });
 
@@ -16,7 +16,7 @@ class MasterDataTypeService {
         };
       }
 
-      return Type.create({
+      return Master_Type.create({
         name: name,
         description: description,
       });
@@ -29,7 +29,7 @@ class MasterDataTypeService {
     try {
       const { name, description } = data;
 
-      const existingType = await Type.findByPk(id);
+      const existingType = await Master_Type.findByPk(id);
 
       if (!existingType) {
         throw {
@@ -51,7 +51,7 @@ class MasterDataTypeService {
 
   static async delete(id, user) {
     try {
-      const type = await Type.findByPk(id);
+      const type = await Master_Type.findByPk(id);
 
       if (!type) {
         return res.status(404).json({
@@ -60,7 +60,7 @@ class MasterDataTypeService {
         });
       }
 
-      const deleteType = await Type.destroy({
+      const deleteType = await Master_Type.destroy({
         where: { id: id },
       });
 
@@ -72,7 +72,7 @@ class MasterDataTypeService {
 
   static async findAll() {
     try {
-      const data = await Type.findAll();
+      const data = await Master_Type.findAll();
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
@@ -86,7 +86,7 @@ class MasterDataTypeService {
 
   static async findOne(id) {
     try {
-      const type = await Type.findByPk(id);
+      const type = await Master_Type.findByPk(id);
 
       if (!type) {
         throw {

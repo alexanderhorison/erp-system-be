@@ -4,22 +4,22 @@ class StockAdjustmentHistoryService {
   static async createOne({
     data,
     user,
-    adjustment_type,
+    adjustmentType,
     quantity,
     info = null,
-    delivery_order_id = null,
+    deliveryOrderId = null,
     transaction,
     description = null,
   }) {
     try {
       const createdHistory = {
-        ProductWarehouseId: data.id,
+        productWarehouseId: data.id,
         quantity: quantity,
-        WarehouseId: data.WarehouseId,
-        adjustment_type: adjustment_type,
+        warehouseId: data.warehouseId,
+        adjustmentType: adjustmentType,
         info,
-        delivery_order_id,
-        UserId: user.id,
+        deliveryOrderId,
+        userId: user.id,
         description,
       };
 

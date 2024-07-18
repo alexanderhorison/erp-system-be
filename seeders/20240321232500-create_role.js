@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // Fetch all menus
     const menus = await queryInterface.sequelize.query(
-      `SELECT id, name FROM "Menus";`,
+      `SELECT id, name FROM "Master_Menus";`,
       {
         type: Sequelize.QueryTypes.SELECT,
       }
@@ -32,26 +32,26 @@ module.exports = {
       }
     });
     await queryInterface.bulkInsert(
-      "Roles",
+      "Master_Roles",
       [
         {
           name: "Admin",
           description: "administrator",
-          MenuId: menuAdmin,
+          menuId: menuAdmin,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           name: "Kepala Gudang",
           description: "kepala gudang",
-          MenuId: menuKepalaGudang,
+          menuId: menuKepalaGudang,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           name: "Admin Gudang",
           description: "admin gudang",
-          MenuId: menuAdminGudang,
+          menuId: menuAdminGudang,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -62,7 +62,7 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete(
-      "Roles",
+      "Master_Roles",
       { name: ["Admin", "Kepala Gudang", "Admin Gudang"] },
       {}
     );

@@ -1,11 +1,11 @@
 const {
   Master_Product,
-  Master_Product_History,
-  Type,
-  Category,
-  Company,
-  Master_Transformation,
-  Unit,
+  Product_Log,
+  Master_Type,
+  Master_Category,
+  Master_Company,
+  Master_Product_Transformation,
+  Master_Unit,
   sequelize: sq,
 } = require("../../models");
 const {
@@ -17,7 +17,7 @@ const { generateFilter } = require('../../helpers/queryGenerator');
 class MasterDataProductService {
   static async create(data, user) {
     try {
-      const { name, CategoryId, TypeId, description, CompanyId } = data;
+      const { name, categoryId, typeId, description, companyId } = data;
 
       const existingProduct = await Master_Product.findOne({
         where: { name: name },
@@ -32,17 +32,17 @@ class MasterDataProductService {
 
       const createdProduct = await Master_Product.create({
         name: name,
-        CategoryId: CategoryId,
-        TypeId: TypeId,
+        categoryId: categoryId,
+        typeId: typeId,
         description: description,
-        CompanyId: CompanyId
+        companyId: companyId
       });
 
-      await Master_Product_History.create({
+      await Product_Log.create({
         name: "Create",
-        data_before: JSON.stringify(existingProduct),
-        data_after: JSON.stringify(createdProduct),
-        UserId: user.id, //! Hardcode sementara
+        dataBefore: JSON.stringify(existingProduct),
+        dataAfter: JSON.stringify(createdProduct),
+        userId: user.id, //! Hardcode sementara
       });
 
       return createdProduct;
@@ -53,7 +53,7 @@ class MasterDataProductService {
 
   static async update(id, data, user) {
     try {
-      const { name, CategoryId, TypeId, description, CompanyId } = data;
+      const { name, categoryId, typeId, description, companyId } = data;
 
       const existingProduct = await Master_Product.findByPk(id);
       if (!existingProduct) {
@@ -66,16 +66,16 @@ class MasterDataProductService {
       const updatedProduct = await existingProduct.update({
         name: name,
         description: description,
-        CategoryId: CategoryId,
-        TypeId: TypeId,
-        CompanyId: CompanyId
+        categoryId: categoryId,
+        typeId: typeId,
+        companyId: companyId
       });
 
-      await Master_Product_History.create({
+      await Product_Log.create({
         name: "Update",
-        data_before: JSON.stringify(existingProduct),
-        data_after: JSON.stringify(updatedProduct),
-        UserId: user.id, //! Hardcode sementara
+        dataBefore: JSON.stringify(existingProduct),
+        dataAfter: JSON.stringify(updatedProduct),
+        userId: user.id, //! Hardcode sementara
       });
 
       return updatedProduct;
@@ -99,11 +99,11 @@ class MasterDataProductService {
         where: { id: id },
       });
 
-      await Master_Product_History.create({
+      await Product_Log.create({
         name: "Delete",
-        data_before: JSON.stringify(product),
-        data_after: JSON.stringify(deleteProduct),
-        UserId: user.id, //! Hardcode sementara
+        dataBefore: JSON.stringify(product),
+        dataAfter: JSON.stringify(deleteProduct),
+        userId: user.id, //! Hardcode sementara
       });
 
       return deleteProduct;
@@ -114,15 +114,15 @@ class MasterDataProductService {
 
   static async findAll(req) {
     try {
-      const { CategoryId, TypeId, CompanyId } = req.query;
+      const { categoryId, typeId, companyId } = req.query;
 
       let queryFilter = {};
 
       if (req.query != {}){
         const filters = [
-          { column: "CategoryId", operator: "=", value: CategoryId },
-          { column: "TypeId", operator: "=", value: TypeId },
-          { column: "CompanyId", operator: "=", value: CompanyId },
+          { column: "categoryId", operator: "=", value: categoryId },
+          { column: "typeId", operator: "=", value: typeId },
+          { column: "companyId", operator: "=", value: companyId },
         ]
         queryFilter = generateFilter(filters)
       }
@@ -130,17 +130,17 @@ class MasterDataProductService {
       const data = await Master_Product.findAll({
         include: [
           {
-            model: Type,
+            model: Master_Type,
             paranoid: false,
             attributes: ["name"],
           },
           {
-            model: Category,
+            model: Master_Category,
             paranoid: false,
             attributes: ["name"],
           },
           {
-            model: Company,
+            model: Master_Company,
             attributes: ["name"],
           },
         ],
@@ -151,9 +151,9 @@ class MasterDataProductService {
         id: item.id,
         name: item.name,
         description: item.description,
-        category: item.Category.name,
-        type: item.Type.name,
-        company: item.Company ? item.Company.name : '',
+        category: item.Master_Category.name,
+        type: item.Master_Type.name,
+        company: item.Master_Company ? item.Master_Company.name : '',
       }));
 
       return result;
@@ -167,15 +167,15 @@ class MasterDataProductService {
       const product = await Master_Product.findByPk(id, {
         include: [
           {
-            model: Type,
+            model: Master_Type,
             paranoid: false,
           },
           {
-            model: Category,
+            model: Master_Category,
             paranoid: false,
           },
           {
-            model: Company,
+            model: Master_Company,
           },
         ],
       });
@@ -190,10 +190,10 @@ class MasterDataProductService {
       const result = {
         id: product.id,
         name: product.name,
-        CategoryId: product.Category.id,
-        TypeId: product.Type.id,
+        categoryId: product.Master_Category.id,
+        typeId: product.Master_Type.id,
         description: product.description,
-        CompanyId: product.Company.id
+        companyId: product.Master_Company.id
       };
 
       return result;
@@ -204,26 +204,25 @@ class MasterDataProductService {
 
   static async getAllProductTransformasi(productId) {
     try {
-      const data = await Master_Transformation.findAll({
+      const data = await Master_Product_Transformation.findAll({
         attributes: [
           "id",
-          "MasterProductId",
+          "masterProductId",
           "info",
-          "product_transformation_id",
-          // Add other columns you need from Master_Transformation
+          "productTransformationId",
         ],
         include: [
           {
-            model: Unit,
+            model: Master_Unit,
             paranoid: false,
             attributes: ["name"],
-            as: "UnitFrom",
+            as: "unitFrom",
           },
           {
-            model: Unit,
+            model: Master_Unit,
             paranoid: false,
             attributes: ["name"],
-            as: "UnitTo",
+            as: "unitTo",
           },
           {
             model: Master_Product,
@@ -232,7 +231,7 @@ class MasterDataProductService {
           },
         ],
         where: {
-          MasterProductId: productId,
+          masterProductId: productId,
           deletedAt: null,
         },
         order: [["id", "ASC"]],
@@ -240,19 +239,19 @@ class MasterDataProductService {
       });
 
       // Ini bisa di enhance dengan penambahan field di db kolom active jadi hanya get yang active
-      // Filter double data by product_transformation_id
+      // Filter double data by productTransformationId
       const filterUniqueTransformationId = data.reduce((acc, item) => {
         const found = acc.find(
           (existingItem) =>
-            existingItem.product_transformation_id ===
-            item.product_transformation_id
+            existingItem.productTransformationId ===
+            item.productTransformationId
         );
         if (!found) {
           acc.push({
             id: item.id,
-            MasterProductId: item.MasterProductId,
+            masterProductId: item.masterProductId,
             info: item.info,
-            product_transformation_id: item.product_transformation_id,
+            productTransformationId: item.productTransformationId,
           });
         }
         return acc;
@@ -268,44 +267,44 @@ class MasterDataProductService {
     const transaction = await sq.transaction();
     try {
       const {
-        MasterProductId,
-        UnitFromId,
-        amount_from,
-        UnitToId,
-        amount_to,
+        masterProductId,
+        unitFromId,
+        amountFrom,
+        unitToId,
+        amountTo,
         info1,
         info2,
       } = data;
 
-      const product_transformation_id = await generateProductTransformationId();
+      const productTransformationId = await generateProductTransformationId();
 
       // Data 1
       const productTransformasiData1 = {
-        MasterProductId,
-        UnitFromId,
-        amount_from,
-        UnitToId,
-        amount_to,
+        masterProductId,
+        unitFromId,
+        amountFrom,
+        unitToId,
+        amountTo,
         info: info1 || "",
         createdBy: userId,
-        product_transformation_id,
+        productTransformationId,
       };
 
       // Data 2
       const productTransformasiData2 = {
-        MasterProductId,
-        UnitFromId: UnitToId,
-        UnitToId: UnitFromId,
-        amount_from: amount_to,
-        amount_to: amount_from,
+        masterProductId,
+        unitFromId: unitToId,
+        unitToId: unitFromId,
+        amountFrom: amountTo,
+        amountTo: amountFrom,
         info: info2 || "",
         createdBy: userId,
-        product_transformation_id,
+        productTransformationId,
       };
 
       // Pembuatan Product Transformasi Data
-      await Master_Transformation.create(productTransformasiData1);
-      await Master_Transformation.create(productTransformasiData2);
+      await Master_Product_Transformation.create(productTransformasiData1);
+      await Master_Product_Transformation.create(productTransformasiData2);
 
       await transaction.commit();
       return;
@@ -319,17 +318,17 @@ class MasterDataProductService {
     const transaction = await sq.transaction();
     try {
       const {
-        MasterProductId,
-        UnitFromId,
-        amount_from,
-        UnitToId,
-        amount_to,
-        product_transformation_id,
+        masterProductId,
+        unitFromId,
+        amountFrom,
+        unitToId,
+        amountTo,
+        productTransformationId,
         info1,
         info2,
       } = data;
 
-      const existingTransformasi = await Master_Transformation.findByPk(id);
+      const existingTransformasi = await Master_Product_Transformation.findByPk(id);
 
       if (!existingTransformasi) {
         throw {
@@ -340,28 +339,28 @@ class MasterDataProductService {
 
       // Data 1
       const updateTransformasiData1 = {
-        UnitFromId,
-        amount_from,
-        UnitToId,
-        amount_to,
+        unitFromId,
+        amountFrom,
+        unitToId,
+        amountTo,
         info: info1,
       };
 
       await existingTransformasi.update(updateTransformasiData1);
 
-      const existingTransformasi2 = await Master_Transformation.findOne({
+      const existingTransformasi2 = await Master_Product_Transformation.findOne({
         where: {
-          product_transformation_id,
+          productTransformationId,
           id: { [Op.ne]: id },
         },
       });
 
       // Data 2
       const updateTransformasiData2 = {
-        UnitFromId: UnitToId,
-        UnitToId: UnitFromId,
-        amount_from: amount_to,
-        amount_to: amount_from,
+        unitFromId: unitToId,
+        unitToId: unitFromId,
+        amountFrom: amountTo,
+        amountTo: amountFrom,
         info: info2,
       };
 
@@ -377,19 +376,19 @@ class MasterDataProductService {
 
   static async getDetailTransformasi(id) {
     try {
-      const transformasi = await Master_Transformation.findByPk(id, {
+      const transformasi = await Master_Product_Transformation.findByPk(id, {
         include: [
           {
-            model: Unit,
+            model: Master_Unit,
             paranoid: false,
             attributes: ["id", "name"],
-            as: "UnitFrom",
+            as: "unitFrom",
           },
           {
-            model: Unit,
+            model: Master_Unit,
             paranoid: false,
             attributes: ["id", "name"],
-            as: "UnitTo",
+            as: "unitTo",
           },
           {
             model: Master_Product,
@@ -408,11 +407,11 @@ class MasterDataProductService {
 
       const result = {
         id: transformasi.id,
-        MasterProductId: transformasi.MasterProductId,
-        UnitFromId: transformasi.UnitFromId,
-        UnitToId: transformasi.UnitToId,
-        amount_to: transformasi.amount_to,
-        product_transformation_id: transformasi.product_transformation_id,
+        masterProductId: transformasi.masterProductId,
+        unitFromId: transformasi.unitFromId,
+        unitToId: transformasi.unitToId,
+        amountTo: transformasi.amountTo,
+        productTransformationId: transformasi.productTransformationId,
       };
 
       return result;
@@ -423,7 +422,7 @@ class MasterDataProductService {
 
   static async deleteProductTransformasi(id) {
     try {
-      const transformasi = await Master_Transformation.findByPk(id);
+      const transformasi = await Master_Product_Transformation.findByPk(id);
 
       if (!transformasi) {
         throw {
@@ -432,10 +431,10 @@ class MasterDataProductService {
         };
       }
 
-      const product_transformation_id = transformasi.product_transformation_id;
+      const productTransformationId = transformasi.productTransformationId;
 
-      const deleteTransformation = await Master_Transformation.destroy({
-        where: { product_transformation_id },
+      const deleteTransformation = await Master_Product_Transformation.destroy({
+        where: { productTransformationId },
       });
 
       return deleteTransformation;

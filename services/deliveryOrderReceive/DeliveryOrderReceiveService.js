@@ -1,10 +1,10 @@
 const {
   sequelize: sq,
   Master_Product,
-  Product_Warehouse,
-  Unit,
+  Warehouse_Product,
+  Master_Unit,
   Delivery_Order,
-  Product_Delivery_Order,
+  Delivery_Order_Product,
 } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -17,20 +17,20 @@ class DeliveryOrderReceiveService {
       // Check warehouse origin
       const origin = await Delivery_Order.findOne({
         where: {
-          delivery_order_id: deliveryOrderId,
+          deliveryOrderId: deliveryOrderId,
         },
         include: [
           {
-            model: Product_Delivery_Order,
+            model: Delivery_Order_Product,
             include: [
               {
-                model: Product_Warehouse,
+                model: Warehouse_Product,
                 include: [
                   {
                     model: Master_Product
                   },
                   {
-                    model: Unit
+                    model: Master_Unit
                   }
                 ]
               },
@@ -47,37 +47,37 @@ class DeliveryOrderReceiveService {
         }
       }
 
-      const productOrigin = origin.Product_Delivery_Orders
+      const productOrigin = origin.Delivery_Order_Product
 
       for await (const product of productOrigin) {
 
-        const masterProduct = product.Product_Warehouse.Master_Product
+        const masterProduct = product.Warehouse_Product.Master_Product
 
-        const destinationProduct = await Product_Warehouse.findOne({
+        const destinationProduct = await Warehouse_Product.findOne({
           where: {
-            WarehouseId: origin.WarehouseDestinationId,
-            ProductId: masterProduct.id
+            warehouseId: origin.warehouseDestinationId,
+            productId: masterProduct.id
           },
           transaction
         })
 
         if (!destinationProduct) {
           // INITIATE JIKA TIDAK ADA PRODUK DI WAREHOUSE DESTINASI
-          const initiated = await Product_Warehouse.create({
-            ProductId: masterProduct.id,
-            WarehouseId: origin.WarehouseDestinationId,
+          const initiated = await Warehouse_Product.create({
+            productId: masterProduct.id,
+            warehouseId: origin.warehouseDestinationId,
             quantity: product.quantity,
-            UnitId: product.Product_Warehouse.UnitId,
+            unitId: product.Warehouse_Product.unitId,
             minimum_stock: 0,
           }, { transaction })
 
           await StockAdjustmentHistoryService.createOne({
             data: initiated,
             user,
-            adjustment_type: "INITIATE",
+            adjustmentType: "INITIATE",
             quantity: initiated.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            delivery_order_id: deliveryOrderId,
+            deliveryOrderId: deliveryOrderId,
             transaction,
           })
 
@@ -89,10 +89,10 @@ class DeliveryOrderReceiveService {
           await StockAdjustmentHistoryService.createOne({
             data: destinationProduct,
             user,
-            adjustment_type: "PLUS",
+            adjustmentType: "PLUS",
             quantity: product.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            delivery_order_id: deliveryOrderId,
+            deliveryOrderId: deliveryOrderId,
             transaction,
           })
         }

@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // Fetch All menus
     const menus = await queryInterface.sequelize.query(
-      `SELECT id, name FROM "Menus";`,
+      `SELECT id, name FROM "Master_Menus";`,
       {
         type: Sequelize.QueryTypes.SELECT,
       }
@@ -13,7 +13,7 @@ module.exports = {
     // Function to execute Menu update
     const functionUpdate = async (menuId, menuName) => {
       await queryInterface.bulkUpdate(
-        "Menus",
+        "Master_Menus",
         { menuId: menuId },
         { name: menuName }
       );
@@ -62,7 +62,7 @@ module.exports = {
     // Insert Menu Satuan produk
     await queryInterface.insert(
       null,
-      "Menus",
+      "Master_Menus",
       {
         name: "Satuan Produk",
         description: "Manajemen satuan produk",
@@ -75,7 +75,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("Menus", { name: "Satuan Produk" }, null);
-    await queryInterface.bulkUpdate("Menus", { menuId: null }, {});
+    await queryInterface.bulkDelete("Master_Menus", { name: "Satuan Produk" }, null);
+    await queryInterface.bulkUpdate("Master_Menus", { menuId: null }, {});
   },
 };

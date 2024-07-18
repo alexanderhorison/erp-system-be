@@ -14,8 +14,7 @@ class MasterDataWarehouseController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      //! Sementara hardcode sebelum ada middleware
-      const user = { id: 1 };
+      const user = req.userData;
 
       await MasterDataWarehouseService.create(body, user);
 
@@ -65,13 +64,13 @@ class MasterDataWarehouseController {
         schemaParams
       );
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       await MasterDataWarehouseService.delete(warehouseId, user);
 
       res.status(200).json(responses(true, "Gudang berhasil dihapus"));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
@@ -100,7 +99,7 @@ class MasterDataWarehouseController {
 
       res.status(200).json(responses(true, "Sukses Get Detail", data));
     } catch (error) {
-      return res
+      res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }

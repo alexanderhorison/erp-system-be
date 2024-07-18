@@ -13,7 +13,7 @@ class MasterDataCategoryController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const newCategory = await MasterDataCategoryService.create(body, user);
 
@@ -39,9 +39,7 @@ class MasterDataCategoryController {
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      const user = {
-        id: 1,
-      };
+      const user = req.userData;
 
       const updatedCategory = await MasterDataCategoryService.update(
         id,
@@ -63,7 +61,7 @@ class MasterDataCategoryController {
       const schemaParams = yup.number().required("Id kategori harus diisi");
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-      const user = { id: 1 };
+      const user = req.userData;
 
       const deletedCategory = await MasterDataCategoryService.delete(id, user);
 

@@ -7,10 +7,10 @@ unit.forEach(item => {
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    return queryInterface.bulkInsert('Units', unit, {})
+    return queryInterface.bulkInsert('Master_Units', unit, {})
   },
 
   async down (queryInterface, Sequelize) {
-    return queryInterface.bulkDelete('Units', null, {})
+    return queryInterface.bulkDelete('Master_Units', null, {})
   }
 };

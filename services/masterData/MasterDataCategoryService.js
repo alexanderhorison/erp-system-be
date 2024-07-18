@@ -1,22 +1,22 @@
-const { Category } = require("../../models");
+const { Master_Category } = require("../../models");
 
 class MasterDataCategoryService {
   static async create(data, user) {
     try {
       const { name, description } = data;
 
-      const existingCategory = await Category.findOne({
+      const existingMasterCategory = await Master_Category.findOne({
         where: { name: name },
       });
 
-      if (existingCategory) {
+      if (existingMasterCategory) {
         throw {
           code: 400,
           message: "Nama kategori sudah ada dalam database",
         };
       }
       
-      return Category.create({
+      return Master_Category.create({
         name: name,
         description: description,
       });
@@ -28,30 +28,31 @@ class MasterDataCategoryService {
   static async update(id, data, user) {
     try {
       const { name, description } = data;
+      console.log(id);
+      const existingMasterCategory = await Master_Category.findByPk(id);
 
-      const existingCategory = await Category.findByPk(id);
-
-      if (!existingCategory) {
+      if (!existingMasterCategory) {
         throw {
           code: 404,
           message: "kategori tidak ditemukan",
         };
       }
 
-      const updatedCategory = await existingCategory.update({
+      const updatedCategory = await existingMasterCategory.update({
         name: name,
         description: description,
       });
 
       return updatedCategory;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
 
   static async delete(id, user) {
     try {
-      const category = await Category.findByPk(id);
+      const category = await Master_Category.findByPk(id);
 
       if (!category) {
         throw {
@@ -60,7 +61,7 @@ class MasterDataCategoryService {
         }
       }
 
-      const deleteCategory = await Category.destroy({
+      const deleteCategory = await Master_Category.destroy({
         where: { id: id },
       });
 
@@ -72,7 +73,7 @@ class MasterDataCategoryService {
 
   static async findAll() {
     try {
-      const data = await Category.findAll();
+      const data = await Master_Category.findAll();
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
@@ -86,12 +87,12 @@ class MasterDataCategoryService {
 
   static async findOne(id) {
     try {
-      const category = await Category.findByPk(id);
+      const category = await Master_Category.findByPk(id);
 
       if (!category) {
         throw {
           code: 404,
-          message: "kategori tidak ditemukan",
+          message: "Master kategori tidak ditemukan",
         };
       }
 

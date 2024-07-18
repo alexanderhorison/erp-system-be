@@ -1,4 +1,4 @@
-const { Role, Menu, User } = require("../../models");
+const { Master_Role, Master_Menu, Master_User } = require("../../models");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const { responses, throwValidation } = require("../../helpers/responses");
@@ -19,7 +19,7 @@ class RoleService {
       const { name, description, menuId } = body;
 
       // Find existing role
-      const existingRole = await Role.findOne({
+      const existingRole = await Master_Role.findOne({
         where: { name },
       });
 
@@ -28,7 +28,7 @@ class RoleService {
       }
 
       // Check menu exist
-      let menus = await Menu.findAll({ attributes: ["id", "menuId"] });
+      let menus = await Master_Menu.findAll({ attributes: ["id", "menuId"] });
       menus = menus.map((menu) => menu.menuId);
       menuId.forEach((id) => {
         if (!menus.includes(id)) {
@@ -36,13 +36,13 @@ class RoleService {
         }
       });
 
-      const newRole = await Role.create({
+      const newRole = await Master_Role.create({
         name: name,
         description: description,
-        MenuId: menuId,
+        menuId: menuId,
       });
 
-      res.status(201).json(responses(true, "Role berhasil dibuat", newRole));
+      return res.status(201).json(responses(true, "Role berhasil dibuat", newRole));
     } catch (error) {
       return res
         .status(error.code || 500)
@@ -65,10 +65,10 @@ class RoleService {
 
       const { name, description, menuId } = body;
 
-      const role = await Role.findByPk(roleId);
+      const role = await Master_Role.findByPk(roleId);
 
       // Check menu exist
-      let menus = await Menu.findAll({ attributes: ["id", "menuId"] });
+      let menus = await Master_Menu.findAll({ attributes: ["id", "menuId"] });
       menus = menus.map((menu) => menu.menuId);
       menuId.forEach((id) => {
         if (!menus.includes(id)) {
@@ -83,10 +83,10 @@ class RoleService {
       const updatedMenu = await role.update({
         name: name,
         description: description,
-        MenuId: menuId,
+        menuId: menuId,
       });
 
-      res
+      return res
         .status(200)
         .json(responses(true, "Role berhasil diupdate", updatedMenu));
     } catch (error) {
@@ -99,7 +99,7 @@ class RoleService {
   static async deleteRole(req, res) {
     try {
       const roleId = req.params.roleId;
-      const role = await Role.findByPk(roleId);
+      const role = await Master_Role.findByPk(roleId);
 
       if (!role) {
         throw throwValidation(404, "Role tidak ditemukan");
@@ -109,8 +109,8 @@ class RoleService {
         throw throwValidation(400, "Role ini tidak boleh dihapus");
       }
 
-      const findUser = await User.findOne({
-        where: { RoleId: roleId },
+      const findUser = await Master_User.findOne({
+        where: { roleId: roleId },
       });
 
       if (findUser) {
@@ -134,8 +134,8 @@ class RoleService {
 
   static async getAllRole(req, res) {
     try {
-      const getRoles = await Role.findAll({
-        attributes: ["id", "name", "description", "MenuId", "createdAt"],
+      const getRoles = await Master_Role.findAll({
+        attributes: ["id", "name", "description", "menuId", "createdAt"],
       });
 
       return res.status(200).json(responses(true, "berhasil", getRoles));
@@ -150,7 +150,7 @@ class RoleService {
     try {
       const roleId = req.params.roleId;
 
-      const role = await Role.findByPk(roleId);
+      const role = await Master_Role.findByPk(roleId);
 
       if (!role) {
         throw throwValidation(404, "Role tidak ditemukan");

@@ -12,7 +12,7 @@ async function generateDeliveryOrderId(digits = 8) {
       );
       orderId = `TBA-${tempId}`;
       const exsisting = await Delivery_Order.findOne({
-        where: { delivery_order_id: orderId },
+        where: { deliveryOrderId: orderId },
       });
       exsisting ? (notDuplicate = true) : (notDuplicate = false);
     } while (notDuplicate);

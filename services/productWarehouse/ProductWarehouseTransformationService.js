@@ -1,12 +1,12 @@
 const {
   sequelize: sq,
   Master_Product,
-  Type,
-  Category,
-  Product_Warehouse,
-  Unit,
-  Warehouse,
-  Master_Transformation,
+  Master_Type,
+  Master_Category,
+  Warehouse_Product,
+  Master_Unit,
+  Master_Warehouse,
+  Master_Product_Transformation,
   Stock_Adjustment_History,
 } = require("../../models");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -14,11 +14,11 @@ const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAd
 class ProductWarehouseTransformationService {
   static async getAllListTransformationByProductWarehouseId(id) {
     try {
-      const dataProduct = await Product_Warehouse.findOne({
+      const dataProduct = await Warehouse_Product.findOne({
         where: {
           id,
         },
-        attributes: ["ProductId", "UnitId"]
+        attributes: ["productId", "unitId"]
       })
 
       if (!dataProduct) {
@@ -28,19 +28,19 @@ class ProductWarehouseTransformationService {
         }
       }
 
-      const listData = await Master_Transformation.findAll({
+      const listData = await Master_Product_Transformation.findAll({
         where: {
-          MasterProductId: dataProduct.ProductId,
-          UnitFromId: dataProduct.UnitId,
+          masterProductId: dataProduct.productId,
+          unitFromId: dataProduct.unitId,
         },
         include: [
           {
-            model: Unit,
-            as: "UnitFrom"
+            model: Master_Unit,
+            as: "unitFrom"
           },
           {
-            model: Unit,
-            as: "UnitTo"
+            model: Master_Unit,
+            as: "unitTo"
           }
         ]
       })
@@ -54,22 +54,22 @@ class ProductWarehouseTransformationService {
   static async transformProduct({ id, data, user }) {
     const transaction = await sq.transaction();
     try {
-      const transformationData = await Master_Transformation.findOne({
+      const transformationData = await Master_Product_Transformation.findOne({
         where: {
-          id: data.MasterTransformationId
+          id: data.masterTransformationId
         }
       })
 
-      const originProduct = await Product_Warehouse.findOne({
+      const originProduct = await Warehouse_Product.findOne({
         where: {
           id: id,
         }
       });
 
-      const destinationProduct = await Product_Warehouse.findOne({
+      const destinationProduct = await Warehouse_Product.findOne({
         where: {
-          ProductId: originProduct.ProductId,
-          UnitId: transformationData.UnitToId,
+          productId: originProduct.productId,
+          unitId: transformationData.unitToId,
         }
       })
 
@@ -79,7 +79,7 @@ class ProductWarehouseTransformationService {
       await StockAdjustmentHistoryService.createOne({
         data: originProduct,
         user,
-        adjustment_type: "MINUS",
+        adjustmentType: "MINUS",
         quantity: data.qtyTransformation,
         info: "TRANSFORMATION_PRODUCT",
         description: transformationData?.info,
@@ -89,13 +89,13 @@ class ProductWarehouseTransformationService {
       if (destinationProduct) {
         // PRODUCT SUDAH ADA
         // TAMBAHKAN PRODUCT TUJUAN
-        destinationProduct.quantity += (data.qtyTransformation / transformationData.amount_from) * transformationData.amount_to
+        destinationProduct.quantity += (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo
         await destinationProduct.save({ transaction });
         await StockAdjustmentHistoryService.createOne({
           data: destinationProduct,
           user,
-          adjustment_type: "PLUS",
-          quantity: (data.qtyTransformation / transformationData.amount_from) * transformationData.amount_to,
+          adjustmentType: "PLUS",
+          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
           transaction,
@@ -103,19 +103,19 @@ class ProductWarehouseTransformationService {
       } else {
         // PRODUCT BELUM ADA
         // BUAT PRODUCT TUJUAN
-        const newDestinationProduct = await Product_Warehouse.create({
-          ProductId: originProduct.ProductId,
-          WarehouseId: originProduct.WarehouseId,
-          quantity: (data.qtyTransformation / transformationData.amount_from) * transformationData.amount_to,
-          UnitId: transformationData.UnitToId,
+        const newDestinationProduct = await Warehouse_Product.create({
+          productId: originProduct.productId,
+          warehouseId: originProduct.warehouseId,
+          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          unitId: transformationData.unitToId,
           minimum_stock: 0,
         }, { transaction })
 
         await StockAdjustmentHistoryService.createOne({
           data: newDestinationProduct,
           user,
-          adjustment_type: "INITIATE",
-          quantity: (data.qtyTransformation / transformationData.amount_from) * transformationData.amount_to,
+          adjustmentType: "INITIATE",
+          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
           transaction,
