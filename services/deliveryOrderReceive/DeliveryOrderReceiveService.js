@@ -47,7 +47,7 @@ class DeliveryOrderReceiveService {
         }
       }
 
-      const productOrigin = origin.Delivery_Order_Product
+      const productOrigin = origin.Delivery_Order_Products
 
       for await (const product of productOrigin) {
 

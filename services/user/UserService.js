@@ -381,7 +381,7 @@ class UserService {
           res.status(500).json(responses(false, err.message));
         } else {
           const { id } = decoded;
-          const user = await User.findOne({
+          const user = await Master_User.findOne({
             where: {
               id,
             },
@@ -415,7 +415,7 @@ class UserService {
               name: user.name,
               email: user.email,
               userName: user.userName,
-              menuId: user.Role.menuId,
+              menuId: user.Master_Role.menuId,
               roleId: Number(user.roleId),
               warehouseId: user.warehouseId,
             };
@@ -424,7 +424,7 @@ class UserService {
                 type: "bearer",
                 token: accessToken,
                 refreshToken: refreshToken,
-                user_info: userLogin,
+                userInfo: userLogin,
               })
             );
           } else {

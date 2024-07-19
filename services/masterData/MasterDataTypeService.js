@@ -1,4 +1,4 @@
-const { Master_Type } = require("../../models");
+const { Master_Type, Master_Product } = require("../../models");
 
 class MasterDataTypeService {
   static async create(data, user) {
@@ -58,6 +58,19 @@ class MasterDataTypeService {
           success: false,
           message: "Type tidak ditemukan",
         });
+      }
+
+      // find product that have type
+      const existType = await Master_Product.findOne({
+        where: { typeId: id },
+      });
+
+      if (existType) {
+        throw {
+          code: 400,
+          message:
+            "Tidak bisa menghapus tipe, karna ada product yang memiliki tipe ini",
+        };
       }
 
       const deleteType = await Master_Type.destroy({

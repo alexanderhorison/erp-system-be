@@ -10,7 +10,7 @@ function responses(success, message, data = "") {
 }
 
 function throwValidation(code, message = "failed") {
-  return {
+  throw {
     code: code,
     message: message,
   };

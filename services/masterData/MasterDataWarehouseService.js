@@ -1,4 +1,4 @@
-const { Master_Warehouse } = require("../../models");
+const { Master_Warehouse, Master_User} = require("../../models");
 
 class MasterDataWarehouseService {
   static async create(data, user) {
@@ -57,13 +57,26 @@ class MasterDataWarehouseService {
         });
       }
 
+      // find user that have warehouse
+      const existWarehouse = await Master_User.findOne({
+        where: { warehouseId: id },
+      });
+
+      if (existWarehouse) {
+        throw {
+          code: 400,
+          message:
+            "Tidak bisa menghapus gudang, karna ada user yang memiliki gudang ini",
+        };
+      }
+
       const deleteWarehouse = await Master_Warehouse.destroy({
         where: { id: id },
       });
 
       return deleteWarehouse;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 

@@ -18,11 +18,12 @@ module.exports = (sequelize, DataTypes) => {
 
       Delivery_Order.hasMany(models.Delivery_Order_Product, {
         foreignKey: "deliveryOrderId",
+        sourceKey: "deliveryOrderId",
       });
 
-      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "createdBy" });
+      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "createdBy", as: "creatorBy" });
 
-      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "receivedBy" });
+      Delivery_Order.belongsTo(models.Master_User, { foreignKey: "receivedBy", as: "receiverBy" });
     }
   }
 

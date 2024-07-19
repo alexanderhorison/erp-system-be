@@ -57,7 +57,7 @@ class DeliveryOrderService {
         stockjustmentHistory.push({
           productWarehouseId: item.productWarehouseId,
           quantity: item.qty,
-          adjustment_type: "MINUS",
+          adjustmentType: "MINUS",
           warehouseId: data.warehouseOriginId,
           userId: user.id,
           info: "DELIVERY ORDER CREATE",
@@ -107,7 +107,7 @@ class DeliveryOrderService {
                 model: Master_Role,
               },
             ],
-            as: "createdBy"
+            as: "creatorBy"
           },
           {
             model: Master_User,
@@ -117,7 +117,7 @@ class DeliveryOrderService {
                 model: Master_Role,
               },
             ],
-            as: "receivedBy"
+            as: "receiverBy"
           },
           {
             model: Master_Warehouse,
@@ -134,7 +134,7 @@ class DeliveryOrderService {
         ],
       }
 
-      if (payload.user.RoleId == 3) {
+      if (payload.user.roleId == 3) {
         queryOption.where = {
           warehouseDestinationId: payload.user.warehouseId
         }
@@ -146,9 +146,10 @@ class DeliveryOrderService {
           id: item.deliveryOrderId,
           deliveryOrderId: item.deliveryOrderId,
           createdAt: formatDate(item.createdAt),
+          receivedAt: formatDate(item.receivedAt),
           createdBy: {
-            name: item.createdBy.name,
-            roleName: item.createdBy.Master_Role.name,
+            name: item.creatorBy.name,
+            roleName: item.creatorBy.Master_Role.name,
           },
           warehouseOrigin: item.warehouseOrigin.name,
           warehouseDestination: item.warehouseDestination.name,
@@ -246,12 +247,12 @@ class DeliveryOrderService {
           {
             model: Master_User,
             attributes: ["name"],
-            as: "createdBy"
+            as: "creatorBy"
           },
           {
             model: Master_User,
             attributes: ["name"],
-            as: "receivedBy"
+            as: "receiverBy"
           },
         ],
       });

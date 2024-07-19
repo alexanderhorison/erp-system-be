@@ -1,4 +1,4 @@
-const { Master_Category } = require("../../models");
+const { Master_Category, Master_Product } = require("../../models");
 
 class MasterDataCategoryService {
   static async create(data, user) {
@@ -59,6 +59,19 @@ class MasterDataCategoryService {
           code: 404,
           message: "Kategori tidak ditemukan"
         }
+      }
+
+      // find product that have category
+      const existCategory = await Master_Product.findOne({
+        where: { categoryId: id },
+      });
+
+      if (existCategory) {
+        throw {
+          code: 400,
+          message:
+            "Tidak bisa menghapus category, karna ada product yang memiliki category ini",
+        };
       }
 
       const deleteCategory = await Master_Category.destroy({

@@ -95,6 +95,19 @@ class MasterDataProductService {
         };
       }
 
+      // find Master Transformation that have unit
+      const existTransformation = await Master_Product_Transformation.findOne({
+        where: { masterProductId: id },
+      });
+
+      if (existTransformation) {
+        throw {
+          code: 400,
+          message:
+            "Tidak bisa menghapus product, karna ada rumus transformasi yang memiliki product ini",
+        };
+      }
+
       const deleteProduct = await Master_Product.destroy({
         where: { id: id },
       });

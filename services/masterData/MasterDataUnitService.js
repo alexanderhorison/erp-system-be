@@ -1,4 +1,5 @@
-const { Master_Unit } = require("../../models");
+const { Master_Unit, Master_Product_Transformation } = require("../../models");
+const { Op } = require('sequelize');
 
 class MasterDataUnitService {
   static async create(data, user) {
@@ -57,6 +58,24 @@ class MasterDataUnitService {
         throw {
           code: 404,
           message: "Unit tidak ditemukan",
+        };
+      }
+
+      // find Master Transformation that have unit
+      const existTransformation = await Master_Product_Transformation.findOne({
+        where: {
+          [Op.or]: [
+            { unitFromId: id },
+            { unitToId: id }
+          ]
+        },
+      });
+
+      if (existTransformation) {
+        throw {
+          code: 400,
+          message:
+            "Tidak bisa menghapus unit, karna ada rumus transformasi yang memiliki unit ini",
         };
       }
 

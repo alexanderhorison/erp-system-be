@@ -101,7 +101,6 @@ class MasterDataCompanyService {
   static async findOne(id) {
     try {
       const company = await Master_Company.findByPk(id);
-      console.log(company);
       if (!company) {
         throw {
           code: 404,
