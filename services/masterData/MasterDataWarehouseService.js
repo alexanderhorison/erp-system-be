@@ -1,4 +1,12 @@
-const { Master_Warehouse, Master_User} = require("../../models");
+const { throwValidation } = require("../../helpers/responses");
+const {
+  Master_Warehouse,
+  Master_User,
+  Master_Warehouse_Rack,
+  Master_Warehouse_Rack_Attribute,
+  sequelize: sq,
+} = require("../../models");
+const { Op } = require("sequelize");
 
 class MasterDataWarehouseService {
   static async create(data, user) {
@@ -42,7 +50,7 @@ class MasterDataWarehouseService {
 
       return updatedWarehouse;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -113,6 +121,229 @@ class MasterDataWarehouseService {
 
       return result;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async createWarehouseRack(body) {
+    const transaction = await sq.transaction();
+    try {
+      const { warehouseId, description, name, data } = body;
+
+      const existingWarehouseRack = await Master_Warehouse_Rack.findOne({
+        where: {
+          name: {
+            [Op.iLike]: name,
+          },
+        },
+      });
+
+      if (existingWarehouseRack) {
+        throwValidation(400, "Nama rak sudah ada dalam database");
+      }
+
+      // Create rack
+      const createdRack = await Master_Warehouse_Rack.create(
+        {
+          name: name,
+          description: description,
+          warehouseId: warehouseId,
+        },
+        { transaction }
+      );
+
+      const dataRackAttr = [];
+
+      data.forEach((item) => {
+        dataRackAttr.push({
+          key: item.key,
+          value: item.value,
+          warehouseRackId: createdRack.id,
+        });
+      });
+
+      // Bulk Create rack attributes
+      await Master_Warehouse_Rack_Attribute.bulkCreate(dataRackAttr, {
+        transaction,
+      });
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async updateWarehouseRack(warehouseRackId, body) {
+    const transaction = await sq.transaction();
+    try {
+      const { description, name, data } = body;
+
+      const existingWarehouseRack = await Master_Warehouse_Rack.findByPk(
+        warehouseRackId
+      );
+
+      if (!existingWarehouseRack) {
+        throwValidation(404, "Rak tidak ditemukan");
+      }
+
+      let findAllWarehouseRack = await Master_Warehouse_Rack_Attribute.findAll({
+        where: { warehouseRackId: warehouseRackId },
+        attributes: ["id"],
+      });
+
+      const updatedIds = [];
+
+      // Update Rack Attribute
+      for (const item of data) {
+        // if there is id it will be update
+        if (item.id) {
+          const existingAttribute =
+            await Master_Warehouse_Rack_Attribute.findOne({
+              where: {
+                id: item.id,
+              },
+              transaction,
+            });
+
+          if (!existingAttribute) {
+            throwValidation(404, "Rak Attribute tidak ditemukan");
+          }
+
+          // Update the existing attribute
+          await existingAttribute.update(
+            { value: item.value, key: item.key },
+            { transaction }
+          );
+
+          // to record the updated attribute id
+          updatedIds.push(item.id);
+        } else if (!item.id) {
+          await Master_Warehouse_Rack_Attribute.create(
+            {
+              value: item.value,
+              key: item.key,
+              warehouseRackId: warehouseRackId,
+            },
+            { transaction }
+          );
+        }
+      }
+
+      // Update Rack
+      await existingWarehouseRack.update(
+        {
+          name: name,
+          description: description,
+        },
+        { transaction }
+      );
+
+      findAllWarehouseRack = findAllWarehouseRack.map((item) => {
+        return item.id;
+      });
+
+      const idsToDelete = findAllWarehouseRack.filter(
+        (item) => !updatedIds.includes(item)
+      );
+
+      if (idsToDelete.length > 0) {
+        await Master_Warehouse_Rack_Attribute.destroy({
+          where: {
+            id: idsToDelete,
+          },
+          transaction,
+        });
+      }
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async findAllWarehouseRack(warehouseId) {
+    try {
+      const data = await Master_Warehouse_Rack.findAll({
+        attributes: ["id", "name", "description", "warehouseId"],
+        include: [
+          {
+            model: Master_Warehouse_Rack_Attribute,
+            attributes: ["id", "warehouseRackId", "key", "value"],
+          },
+        ],
+        where: { warehouseId: warehouseId },
+      });
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailWarehouseRack(id) {
+    try {
+      const warehouseRack = await Master_Warehouse_Rack.findByPk(id, {
+        include: [
+          {
+            model: Master_Warehouse_Rack_Attribute,
+          },
+        ],
+      });
+
+      if (!warehouseRack) {
+        throwValidation(404, "Warehouse rak tidak ditemukan");
+      }
+
+      const warehouseAttribute =
+        warehouseRack.Master_Warehouse_Rack_Attributes.map((item) => {
+          return {
+            id: item.id,
+            key: item.key,
+            value: item.value,
+          };
+        });
+
+      const result = {
+        id: warehouseRack.id,
+        name: warehouseRack.name,
+        description: warehouseRack.description,
+        warehouseId: warehouseRack.warehouseId,
+        data: warehouseAttribute,
+      };
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async deleteWarehouseRack(id) {
+    const transaction = await sq.transaction();
+    try {
+      const warehouseRack = await Master_Warehouse_Rack.findByPk(id);
+
+      if (!warehouseRack) {
+        throwValidation(404, "Warehouse rak tidak ditemukan");
+      }
+
+      await Master_Warehouse_Rack_Attribute.destroy({
+        where: { warehouseRackId: id },
+        transaction,
+      });
+
+      await Master_Warehouse_Rack.destroy({
+        where: { id: id },
+        transaction,
+      });
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }
