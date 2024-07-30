@@ -23,11 +23,20 @@ class MasterDataWarehouseService {
       };
     }
 
-    return Master_Warehouse.create({
+    const newWarehouse = await Master_Warehouse.create({
       name: name,
       description: description,
       location: location,
     });
+
+    // Create default rack
+    await Master_Warehouse_Rack.create({
+      name: 'default rack',
+      description: '',
+      warehouseId: newWarehouse.id,
+    });
+
+    return newWarehouse;
   }
 
   static async update(id, data, user) {
