@@ -12,7 +12,7 @@ const {
   generateProductTransformationId,
 } = require("../../helpers/transformationIdGenerator");
 const { Op } = require("sequelize");
-const { generateFilter } = require('../../helpers/queryGenerator');
+const { generateFilter } = require("../../helpers/queryGenerator");
 
 class MasterDataProductService {
   static async create(data, user) {
@@ -35,7 +35,7 @@ class MasterDataProductService {
         categoryId: categoryId,
         typeId: typeId,
         description: description,
-        companyId: companyId
+        companyId: companyId,
       });
 
       await Product_Log.create({
@@ -68,7 +68,7 @@ class MasterDataProductService {
         description: description,
         categoryId: categoryId,
         typeId: typeId,
-        companyId: companyId
+        companyId: companyId,
       });
 
       await Product_Log.create({
@@ -131,13 +131,13 @@ class MasterDataProductService {
 
       let queryFilter = {};
 
-      if (req.query != {}){
+      if (req.query != {}) {
         const filters = [
           { column: "categoryId", operator: "=", value: categoryId },
           { column: "typeId", operator: "=", value: typeId },
           { column: "companyId", operator: "=", value: companyId },
-        ]
-        queryFilter = generateFilter(filters)
+        ];
+        queryFilter = generateFilter(filters);
       }
 
       const data = await Master_Product.findAll({
@@ -157,7 +157,7 @@ class MasterDataProductService {
             attributes: ["name"],
           },
         ],
-        where: queryFilter
+        where: queryFilter,
       });
 
       const result = data.map((item) => ({
@@ -166,7 +166,7 @@ class MasterDataProductService {
         description: item.description,
         category: item.Master_Category.name,
         type: item.Master_Type.name,
-        company: item.Master_Company ? item.Master_Company.name : '',
+        company: item.Master_Company ? item.Master_Company.name : "",
       }));
 
       return result;
@@ -206,7 +206,7 @@ class MasterDataProductService {
         categoryId: product.Master_Category.id,
         typeId: product.Master_Type.id,
         description: product.description,
-        companyId: product.Master_Company.id
+        companyId: product.Master_Company.id,
       };
 
       return result;
@@ -316,8 +316,12 @@ class MasterDataProductService {
       };
 
       // Pembuatan Product Transformasi Data
-      await Master_Product_Transformation.create(productTransformasiData1);
-      await Master_Product_Transformation.create(productTransformasiData2);
+      await Master_Product_Transformation.create(productTransformasiData1, {
+        transaction,
+      });
+      await Master_Product_Transformation.create(productTransformasiData2, {
+        transaction,
+      });
 
       await transaction.commit();
       return;
@@ -341,7 +345,9 @@ class MasterDataProductService {
         info2,
       } = data;
 
-      const existingTransformasi = await Master_Product_Transformation.findByPk(id);
+      const existingTransformasi = await Master_Product_Transformation.findByPk(
+        id
+      );
 
       if (!existingTransformasi) {
         throw {
@@ -359,14 +365,18 @@ class MasterDataProductService {
         info: info1,
       };
 
-      await existingTransformasi.update(updateTransformasiData1);
-
-      const existingTransformasi2 = await Master_Product_Transformation.findOne({
-        where: {
-          productTransformationId,
-          id: { [Op.ne]: id },
-        },
+      await existingTransformasi.update(updateTransformasiData1, {
+        transaction,
       });
+
+      const existingTransformasi2 = await Master_Product_Transformation.findOne(
+        {
+          where: {
+            productTransformationId,
+            id: { [Op.ne]: id },
+          },
+        }
+      );
 
       // Data 2
       const updateTransformasiData2 = {
@@ -377,7 +387,9 @@ class MasterDataProductService {
         info: info2,
       };
 
-      await existingTransformasi2.update(updateTransformasiData2);
+      await existingTransformasi2.update(updateTransformasiData2, {
+        transaction,
+      });
 
       await transaction.commit();
       return;
