@@ -31,8 +31,8 @@ class MasterDataWarehouseService {
 
     // Create default rack
     await Master_Warehouse_Rack.create({
-      name: 'default rack',
-      description: '',
+      name: 'default',
+      description: 'default rak',
       warehouseId: newWarehouse.id,
     });
 

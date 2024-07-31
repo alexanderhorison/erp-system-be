@@ -50,6 +50,7 @@ class ProductWarehouseController {
         quantity: yup.number().required("Kuantiti tidak boleh kosong"),
         unitId: yup.number().required("Unit id tidak boleh kosong"),
         minimumStock: yup.number().required("Stok minimum tidak boleh kosong"),
+        warehouseRackId: yup.number().required("Rak produk tidak boleh kosong")
       });
 
       const schemaParams = yup.object({

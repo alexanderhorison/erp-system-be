@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       Warehouse_Product.hasMany(models.Delivery_Order_Product, {
         foreignKey: "productWarehouseId",
       });
+      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, { foreignKey: "warehouseRackId" });
     }
   }
   Warehouse_Product.init(
@@ -23,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       minimumStock: DataTypes.INTEGER,
       description: DataTypes.STRING,
       info: DataTypes.TEXT,
+      warehouseRackId: DataTypes.INTEGER,
     },
     {
       sequelize,

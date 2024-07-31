@@ -8,7 +8,7 @@ router.get("/", ProductWarehouseController.getAllWarehouse);
 router.use("/transformation", routerTransformation)
 router.get("/list", ProductWarehouseController.getListProduct)
 router.get("/warehouse/:id", ProductWarehouseController.getProductByWarehouse);
-router.post("/create/:WarehouseId", ProductWarehouseController.create);
+router.post("/create/:warehouseId", ProductWarehouseController.create);
 
 router.get("/:id", ProductWarehouseController.getProductWarehouse);
 router.put("/:id", ProductWarehouseController.adjustProduct);

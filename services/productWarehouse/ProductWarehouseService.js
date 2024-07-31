@@ -6,6 +6,7 @@ const {
   Warehouse_Product,
   Master_Unit,
   Master_Warehouse,
+  Master_Warehouse_Rack
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -141,7 +142,6 @@ class ProductWarehouseService {
 
       return result;
     } catch (error) {
-      console.log(error);
       throw error;
     }
   }
@@ -159,6 +159,7 @@ class ProductWarehouseService {
           },
           Master_Unit,
           Master_Warehouse,
+          Master_Warehouse_Rack
         ],
       });
 
@@ -173,6 +174,7 @@ class ProductWarehouseService {
           typeName: item.Master_Product.Master_Type.name,
           unitName: item.Master_Unit.name,
           warehouseName: item.Master_Warehouse.name,
+          rackName: item.Master_Warehouse_Rack.name,
           quantity: item.quantity,
           minimumStock: item.minimumStock,
         })
