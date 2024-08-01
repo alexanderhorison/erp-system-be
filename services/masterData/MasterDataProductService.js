@@ -47,6 +47,7 @@ class MasterDataProductService {
 
       return createdProduct;
     } catch (error) {
+      console.log(error, 'error in service create product');
       throw error;
     }
   }
@@ -80,6 +81,7 @@ class MasterDataProductService {
 
       return updatedProduct;
     } catch (error) {
+      console.log(error, 'error in service update product');
       throw error;
     }
   }
@@ -314,6 +316,7 @@ class MasterDataProductService {
       await transaction.commit();
       return;
     } catch (error) {
+      console.log(error, ' error create product transformation service');
       await transaction.rollback();
       throw error;
     }
