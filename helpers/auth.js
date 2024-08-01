@@ -141,7 +141,7 @@ class Auth {
       const user = req.UserData;
       
       // Jika user adalah admin dan kepala gudang authorized
-      if ([3].includes(user.RoleId)) {
+      if ([1, 3].includes(user.RoleId)) {
         next();
       } else {
         // User role bukan Admin Gudang
