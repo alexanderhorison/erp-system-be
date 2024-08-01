@@ -24,7 +24,6 @@ class MasterDataProductController {
         .status(201)
         .json(responses(true, "Produk berhasil ditambahkan", data));
     } catch (error) {
-      console.log(error, 'error create product controller');
       res
         .status(error.code || 500)
         .json({ success: false, message: error.message });
@@ -51,7 +50,6 @@ class MasterDataProductController {
 
       res.status(200).json(responses(true, "Produk berhasil diubah", data));
     } catch (error) {
-      console.log(error, 'error update product controller');
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
@@ -127,7 +125,6 @@ class MasterDataProductController {
         .status(200)
         .json(responses(true, `Berhasil membuat rumus transformasi`));
     } catch (error) {
-      console.log(error, ' error create product transformation controller');
       return res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
