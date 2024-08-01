@@ -108,13 +108,9 @@ class MasterDataProductController {
       const schema = yup.object({
         MasterProductId: yup.number().required("Master Produk harus ada"),
         UnitFromId: yup.number().required("Asal satuan produk harus ada"),
-        amount_from: yup
-          .number()
-          .required("Jumlah asal konversi produk harus ada"),
+        amount_from: yup.number().required("Jumlah asal konversi produk harus ada"),
         UnitToId: yup.number().required("Tujuan satuan produk harus ada"),
-        amount_to: yup
-          .number()
-          .required("Jumlah tujuan konversi produk harus ada"),
+        amount_to: yup.number().required("Jumlah tujuan konversi produk harus ada"),
         info1: yup.string().optional(),
         info2: yup.string().optional(),
       });
