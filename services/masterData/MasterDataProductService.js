@@ -304,8 +304,12 @@ class MasterDataProductService {
       };
 
       // Pembuatan Product Transformasi Data
-      await Master_Transformation.create(productTransformasiData1);
-      await Master_Transformation.create(productTransformasiData2);
+      await Master_Transformation.create(productTransformasiData1, {
+        transaction,
+      });
+      await Master_Transformation.create(productTransformasiData2, {
+        transaction,
+      });
 
       await transaction.commit();
       return;
