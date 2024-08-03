@@ -167,6 +167,8 @@ class StockOpnameService {
         }
       });
 
+      console.log(data.data, id);
+
       if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
       existingStockOpname.notes = data?.notes
       existingStockOpname.updatedBy = user?.id
@@ -174,11 +176,12 @@ class StockOpnameService {
       for (const item of data?.data) {
         const existingWarehouseProduct = await Stock_Opname_Product.findOne({
           where: {
-            warehouseProductId: item.warehouseProductId
+            id: item.id
           }
         });
         if (!existingWarehouseProduct) throw { code: 404, message: "Stock Opname Product tidak ditemukan" }
         existingWarehouseProduct.actualStock = item.actualStock
+        existingWarehouseProduct.diff = item.diff
         await existingWarehouseProduct.save({ transaction });
       }
       await transaction.commit();
