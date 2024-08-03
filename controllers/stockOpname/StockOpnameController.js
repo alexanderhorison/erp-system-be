@@ -24,6 +24,7 @@ class StockOpnameController {
         warehouseId: yup.number().required("Warehouse harus diisi"),
         opnameDate: yup.date().required("Tgl stock opname harus diisi"),
         data: yup.array().required("Data harus diisi"),
+        status: yup.string().required("Status harus diisi"),
         notes: yup.string().optional(),
       });
 
@@ -67,6 +68,7 @@ class StockOpnameController {
       const schemaBody = yup.object({
         data: yup.array().required("Data harus diisi"),
         notes: yup.string().optional(),
+        status: yup.string().required("Status harus diisi"),
       });
 
       const body = await yupSchemaValidation(req.body, schemaBody);
@@ -77,7 +79,6 @@ class StockOpnameController {
 
       res.status(200).json(responses(true, "Success update detail stock opname", data));
     } catch (error) {
-      console.log(error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));

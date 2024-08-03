@@ -142,6 +142,11 @@ class StockOpnameService {
         createdBy: user?.id || null,
         notes: data?.notes || ""
       }
+      if (data.status === "PENDING") {
+        data.data.forEach((item) => {
+          if (!item.actualStock) throw { code: 400, message: "Data belum lengkap" }
+        })
+      }
       const stockOpname = await Stock_Opname.create(created, { transaction });
       const createdWarehouseProduct = data.data.map((item) => {
         return {
@@ -167,9 +172,15 @@ class StockOpnameService {
         }
       });
 
-      console.log(data.data, id);
-
       if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
+
+      if (data.status === "PENDING") {
+        data.data.forEach((item) => {
+          if (!item.actualStock) throw { code: 400, message: "Data harus lengkap" }
+        })
+        existingStockOpname.status = "PENDING"
+      }
+
       existingStockOpname.notes = data?.notes
       existingStockOpname.updatedBy = user?.id
       await existingStockOpname.save({ transaction });
@@ -226,10 +237,36 @@ class StockOpnameService {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
           id
-        }
+        },
+        include: [
+          {
+            model: Stock_Opname_Product
+          }
+        ]
       });
 
-      if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
+
+      switch (existingStockOpname.status) {
+        case "APPROVED":
+          throw { code: 400, message: "Stock Opname sudah di approve" };
+        case "REJECTED":
+          throw { code: 400, message: "Stock Opname sudah di reject" };
+        // case "DRAFT":
+        //   throw { code: 400, message: "Stock Opname masih tahap draft" };
+        default:
+          if (!existingStockOpname) {
+            throw { code: 404, message: "Stock Opname tidak ditemukan" };
+          }
+      }
+
+      // CHECK DATA ACTUAL STOCK BEFORE APPROVE FROM DRAFT BEFORE IMPLEMENT PENDING
+      // IF ALREADY IMPLEMENTED PENDING STATUS, CODE WILL BE DEPRECATED
+      if (existingStockOpname.status === "DRAFT") {
+        existingStockOpname.Stock_Opname_Products.forEach((item) => {
+          if (!item.actualStock) throw { code: 400, message: "Data belum lengkap" }
+        })
+      }
+      // ======================================================================
 
       const updatedStockOpname = await Stock_Opname.update({ status: "APPROVED", updatedBy: user?.id }, { where: { id } });
 
@@ -247,7 +284,18 @@ class StockOpnameService {
         }
       });
 
-      if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
+      switch (existingStockOpname.status) {
+        case "APPROVED":
+          throw { code: 400, message: "Stock Opname sudah di approve" };
+        case "REJECTED":
+          throw { code: 400, message: "Stock Opname sudah di reject" };
+        // case "DRAFT":
+        //   throw { code: 400, message: "Stock Opname masih tahap draft" };
+        default:
+          if (!existingStockOpname) {
+            throw { code: 404, message: "Stock Opname tidak ditemukan" };
+          }
+      }
 
       const updatedStockOpname = await Stock_Opname.update({ status: "REJECTED", updatedBy: user?.id }, { where: { id } });
       return updatedStockOpname
@@ -255,6 +303,36 @@ class StockOpnameService {
       throw error
     }
   }
+
+  static async pending(id, user) {
+    try {
+      const existingStockOpname = await Stock_Opname.findOne({
+        where: {
+          id
+        }
+      });
+
+      switch (existingStockOpname.status) {
+        case "APPROVED":
+          throw { code: 400, message: "Stock Opname sudah di approve" };
+        case "REJECTED":
+          throw { code: 400, message: "Stock Opname sudah di reject" };
+        // case "DRAFT":
+        //   throw { code: 400, message: "Stock Opname masih tahap draft" };
+        default:
+          if (!existingStockOpname) {
+            throw { code: 404, message: "Stock Opname tidak ditemukan" };
+          }
+      }
+
+      const updatedStockOpname = await Stock_Opname.update({ status: "PENDING", updatedBy: user?.id }, { where: { id } });
+      return updatedStockOpname
+    } catch (error) {
+      throw error
+    }
+  }
+
+
 }
 
 module.exports = StockOpnameService
