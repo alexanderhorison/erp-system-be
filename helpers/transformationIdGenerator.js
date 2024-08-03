@@ -5,18 +5,18 @@ async function generateProductTransformationId(digits = 8) {
     const minNumber = Math.pow(10, digits - 1);
     const maxNumber = Math.pow(10, digits) - 1;
     let notDuplicate = true;
-    let productTransformationId = "";
+    let code = "";
     do {
       let tempId = Math.floor(
         minNumber + Math.random() * (maxNumber - minNumber + 1)
       );
-      productTransformationId = `T-${tempId}`;
+      code = `T-${tempId}`;
       const exsisting = await Master_Product_Transformation.findOne({
-        where: { productTransformationId: productTransformationId },
+        where: { code: code },
       });
       exsisting ? (notDuplicate = true) : (notDuplicate = false);
     } while (notDuplicate);
-    return productTransformationId;
+    return code;
   } catch (error) {
     throw error;
   }

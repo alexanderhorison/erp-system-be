@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     amountTo: DataTypes.INTEGER,
     info: DataTypes.TEXT,
     createdBy: DataTypes.INTEGER,
-    productTransformationId: DataTypes.STRING,
+    code: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Master_Product_Transformation',

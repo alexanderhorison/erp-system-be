@@ -119,6 +119,7 @@ class ProductWarehouseService {
           },
           Master_Unit,
           Master_Warehouse,
+          Master_Warehouse_Rack,
         ],
       });
 
@@ -138,6 +139,7 @@ class ProductWarehouseService {
         warehouseName: data.Master_Warehouse.name,
         quantity: data.quantity,
         minimumStock: data.minimumStock,
+        warehouseRackId: data?.Master_Warehouse_Rack?.id
       };
 
       return result;

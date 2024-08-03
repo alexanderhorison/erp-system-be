@@ -109,7 +109,9 @@ class ProductWarehouseTransformationService {
           warehouseId: originProduct.warehouseId,
           quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           unitId: transformationData.unitToId,
-          minimum_stock: 0,
+          minimum_stock: 1,
+          // Jika produk baru maka tambahkan ke rack product origin
+          warehouseRackId: data.warehouseRackId,
         }, { transaction })
 
         await StockAdjustmentHistoryService.createOne({

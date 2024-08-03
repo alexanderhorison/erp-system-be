@@ -164,9 +164,9 @@ class MasterDataProductController {
         amountTo: yup
           .number()
           .required("Jumlah tujuan konversi produk harus ada"),
-        productTransformationId: yup
+        code: yup
           .string()
-          .required("Produk Transformasi Id harus ada"),
+          .required("code harus ada"),
         info1: yup.string().optional(),
         info2: yup.string().optional(),
       });

@@ -33,6 +33,7 @@ class ProductWarehouseTransformation {
         masterTransformationId: yup.number().required("Id Transformasi harus di isi"),
         productWarehouseId: yup.number().required("Id produk harus di isi"),
         qtyTransformation: yup.number().required("Jumlah harus di isi"),
+        warehouseRackId: yup.number().required("Warehouse rack id harus ada")
       })
 
       const body = await yupSchemaValidation(req.body, schemaBody);

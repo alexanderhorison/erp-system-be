@@ -31,8 +31,8 @@ class MasterDataWarehouseService {
 
     // Create default rack
     await Master_Warehouse_Rack.create({
-      name: 'default',
-      description: 'default rak',
+      name: "default",
+      description: "default rak",
       warehouseId: newWarehouse.id,
     });
 
@@ -197,6 +197,14 @@ class MasterDataWarehouseService {
         throwValidation(404, "Rak tidak ditemukan");
       }
 
+      // default rak tak boleh diedit
+      if (
+        existingWarehouseRack.name === "default" &&
+        name !== existingWarehouseRack.name
+      ) {
+        throwValidation(400, "nama default rak tidak boleh diganti");
+      }
+
       let findAllWarehouseRack = await Master_Warehouse_Rack_Attribute.findAll({
         where: { warehouseRackId: warehouseRackId },
         attributes: ["id"],
@@ -339,6 +347,10 @@ class MasterDataWarehouseService {
         throwValidation(404, "Warehouse rak tidak ditemukan");
       }
 
+      // default rak tak boleh dihapus
+      if (warehouseRack.name === "default") {
+        throwValidation(400, "default rak tidak bisa dihapus");
+      }
       await Master_Warehouse_Rack_Attribute.destroy({
         where: { warehouseRackId: id },
         transaction,

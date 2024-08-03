@@ -5,6 +5,7 @@ const {
   Master_Unit,
   Delivery_Order,
   Delivery_Order_Product,
+  Master_Warehouse_Rack,
 } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -56,19 +57,29 @@ class DeliveryOrderReceiveService {
         const destinationProduct = await Warehouse_Product.findOne({
           where: {
             warehouseId: origin.warehouseDestinationId,
-            productId: masterProduct.id
+            productId: masterProduct.id,
+            unitId: product.Warehouse_Product.unitId
           },
           transaction
         })
 
         if (!destinationProduct) {
+
+          // find default rack
+          const defaultRack = await Master_Warehouse_Rack.findOne({
+            where: {
+              name: 'default'
+            },
+            attributes: ["id"]
+          })
           // INITIATE JIKA TIDAK ADA PRODUK DI WAREHOUSE DESTINASI
           const initiated = await Warehouse_Product.create({
             productId: masterProduct.id,
             warehouseId: origin.warehouseDestinationId,
             quantity: product.quantity,
             unitId: product.Warehouse_Product.unitId,
-            minimum_stock: 0,
+            minimum_stock: 1,
+            warehouseRackId: defaultRack.id
           }, { transaction })
 
           await StockAdjustmentHistoryService.createOne({
@@ -109,7 +120,7 @@ class DeliveryOrderReceiveService {
       return;
     } catch (error) {
       transaction.rollback()
-      throwValidation(error.code, error.message);
+      throw throwValidation(error.code, error.message);
     }
   }
 }
