@@ -174,7 +174,7 @@ class ProductWarehouseService {
           typeName: item.Master_Product.Master_Type.name,
           unitName: item.Master_Unit.name,
           warehouseName: item.Master_Warehouse.name,
-          rackName: item.Master_Warehouse_Rack.name,
+          rackName: item?.Master_Warehouse_Rack?.name,
           quantity: item.quantity,
           minimumStock: item.minimumStock,
         })
