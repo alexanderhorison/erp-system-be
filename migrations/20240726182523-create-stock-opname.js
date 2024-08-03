@@ -47,13 +47,13 @@ module.exports = {
     });
 
     const lastMenu = await queryInterface.sequelize.query(
-      `SELECT id, "menuId" FROM "Menus" ORDER BY id DESC LIMIT 1;`,
+      `SELECT id, "menuId" FROM "Master_Menus" ORDER BY id DESC LIMIT 1;`,
       {
         type: Sequelize.QueryTypes.SELECT,
       }
     );
 
-    await queryInterface.bulkInsert("Menus",
+    await queryInterface.bulkInsert("Master_Menus",
       [
         {
           name: "Stock Opname",
