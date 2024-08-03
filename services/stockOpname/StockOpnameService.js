@@ -8,8 +8,9 @@ const {
   Stock_Opname_Product,
   Warehouse_Product,
   Master_Product,
-  Master_Unit }
-  = require("../../models")
+  Master_Unit,
+  Master_Warehouse_Rack,
+} = require("../../models")
 
 class StockOpnameService {
 
@@ -66,7 +67,6 @@ class StockOpnameService {
           { model: Master_User, as: "deleter" },
           {
             model: Stock_Opname_Product,
-            require: true,
             include: [
               {
                 model: Warehouse_Product,
@@ -76,7 +76,8 @@ class StockOpnameService {
                   },
                   {
                     model: Master_Unit
-                  }
+                  },
+                  Master_Warehouse_Rack
                 ]
               }
             ]
@@ -95,8 +96,9 @@ class StockOpnameService {
         return {
           id: item?.id,
           productId: item?.Warehouse_Product?.Master_Product?.id,
+          productWarehouseId: item?.Warehouse_Product?.id,
           productName: item?.Warehouse_Product?.Master_Product?.name,
-          rack: item?.Warehouse_Product?.rack || null,
+          rackName: item.Warehouse_Product.Master_Warehouse_Rack.dataValues?.n || null,
           unitId: item?.Warehouse_Product?.Master_Unit?.id,
           unitName: item?.Warehouse_Product?.Master_Unit?.name,
           systemStock: item?.systemStock,
@@ -105,8 +107,8 @@ class StockOpnameService {
         }
       })
 
-      
-      
+
+
       const result = {
         id: data.id,
         code: data.code,
@@ -156,15 +158,33 @@ class StockOpnameService {
     }
   }
 
-  static async update(id, data) {
+  static async update(id, data, user) {
+    const transaction = await sq.transaction();
     try {
-      const stockOpname = await Stock_Opname.update(data, {
+      const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id
+          id: id
         }
       });
-      return stockOpname
+
+      if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
+      existingStockOpname.notes = data?.notes
+      existingStockOpname.updatedBy = user?.id
+      await existingStockOpname.save({ transaction });
+      for (const item of data?.data) {
+        const existingWarehouseProduct = await Stock_Opname_Product.findOne({
+          where: {
+            warehouseProductId: item.warehouseProductId
+          }
+        });
+        if (!existingWarehouseProduct) throw { code: 404, message: "Stock Opname Product tidak ditemukan" }
+        existingWarehouseProduct.actualStock = item.actualStock
+        await existingWarehouseProduct.save({ transaction });
+      }
+      await transaction.commit();
+      return existingStockOpname
     } catch (error) {
+      await transaction.rollback();
       throw error
     }
   }
@@ -208,10 +228,10 @@ class StockOpnameService {
 
       if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
 
-      const updatedStockOpname = await Stock_Opname.update({ status: "APPROVED", approvedBy: user?.id }, { where: { id } });
+      const updatedStockOpname = await Stock_Opname.update({ status: "APPROVED", updatedBy: user?.id }, { where: { id } });
+
       return updatedStockOpname
     } catch (error) {
-      await transaction.rollback();
       throw error
     }
   }
@@ -226,7 +246,7 @@ class StockOpnameService {
 
       if (!existingStockOpname) throw { code: 404, message: "Stock Opname tidak ditemukan" }
 
-      const updatedStockOpname = await Stock_Opname.update({ status: "REJECTED", rejectedBy: user?.id }, { where: { id } });
+      const updatedStockOpname = await Stock_Opname.update({ status: "REJECTED", updatedBy: user?.id }, { where: { id } });
       return updatedStockOpname
     } catch (error) {
       throw error

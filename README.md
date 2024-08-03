@@ -23,3 +23,35 @@ values
 ('default', 'default rak', 5, now(), now())
 
 ```
+### STATUS LIST - updated (3 Agustus 2024)
+```
+APPROVED
+PENDING
+REJECTED
+DRAFT
+```
+
+### List menu global (3 Agustus 2024)
+== LIST MENU ==
+menuId di BE disamakan dengan FE, sehingga bisa termapping dengan sesuai. Tidak menggunakan id karena auto increment, jadi manual developer define menu id nya
+
+Jika ada penambahan menu, maka ditambahkan juga di FE
+
+```
+ID MENU : NAMA
+
+1	  Pengguna	membuat pengguna dan otoritasnya
+2	  Otoritas Pengguna	membuat otoritas pengguna dan menu yang bisa diakses
+3	  Kategori Produk	manajemen kategori produk
+4	  Tipe Produk	manajemen satuan produk
+5	  Produk	manajemen produk
+6	  Gudang	manajemen gudang
+7	  Rumus Transformasi	manajemen rumus untuk mengubah satuan produk
+8	  List Produk Gudang	melihat produk gudang, set lowstock alert dan transformasi ke satuan lebih kecil
+9	  Penyesuaian Stok Produk Gudang	melihat produk gudang, menambahkan/mengurangi stok, set low stock alert
+10  Surat Jalan	list surat jalan beserta status, membuat surat jalan dari warehouse ke warehouse lain
+11  Penerimaan Surat Jalan	list surat jalan pending, menerima produk dari warehouse sumber dan input produk diterima
+12  Satuan Produk	Manajemen satuan produk
+13  Company	Manajemen Company Produk
+15  Stock Opname
+```
