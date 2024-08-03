@@ -41,7 +41,7 @@ class ProductWarehouseTransformation {
 
       const user = req.userData;
 
-      ProductWarehouseTransformationService.transformProduct({ id: id, data: body, user })
+      await ProductWarehouseTransformationService.transformProduct({ id: id, data: body, user })
 
       res
         .status(200)

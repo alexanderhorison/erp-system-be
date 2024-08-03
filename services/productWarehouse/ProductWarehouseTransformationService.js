@@ -70,6 +70,7 @@ class ProductWarehouseTransformationService {
         where: {
           productId: originProduct.productId,
           unitId: transformationData.unitToId,
+          warehouseId: originProduct.warehouseId,
         }
       })
 
