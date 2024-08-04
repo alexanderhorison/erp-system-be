@@ -78,7 +78,7 @@ class DeliveryOrderReceiveService {
             warehouseId: origin.warehouseDestinationId,
             quantity: product.quantity,
             unitId: product.Warehouse_Product.unitId,
-            minimum_stock: 1,
+            minimumStock: 1,
             warehouseRackId: defaultRack.id
           }, { transaction })
 

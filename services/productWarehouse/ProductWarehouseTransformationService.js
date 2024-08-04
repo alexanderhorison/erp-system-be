@@ -109,7 +109,7 @@ class ProductWarehouseTransformationService {
           warehouseId: originProduct.warehouseId,
           quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           unitId: transformationData.unitToId,
-          minimum_stock: 1,
+          minimumStock: 1,
           // Jika produk baru maka tambahkan ke rack product origin
           warehouseRackId: data.warehouseRackId,
         }, { transaction })
