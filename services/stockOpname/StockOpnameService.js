@@ -27,7 +27,7 @@ class StockOpnameService {
           { model: Master_User, as: "updater" },
           { model: Master_User, as: "deleter" }
         ],
-        order: [["createdAt", "DESC"]]
+        order: [["opnameDate", "DESC"]]
       });
 
       const result = data.map((item) => {
@@ -37,6 +37,7 @@ class StockOpnameService {
           status: item.status,
           warehouseId: item?.Master_Warehouse.id,
           warehouseName: item?.Master_Warehouse.name,
+          opnameDate: formatDate(item?.opnameDate),
           creatorName: item?.creator?.name,
           updaterName: item?.updater?.name,
           deleterName: item?.deleter?.name,
@@ -115,6 +116,7 @@ class StockOpnameService {
         status: data.status,
         warehouseId: data?.Master_Warehouse.id,
         warehouseName: data?.Master_Warehouse.name,
+        opnameDate: formatDate(data?.opnameDate),
         creatorName: data?.creator?.name,
         updaterName: data?.updater?.name,
         deleterName: data?.deleter?.name,
