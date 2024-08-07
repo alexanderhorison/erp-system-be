@@ -100,7 +100,7 @@ class GoodsInController {
         .json(responses(false, error.message || error));
     }
   }
-  // DONE NOT TESTED
+
   static async getDetailGoodsIn(req, res) {
     try {
       const params = req.params

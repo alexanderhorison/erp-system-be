@@ -3,12 +3,8 @@ const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const GoodsOutService = require("../../services/adjustmentGoods/GoodsOutService");
 
-
-
-
-
 class GoodsOutController {
-  // DONE TESTED
+
   static async getAllGoodsOut(req, res) {
     try {
       const user = req.userData;
@@ -23,7 +19,7 @@ class GoodsOutController {
         .json(responses(false, error.message || error));
     }
   }
-  // DONE TESTED
+
   static async createGoodsOut(req, res) {
     try {
       const schema = yup.object({
@@ -57,7 +53,7 @@ class GoodsOutController {
         .json(responses(false, error.message || error));
     }
   }
-  // DONE NOT TESTED
+
   static async approveGoodsOut(req, res) {
     try {
       const schemaParams = yup.object({
@@ -80,7 +76,7 @@ class GoodsOutController {
         .json(responses(false, error.message || error));
     }
   }
-  // DONE TESTED
+
   static async rejectGoodsOut(req, res) {
     try {
       const schemaParams = yup.object({
@@ -98,14 +94,12 @@ class GoodsOutController {
 
       res.status(200).json(responses(true, "Berhasil reject goods out", rejectGoodsOut));
     } catch (error) {
-      console.log('error', error);
-
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
     }
   }
-  // DONE NOT TESTED
+
   static async getDetailGoodsOut(req, res) {
     try {
       const params = req.params

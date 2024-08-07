@@ -140,8 +140,6 @@ class GoodsInService {
       await transaction.commit();
       return createdData
     } catch (error) {
-      console.log(error);
-
       await transaction.rollback();
       throw error
     }

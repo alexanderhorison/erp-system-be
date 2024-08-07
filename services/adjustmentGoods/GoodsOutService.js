@@ -73,8 +73,6 @@ class GoodsOutService {
 
       return sendData
     } catch (error) {
-      console.log(error);
-
       throw error
     }
   }
