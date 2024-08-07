@@ -12,11 +12,9 @@ const {
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
-const {
-  generateDeliveryOrderId,
-} = require("../../helpers/deliveryOrderIdGenerator");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 const { formatDate } = require("../../helpers/formatDate");
+const { codeGenerator } = require("../../helpers/codeGenerator");
 
 class DeliveryOrderService {
   static async createDeliveryOrder(payload) {
@@ -24,7 +22,7 @@ class DeliveryOrderService {
     try {
       const { data, user } = payload;
 
-      const deliveryOrderId = await generateDeliveryOrderId();
+      const deliveryOrderId = await codeGenerator();
 
       const deliveryOrderData = {
         status: "PENDING",
@@ -61,7 +59,7 @@ class DeliveryOrderService {
           warehouseId: data.warehouseOriginId,
           userId: user.id,
           info: "DELIVERY ORDER CREATE",
-          deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
+          deliveryOrderId: createdDeliveryOrder.id,
         });
       });
 

@@ -1,4 +1,4 @@
-const { generateDeliveryOrderId } = require("../../helpers/deliveryOrderIdGenerator");
+const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const {
   sequelize: sq,
@@ -135,7 +135,7 @@ class StockOpnameService {
   static async create(data, user) {
     const transaction = await sq.transaction();
     try {
-      const code = await generateDeliveryOrderId(8, "STO");
+      const code = await codeGenerator(8, "STO");
       const created = {
         code,
         warehouseId: data.warehouseId,
