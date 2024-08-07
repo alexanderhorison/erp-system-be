@@ -1,4 +1,8 @@
 function formatDate(dateString) {
+  if (!dateString) {
+    return ''
+  }
+
   const date = new Date(dateString);
 
   const options = {

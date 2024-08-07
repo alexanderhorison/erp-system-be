@@ -34,7 +34,7 @@ class GoodsOutController {
           .of(
             yup.object({
               warehouseProductId: yup.number().required("Id goods harus diisi"),
-              quantity: yup.number().required("Kuantiti harus diisi"),
+              qty: yup.number().required("Kuantiti harus diisi"),
             })
           )
           .required("Goods harus diisi"),
