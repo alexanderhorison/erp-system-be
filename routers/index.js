@@ -8,6 +8,7 @@ const Auth = require("../helpers/auth");
 const routerDeliveryOrder = require("./deliveryOrder");
 const routerDeliveryOrderReceive = require("./deliveryOrderReceive");
 const routerStockOpname = require("./stockOpname");
+const routerAdjustmentGoods = require("./adjustmentGoods");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -38,5 +39,9 @@ router.use("/delivery-order-receive", routerDeliveryOrderReceive);
 
 // Stock Opname
 router.use("/stock-opname", routerStockOpname);
+
+// Adjustment Goods
+router.use("/adjustment-goods", routerAdjustmentGoods);
+
 
 module.exports = router;

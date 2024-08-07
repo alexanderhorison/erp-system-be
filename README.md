@@ -9,21 +9,23 @@ Copy env.example to your local as .env
 - Make sure FE and BE have same APP_SECRET_KEY
 ```
 
-
 ### UPDATE on Warehouse Rack (31 Juli 2024)
+
 ```
 Ada update terhadap warehouse Rack dimana punya rak default, jika ada warehouse existing sebelumnya maka akan pasti mengalami error.
 Update warehouseId sesuai yang di existing db
 
-insert into "Master_Warehouse_Racks" 
-(name, description, "warehouseId", "createdAt", "updatedAt") 
-values 
+insert into "Master_Warehouse_Racks"
+(name, description, "warehouseId", "createdAt", "updatedAt")
+values
 ('default', 'default rak', 6, now(), now()),
 ('default', 'default rak', 4, now(), now()),
 ('default', 'default rak', 5, now(), now())
 
 ```
+
 ### STATUS LIST - updated (3 Agustus 2024)
+
 ```
 APPROVED
 PENDING
@@ -32,6 +34,7 @@ DRAFT
 ```
 
 ### List menu global (3 Agustus 2024)
+
 == LIST MENU ==
 menuId di BE disamakan dengan FE, sehingga bisa termapping dengan sesuai. Tidak menggunakan id karena auto increment, jadi manual developer define menu id nya
 
@@ -54,4 +57,6 @@ ID MENU : NAMA
 12  Satuan Produk	Manajemen satuan produk
 13  Company	Manajemen Company Produk
 15  Stock Opname
+16  Barang Masuk
+17  Barang Keluar
 ```
