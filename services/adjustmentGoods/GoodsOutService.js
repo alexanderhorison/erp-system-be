@@ -175,7 +175,7 @@ class GoodsOutService {
           warehouseId: exsistingData.warehouseOriginId,
           userId: user.id,
           info: "GOODS OUT",
-          adjustmentGoodsOutId: code,
+          adjustmentGoodsOutId: exsistingData.id,
         })
       }
       // DONE MINUS STOCK AT WAREHOUSE PRODUCT
