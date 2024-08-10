@@ -99,7 +99,7 @@ class StockOpnameService {
           productId: item?.Warehouse_Product?.Master_Product?.id,
           productWarehouseId: item?.Warehouse_Product?.id,
           productName: item?.Warehouse_Product?.Master_Product?.name,
-          rackName: item.Warehouse_Product.Master_Warehouse_Rack.dataValues?.n || null,
+          rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.dataValues?.n || null,
           unitId: item?.Warehouse_Product?.Master_Unit?.id,
           unitName: item?.Warehouse_Product?.Master_Unit?.name,
           systemStock: item?.systemStock,
@@ -107,8 +107,6 @@ class StockOpnameService {
           diff: item?.diff
         }
       })
-
-
 
       const result = {
         id: data.id,

@@ -13,6 +13,7 @@ const {
   Warehouse_Product,
   Adjustment_Goods_In,
   Adjustment_Goods_In_Product,
+  Master_Warehouse_Rack,
 } = require("../../models");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
@@ -90,6 +91,14 @@ class GoodsInService {
         createdBy: user?.id,
       }, { transaction });
 
+      const defaultRackId = await Master_Warehouse_Rack.findOne({
+        where: {
+          warehouseId: data.warehouseDestination,
+          name: "default"
+        },
+        attributes: ["id"],
+      })
+
       const createAdjustmentGoodsInProduct = []
       const createHistoryAdjusment = []
       // CHECKING IF PRODUCT EXIST IN WAREHOUSE PRODUCT ? CREATE : GET WAREHOUSE ID
@@ -111,6 +120,7 @@ class GoodsInService {
             warehouseId: data.warehouseDestination,
             quantity: 0,
             minimumStock: 1,
+            warehouseRackId: defaultRackId?.id
           }, { transaction })
           warehouseProduct = createdId
           // CREATE HISTORY
