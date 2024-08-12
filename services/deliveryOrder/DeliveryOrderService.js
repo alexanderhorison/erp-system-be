@@ -130,6 +130,7 @@ class DeliveryOrderService {
             paranoid: false,
           },
         ],
+        order: [["createdAt", "DESC"]],
       }
 
       if (payload.user.roleId == 3) {
