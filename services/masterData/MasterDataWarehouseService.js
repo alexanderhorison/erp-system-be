@@ -164,11 +164,14 @@ class MasterDataWarehouseService {
       const dataRackAttr = [];
 
       data.forEach((item) => {
-        dataRackAttr.push({
-          key: item.key,
-          value: item.value,
-          warehouseRackId: createdRack.id,
-        });
+        // karna rak atribut optional 
+        if (item.key && item.vaue) {
+          dataRackAttr.push({
+            key: item.key,
+            value: item.value,
+            warehouseRackId: createdRack.id,
+          });
+        }
       });
 
       // Bulk Create rack attributes
@@ -236,7 +239,7 @@ class MasterDataWarehouseService {
 
           // to record the updated attribute id
           updatedIds.push(item.id);
-        } else if (!item.id) {
+        } else if (!item.id && item.value && item.key) {
           await Master_Warehouse_Rack_Attribute.create(
             {
               value: item.value,

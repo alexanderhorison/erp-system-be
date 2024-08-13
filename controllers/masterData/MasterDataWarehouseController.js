@@ -114,8 +114,8 @@ class MasterDataWarehouseController {
         warehouseId: yup.number().required("Master Warehouse harus ada"),
         data: yup.array().of(
           yup.object().shape({
-            key: yup.string().required("Key attribut harus ada"),
-            value: yup.string().required("Value attribut harus ada"),
+            key: yup.string().optional(),
+            value: yup.string().optional(),
           })
         ),
       });
@@ -143,8 +143,8 @@ class MasterDataWarehouseController {
         description: yup.string().optional(),
         data: yup.array().of(
           yup.object().shape({
-            key: yup.string().required("Key attribut harus ada"),
-            value: yup.string().required("Value attribut harus ada"),
+            key: yup.string().optional(),
+            value: yup.string().optional(),
           })
         ),
       });
