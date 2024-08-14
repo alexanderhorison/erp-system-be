@@ -97,13 +97,19 @@ class MasterDataWarehouseService {
     }
   }
 
-  static async findAll() {
+  static async findAll({ query }) {
     try {
-      const data = await Master_Warehouse.findAll();
+      const data = await Master_Warehouse.findAll({
+        ...(query?.status === "all" ? { paranoid: false } : {}),
+        ...(query?.status === "active" ? { paranoid: true } : {}),
+        ...(query?.status === "not-active" ? { where: { deletedAt: { [Op.not]: null } }, paranoid: false } : {}),
+      });
+
       const result = data.map((item) => ({
         id: item.id,
         name: item.name,
         location: item.location,
+        status: item.deletedAt ? "not active" : "active",
       }));
       return result;
     } catch (error) {

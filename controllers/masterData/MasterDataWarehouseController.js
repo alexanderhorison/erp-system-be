@@ -78,7 +78,7 @@ class MasterDataWarehouseController {
 
   static async getAllWarehouse(req, res) {
     try {
-      const data = await MasterDataWarehouseService.findAll();
+      const data = await MasterDataWarehouseService.findAll({ query: req.query });
       res.status(200).json(responses(true, "Sukses Get Data Gudang", data));
     } catch (error) {
       res
