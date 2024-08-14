@@ -10,6 +10,7 @@ const {
   Master_Product,
   Master_Unit,
   Master_Warehouse_Rack,
+  Master_Company,
 } = require("../../models")
 
 class StockOpnameService {
@@ -73,12 +74,18 @@ class StockOpnameService {
                 model: Warehouse_Product,
                 include: [
                   {
-                    model: Master_Product
+                    model: Master_Product,
+                    include: [
+                      {
+                        model: Master_Company,
+                        attributes: ["name"]
+                      }
+                    ],
                   },
                   {
                     model: Master_Unit
                   },
-                  Master_Warehouse_Rack
+                  Master_Warehouse_Rack,
                 ]
               }
             ]
@@ -104,8 +111,13 @@ class StockOpnameService {
           unitName: item?.Warehouse_Product?.Master_Unit?.name,
           systemStock: item?.systemStock,
           actualStock: item?.actualStock,
-          diff: item?.diff
+          diff: item?.diff,
+          companyName: item.Warehouse_Product.Master_Product.dataValues.Master_C
         }
+      })
+
+      const sortListProduct = listDataProduct.sort((a, b) => {
+        return a.productName.localeCompare(b.productName)
       })
 
       const result = {
@@ -121,7 +133,7 @@ class StockOpnameService {
         createdAt: formatDate(data?.createdAt),
         updatedAt: formatDate(data?.updatedAt),
         notes: data?.notes,
-        listProduct: listDataProduct
+        listProduct: sortListProduct
       }
 
       return result
