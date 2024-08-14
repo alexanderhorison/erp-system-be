@@ -6,7 +6,8 @@ const {
   Warehouse_Product,
   Master_Unit,
   Master_Warehouse,
-  Master_Warehouse_Rack
+  Master_Warehouse_Rack,
+  Master_Company,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -148,16 +149,23 @@ class ProductWarehouseService {
     }
   }
 
-  static async findProductByWarehouseId({ id }) {
+  static async findProductByWarehouseId({ id, query }) {
     try {
       const data = await Warehouse_Product.findAll({
         where: {
           warehouseId: id,
+          ...(query?.unitId && { unitId: query.unitId }),
+          ...(query?.warehouseRackId && { warehouseRackId: query.warehouseRackId }),
         },
         include: [
           {
             model: Master_Product,
-            include: [Master_Category, Master_Type],
+            where: {
+              ...(query?.typeId && { typeId: query.typeId }),
+              ...(query?.companyId && { companyId: query.companyId }),
+              ...(query?.categoryId && { categoryId: query.categoryId }),
+            },
+            include: [Master_Category, Master_Type, Master_Company],
           },
           Master_Unit,
           Master_Warehouse,
@@ -179,6 +187,8 @@ class ProductWarehouseService {
           rackName: item?.Master_Warehouse_Rack?.name,
           quantity: item.quantity,
           minimumStock: item.minimumStock,
+          companyName: item?.Master_Product?.Master_Company?.name,
+          typeName: item?.Master_Product?.Master_Type?.name,
         })
       );
 

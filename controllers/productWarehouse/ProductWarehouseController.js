@@ -32,6 +32,7 @@ class ProductWarehouseController {
 
       const data = await ProductWarehouseService.findProductByWarehouseId({
         id,
+        query: req.query
       });
 
       res.status(200).json(responses(true, "Success get product", data));
@@ -156,7 +157,6 @@ class ProductWarehouseController {
   static async getListProduct(req, res) {
     try {
       const user = req.userData;
-
       const data = await ProductWarehouseService.findProductByWarehouseId({
         id: user.warehouseId,
       });
