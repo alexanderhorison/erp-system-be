@@ -53,6 +53,7 @@ class ProductWarehouseService {
           warehouseId: item.warehouseId,
           adjustmentType: "INITIATE",
           userId: user.id,
+          lastQuantity: item.quantity,
         };
       });
 
@@ -96,6 +97,7 @@ class ProductWarehouseService {
           user,
           adjustmentType: data.adjustmentType,
           quantity: data.quantityAdjustment,
+          lastQuantity: existingData.quantity,
           transaction,
         });
       }

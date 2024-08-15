@@ -84,6 +84,7 @@ class ProductWarehouseTransformationService {
         quantity: data.qtyTransformation,
         info: "TRANSFORMATION_PRODUCT",
         description: transformationData?.info,
+        lastQuantity: originProduct.quantity,
         transaction,
       });
 
@@ -99,6 +100,7 @@ class ProductWarehouseTransformationService {
           quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
+          lastQuantity: destinationProduct.quantity,
           transaction,
         });
       } else {
@@ -121,6 +123,7 @@ class ProductWarehouseTransformationService {
           quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
+          lastQuantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           transaction,
         });
       }

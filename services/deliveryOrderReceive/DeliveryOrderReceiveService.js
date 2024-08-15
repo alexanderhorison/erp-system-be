@@ -88,7 +88,8 @@ class DeliveryOrderReceiveService {
             adjustmentType: "INITIATE",
             quantity: initiated.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            deliveryOrderId: deliveryOrderId,
+            deliveryOrderId: origin.id,
+            lastQuantity: initiated.quantity,
             transaction,
           })
 
@@ -103,7 +104,8 @@ class DeliveryOrderReceiveService {
             adjustmentType: "PLUS",
             quantity: product.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            deliveryOrderId: deliveryOrderId,
+            deliveryOrderId: originid,
+            lastQuantity: destinationProduct.quantity,
             transaction,
           })
         }

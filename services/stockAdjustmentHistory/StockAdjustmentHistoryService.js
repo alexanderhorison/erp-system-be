@@ -10,6 +10,7 @@ class StockAdjustmentHistoryService {
     deliveryOrderId = null,
     transaction,
     description = null,
+    lastQuantity = null,
   }) {
     try {
       const createdHistory = {
@@ -21,6 +22,7 @@ class StockAdjustmentHistoryService {
         deliveryOrderId,
         userId: user.id,
         description,
+        lastQuantity,
       };
 
       const createHistoryAdjusment = await Stock_Adjustment_History.create(
@@ -42,11 +44,11 @@ class StockAdjustmentHistoryService {
         data,
         { transaction }
       );
-      return createHistoryAdjusment;      
+      return createHistoryAdjusment;
     } catch (error) {
       throw error;
     }
-  } 
+  }
 }
 
 module.exports = StockAdjustmentHistoryService;

@@ -174,6 +174,7 @@ class GoodsOutService {
           userId: user.id,
           info: "GOODS OUT",
           adjustmentGoodsOutId: exsistingData.id,
+          lastQuantity: warehouseProduct?.quantity - item?.quantity
         })
       }
       // DONE MINUS STOCK AT WAREHOUSE PRODUCT

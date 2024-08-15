@@ -132,6 +132,7 @@ class GoodsInService {
             userId: user.id,
             info: "GOODS IN",
             adjustmentGoodsInId: createdData.id,
+            lastQuantity: 0
           })
         }
         // IF FOUND, GET WAREHOUSE PRODUCT ID
@@ -203,6 +204,7 @@ class GoodsInService {
           userId: user.id,
           info: "GOODS IN",
           adjustmentGoodsInId: exsistingData.id,
+          lastQuantity: warehouseProduct.quantity
         })
       }
       // DONE ADDING STOCK BEFORE APPROVE

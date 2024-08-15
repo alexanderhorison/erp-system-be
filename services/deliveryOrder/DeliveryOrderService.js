@@ -44,13 +44,24 @@ class DeliveryOrderService {
       const deliveryOrderProduct = [];
 
       const stockjustmentHistory = [];
-
       listProduct.forEach((item) => {
+        console.log(item, "<<<<<");
+
+      })
+      for await (const item of listProduct) {
         deliveryOrderProduct.push({
           deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
           productWarehouseId: item.productWarehouseId,
           quantity: item.qty,
         });
+
+        // CHECK STOCK
+        const stockExsisting = await Warehouse_Product.findOne({
+          where: {
+            id: item.productWarehouseId
+          },
+          attributes: ["quantity"],
+        })
 
         stockjustmentHistory.push({
           productWarehouseId: item.productWarehouseId,
@@ -60,8 +71,9 @@ class DeliveryOrderService {
           userId: user.id,
           info: "DELIVERY ORDER CREATE",
           deliveryOrderId: createdDeliveryOrder.id,
+          lastQuantity: +stockExsisting.quantity - +item.qty
         });
-      });
+      }
 
       // BUAT PRODUK YANG TERDAPAT PADA SURAT JALAN
       const createdDeliveryOrderProduct =
@@ -88,6 +100,8 @@ class DeliveryOrderService {
       await transaction.commit();
       return;
     } catch (error) {
+      console.log(error);
+
       await transaction.rollback();
       throwValidation(error.code, error.message);
     }
