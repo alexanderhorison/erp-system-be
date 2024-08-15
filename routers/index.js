@@ -9,6 +9,7 @@ const routerDeliveryOrder = require("./deliveryOrder");
 const routerDeliveryOrderReceive = require("./deliveryOrderReceive");
 const routerStockOpname = require("./stockOpname");
 const routerAdjustmentGoods = require("./adjustmentGoods");
+const MigrationController = require('../controllers/migration/MigrationController');
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -42,6 +43,9 @@ router.use("/stock-opname", routerStockOpname);
 
 // Adjustment Goods
 router.use("/adjustment-goods", routerAdjustmentGoods);
+
+// API Migrations
+router.post("/api-migrations", MigrationController.apiMigration)
 
 
 module.exports = router;
