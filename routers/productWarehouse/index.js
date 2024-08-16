@@ -10,6 +10,7 @@ router.get("/list", ProductWarehouseController.getListProduct)
 router.get("/warehouse/:id", ProductWarehouseController.getProductByWarehouse);
 router.post("/create/:warehouseId", ProductWarehouseController.create);
 
+router.get("/history/:id", ProductWarehouseController.getHistoryProductWarehouse);
 router.get("/:id", ProductWarehouseController.getProductWarehouse);
 router.put("/:id", ProductWarehouseController.adjustProduct);
 

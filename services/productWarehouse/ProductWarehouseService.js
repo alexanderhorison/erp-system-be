@@ -1,3 +1,5 @@
+const { formatDate, formatDateWithTime } = require("../../helpers/formatDate");
+const { wordingHistory, titleInfo, infoType } = require("../../helpers/producWarehouse/wordingHistory");
 const {
   sequelize: sq,
   Master_Product,
@@ -8,6 +10,11 @@ const {
   Master_Warehouse,
   Master_Warehouse_Rack,
   Master_Company,
+  Stock_Adjustment_History,
+  Delivery_Order,
+  Adjustment_Goods_In,
+  Adjustment_Goods_Out,
+  Master_User,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -204,6 +211,79 @@ class ProductWarehouseService {
 
       return result;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getHistoryProductWarehouse({ id }) {
+    try {
+      const data = await Stock_Adjustment_History.findAll({
+        where: {
+          productWarehouseId: id,
+        },
+        order: [["id", "DESC"]],
+        include: [
+          Master_User,
+          Delivery_Order,
+          Adjustment_Goods_In,
+          Adjustment_Goods_Out,
+        ],
+      });
+      const dataProduct = await Warehouse_Product.findOne({
+        where: {
+          id: id,
+        },
+        include: [
+          Master_Product,
+          Master_Unit,
+          Master_Warehouse,
+          Master_Warehouse_Rack,
+        ],
+      })
+
+      const mappingHistory = data.map((item) => {
+        return {
+          title: infoType(item),
+          titleInfo: titleInfo(item),
+          infoType: infoType(item),
+          quantity: item?.quantity,
+          date: formatDateWithTime(item?.createdAt).split("-")[0],
+          time: formatDateWithTime(item?.createdAt).split("-")[1],
+          adjustmentType: item?.adjustmentType,
+          ...(item?.info === "TRANSFORMATION PRODUCT" || item?.info === "TRANSFORMATION_PRODUCT") && {
+            formula: `Rumus: ${item?.description}`
+          },
+          ...(item?.info === "GOODS IN") && {
+            goodsIn: `Nomor Surat Barang Masuk: ${item?.Adjustment_Goods_In?.code}`
+          },
+          ...(item?.info === "GOODS OUT") && {
+            goodsOut: `Nomor Surat Barang Keluar: ${item?.Adjustment_Goods_Out?.code}`
+          },
+          ...(item?.info === "DELIVERY ORDER CREATE") && {
+            deliveryOrder: `Nomor Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`
+          },
+          ...(item?.info === "DELIVERY ORDER RECEIVE") && {
+            deliveryOrder: `Nomor Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`
+          },
+          createdBy: item?.Master_User?.name,
+          lastQuantity: item?.lastQuantity
+        }
+      })
+
+      const mappingProduct = {
+        productName: dataProduct?.Master_Product?.name,
+        unitName: dataProduct?.Master_Unit?.name,
+        rackName: dataProduct?.Master_Warehouse_Rack?.name
+      }
+
+      const result = {
+        product: mappingProduct,
+        history: mappingHistory,
+      };
+      return result;
+    } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }

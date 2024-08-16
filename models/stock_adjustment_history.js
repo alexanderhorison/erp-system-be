@@ -5,6 +5,30 @@ module.exports = (sequelize, DataTypes) => {
   class Stock_Adjustment_History extends Model {
     static associate(models) {
       // define association here
+
+      Stock_Adjustment_History.belongsTo(models.Warehouse_Product, {
+        foreignKey: "productWarehouseId",
+      });
+
+      Stock_Adjustment_History.belongsTo(models.Master_Warehouse, {
+        foreignKey: "warehouseId",
+      });
+
+      Stock_Adjustment_History.belongsTo(models.Master_User, {
+        foreignKey: "userId",
+      });
+
+      Stock_Adjustment_History.belongsTo(models.Delivery_Order, {
+        foreignKey: "deliveryOrderId",
+      });
+
+      Stock_Adjustment_History.belongsTo(models.Adjustment_Goods_Out, {
+        foreignKey: "adjustmentGoodsOutId",
+      });
+
+      Stock_Adjustment_History.belongsTo(models.Adjustment_Goods_In, {
+        foreignKey: "adjustmentGoodsInId",
+      });
     }
   }
 

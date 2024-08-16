@@ -82,7 +82,7 @@ class ProductWarehouseTransformationService {
         user,
         adjustmentType: "MINUS",
         quantity: data.qtyTransformation,
-        info: "TRANSFORMATION_PRODUCT",
+        info: "TRANSFORMATION PRODUCT",
         description: transformationData?.info,
         lastQuantity: originProduct.quantity,
         transaction,
