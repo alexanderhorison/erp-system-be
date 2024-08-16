@@ -32,12 +32,21 @@ class ProductWarehouseService {
           unitId: listUnit,
           warehouseId: warehouseId,
         },
+        include: [
+          {
+            model: Master_Product,
+          },
+          {
+            model: Master_Unit,
+          }
+        ]
       });
 
       if (exsistingData.length) {
+        const productDuplicate = exsistingData.map((item) => `${item.Master_Product.name}- Unit: ${item.Master_Unit.name}`);
         throw {
           code: 400,
-          message: "Data sudah ada dalam database",
+          message: `Produk: ${productDuplicate[0]} sudah ada dalam database`,
         };
       }
 
