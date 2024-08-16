@@ -44,10 +44,6 @@ class DeliveryOrderService {
       const deliveryOrderProduct = [];
 
       const stockjustmentHistory = [];
-      listProduct.forEach((item) => {
-        console.log(item, "<<<<<");
-
-      })
       for await (const item of listProduct) {
         deliveryOrderProduct.push({
           deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
@@ -100,8 +96,6 @@ class DeliveryOrderService {
       await transaction.commit();
       return;
     } catch (error) {
-      console.log(error);
-
       await transaction.rollback();
       throwValidation(error.code, error.message);
     }

@@ -171,8 +171,6 @@ class ProductWarehouseController {
 
   static async getHistoryProductWarehouse(req, res) {
     try {
-      console.log(req.params.id);
-
       const schemaParams = yup
         .number()
         .required("Id produk warehouse tidak boleh kosong");

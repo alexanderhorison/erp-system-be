@@ -263,19 +263,27 @@ class ProductWarehouseService {
             formula: `Rumus: ${item?.description}`
           },
           ...(item?.info === "GOODS IN") && {
-            goodsIn: `Nomor Surat Barang Masuk: ${item?.Adjustment_Goods_In?.code}`
+            goodsIn: `Barang Masuk: ${item?.Adjustment_Goods_In?.code}`,
+            notes: item?.Adjustment_Goods_In?.notes,
+            goodsInCode: item?.Adjustment_Goods_In?.code
           },
           ...(item?.info === "GOODS OUT") && {
-            goodsOut: `Nomor Surat Barang Keluar: ${item?.Adjustment_Goods_Out?.code}`
+            goodsOut: `Barang Keluar: ${item?.Adjustment_Goods_Out?.code}`,
+            notes: item?.Adjustment_Goods_Out?.notes,
+            goodsOutCode: item?.Adjustment_Goods_Out?.code
           },
           ...(item?.info === "DELIVERY ORDER CREATE") && {
-            deliveryOrder: `Nomor Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`,
+            notes: item?.Delivery_Order?.notes,
+            deliveryOrderCode: item?.Delivery_Order?.deliveryOrderId
           },
           ...(item?.info === "DELIVERY ORDER RECEIVE") && {
-            deliveryOrder: `Nomor Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`,
+            notes: item?.Delivery_Order?.notes,
+            deliveryOrderCode: item?.Delivery_Order?.deliveryOrderId
           },
           createdBy: item?.Master_User?.name,
-          lastQuantity: item?.lastQuantity
+          lastQuantity: item?.lastQuantity,
         }
       })
 
@@ -291,8 +299,6 @@ class ProductWarehouseService {
       };
       return result;
     } catch (error) {
-      console.log(error);
-
       throw error;
     }
   }
