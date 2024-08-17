@@ -37,13 +37,8 @@ class MigrationService {
           for (let i = 0; i < findAllStock.length; i++) {
             const productWarehouseId = findAllStock[i].productWarehouseId;
 
-            const currentQuantity = await this.processStockAdjustmentHistory(
-              productWarehouseId,
-              transaction
-            );
-
             // find productWarehouse to get current quantity
-            const { quantity } = await Warehouse_Product.findOne({
+            const productWarehouse = await Warehouse_Product.findOne({
               attributes: ["quantity"],
               where: {
                 id: productWarehouseId,
@@ -51,11 +46,20 @@ class MigrationService {
               raw: true,
             });
 
+            if (!productWarehouse) {
+              continue;
+            }
+
+            const currentQuantity = await this.processStockAdjustmentHistory(
+              productWarehouseId,
+              transaction
+            );
+
             // Make sure quantity is same
-            if (currentQuantity !== quantity) {
+            if (currentQuantity !== productWarehouse.quantity) {
               throw {
                 code: 400,
-                message: `Mismatch in quantity for productWarehouseId: ${productWarehouseId}. Expected: ${quantity}, Found: ${currentQuantity}`,
+                message: `Mismatch in quantity for productWarehouseId: ${productWarehouseId}. Expected: ${productWarehouse.quantity}, Found: ${currentQuantity}`,
               };
             }
           }

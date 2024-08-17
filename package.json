@@ -27,7 +27,7 @@
     "db:create": "npx sequelize db:create",
     "db:migrate": "npx sequelize db:migrate",
     "db:create:model": "npx sequelize model:generate --name Master_Warehouse_Rack_Attribute --attributes warehouseRackId:integer,key:string,value:string",
-    "db:create:migration": "npx sequelize migration:generate --name=add-constraint-products",
+    "db:create:migration": "npx sequelize migration:generate --name=add-constraint-delivery-order",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:seed:all": "npx sequelize db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo",
