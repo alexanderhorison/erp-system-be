@@ -11,9 +11,11 @@ module.exports = {
 
     // Step 2: Copy data to the new column, casting as needed
     await queryInterface.sequelize.query(`
-      UPDATE "Stock_Adjustment_Histories"
-      SET "deliveryOrderId_temp" = CAST("deliveryOrderId" AS INTEGER)
-      WHERE "deliveryOrderId" ~ '^[0-9]+$' AND "deliveryOrderId" IS NOT NULL
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2.id
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId" = do2."deliveryOrderId"
+        AND (sah.info = 'DELIVERY ORDER CREATE' OR sah.info = 'DELIVERY ORDER RECEIVE');
     `);
 
     // Step 3: Drop the old column
@@ -24,19 +26,19 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // If needed, reverse the process: create the old column, copy data back, and drop the new column
-
     // Step 1: Add the old column with STRING type
     await queryInterface.addColumn('Stock_Adjustment_Histories', 'deliveryOrderId_temp', {
       type: Sequelize.STRING,
       allowNull: true,
     });
 
-    // Step 2: Copy data back to the old column
+    // Step 2: Copy the old value back to the old column
     await queryInterface.sequelize.query(`
-      UPDATE "Stock_Adjustment_Histories"
-      SET "deliveryOrderId_temp" = CAST("deliveryOrderId" AS TEXT)
-      WHERE "deliveryOrderId" IS NOT NULL
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2."deliveryOrderId"
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId" = do2.id
+        AND (sah.info = 'DELIVERY ORDER CREATE' OR sah.info = 'DELIVERY ORDER RECEIVE');
     `);
 
     // Step 3: Drop the new INTEGER column
