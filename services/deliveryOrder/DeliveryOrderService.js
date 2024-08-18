@@ -22,7 +22,7 @@ class DeliveryOrderService {
     try {
       const { data, user } = payload;
 
-      const deliveryOrderId = await codeGenerator();
+      const code = await codeGenerator();
 
       const deliveryOrderData = {
         status: "PENDING",
@@ -30,7 +30,7 @@ class DeliveryOrderService {
         warehouseDestinationId: data.warehouseDestinationId,
         notes: data.notes || "",
         createdBy: user.id,
-        deliveryOrderId: deliveryOrderId,
+        code: code,
       };
 
       // BUAT SURAT JALAN
@@ -46,7 +46,7 @@ class DeliveryOrderService {
       const stockjustmentHistory = [];
       for await (const item of listProduct) {
         deliveryOrderProduct.push({
-          deliveryOrderId: createdDeliveryOrder.deliveryOrderId,
+          deliveryOrderId: createdDeliveryOrder.id,
           productWarehouseId: item.productWarehouseId,
           quantity: item.qty,
         });
@@ -150,8 +150,8 @@ class DeliveryOrderService {
       const data = await Delivery_Order.findAll(queryOption);
       const result = data.map((item) => {
         return {
-          id: item.deliveryOrderId,
-          deliveryOrderId: item.deliveryOrderId,
+          id: item.id,
+          code: item.code,
           createdAt: formatDate(item.createdAt),
           receivedAt: formatDate(item.receivedAt),
           createdBy: {
@@ -217,11 +217,11 @@ class DeliveryOrderService {
     }
   }
 
-  static async getDetailDeliveryOrder(deliveryOrderId) {
+  static async getDetailDeliveryOrder(code) {
     try {
       const data = await Delivery_Order.findOne({
         where: {
-          deliveryOrderId: deliveryOrderId,
+          code: code,
         },
         include: [
           {

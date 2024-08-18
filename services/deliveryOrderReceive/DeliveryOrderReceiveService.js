@@ -11,14 +11,14 @@ const { throwValidation } = require("../../helpers/responses");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class DeliveryOrderReceiveService {
-  static async updateDeliveryOrder(deliveryOrderId, user) {
+  static async updateDeliveryOrder(code, user) {
     const transaction = await sq.transaction();
     try {
 
       // Check warehouse origin
       const origin = await Delivery_Order.findOne({
         where: {
-          deliveryOrderId: deliveryOrderId,
+          code: code,
         },
         include: [
           {

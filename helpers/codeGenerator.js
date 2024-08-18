@@ -14,7 +14,7 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       generatedCode = `${prefix}-${tempId}`;
       if (prefix === "TBA") {
         exsisting = await Delivery_Order.findOne({
-          where: { deliveryOrderId: generatedCode },
+          where: { code: generatedCode },
         });
       }
       if (prefix === "STO") {
@@ -32,7 +32,7 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
           where: { code: generatedCode },
         })
       }
-        exsisting ? (notDuplicate = true) : (notDuplicate = false);
+      exsisting ? (notDuplicate = true) : (notDuplicate = false);
     } while (notDuplicate);
     return generatedCode;
   } catch (error) {

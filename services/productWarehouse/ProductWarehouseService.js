@@ -273,14 +273,14 @@ class ProductWarehouseService {
             goodsOutCode: item?.Adjustment_Goods_Out?.code
           },
           ...(item?.info === "DELIVERY ORDER CREATE") && {
-            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`,
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
             notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.deliveryOrderId
+            deliveryOrderCode: item?.Delivery_Order?.code
           },
           ...(item?.info === "DELIVERY ORDER RECEIVE") && {
-            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.deliveryOrderId}`,
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
             notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.deliveryOrderId
+            deliveryOrderCode: item?.Delivery_Order?.code
           },
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,

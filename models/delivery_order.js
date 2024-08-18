@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
 
       Delivery_Order.hasMany(models.Delivery_Order_Product, {
         foreignKey: "deliveryOrderId",
-        sourceKey: "deliveryOrderId",
       });
 
       Delivery_Order.belongsTo(models.Master_User, { foreignKey: "createdBy", as: "creatorBy" });
@@ -34,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       warehouseDestinationId: DataTypes.INTEGER,
       createdBy: DataTypes.INTEGER,
       notes: DataTypes.TEXT,
-      deliveryOrderId: DataTypes.STRING,
+      code: DataTypes.STRING,
       receivedAt: DataTypes.DATE,
       receivedBy: DataTypes.INTEGER,
     },

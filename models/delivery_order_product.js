@@ -7,7 +7,6 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Delivery_Order_Product.belongsTo(models.Delivery_Order, {
         foreignKey: "deliveryOrderId",
-        targetKey: "deliveryOrderId"
       });
 
       Delivery_Order_Product.belongsTo(models.Warehouse_Product, {
