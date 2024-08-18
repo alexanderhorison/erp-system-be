@@ -15,7 +15,27 @@ module.exports = {
       SET "deliveryOrderId_temp" = do2.id
       FROM "Delivery_Orders" do2
       WHERE sah."deliveryOrderId" = do2."deliveryOrderId"
-        AND (sah.info = 'DELIVERY ORDER CREATE' OR sah.info = 'DELIVERY ORDER RECEIVE');
+        AND sah.info = 'DELIVERY ORDER RECEIVE';
+    `);
+
+    // DELIVERY ORDER ID BERUPA TBA DIBAWAH TANGGAL 11 AGUSTUS 2024
+    await queryInterface.sequelize.query(`
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2.id
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId" = do2."deliveryOrderId"
+        AND sah.info = 'DELIVERY ORDER CREATE'
+        AND do2."createdAt" < '2024-08-11';
+    `);
+
+    //DELIVERY ORDER ID SUDAH BERUPA ID UPDATE DARI TANGGAL 11 AGUSTUS 2024
+    await queryInterface.sequelize.query(`
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2.id
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId" = do2.id::text
+        AND sah.info = 'DELIVERY ORDER CREATE'
+        AND do2."createdAt" > '2024-08-11';
     `);
 
     // Step 3: Drop the old column
@@ -32,13 +52,31 @@ module.exports = {
       allowNull: true,
     });
 
-    // Step 2: Copy the old value back to the old column
+    // Step 2: Restore the original `deliveryOrderId` data, casting do2.id to text
     await queryInterface.sequelize.query(`
       UPDATE "Stock_Adjustment_Histories" sah
-      SET "deliveryOrderId_temp" = do2."deliveryOrderId"
+      SET "deliveryOrderId_temp" = do2."deliveryOrderId"::text
       FROM "Delivery_Orders" do2
-      WHERE sah."deliveryOrderId" = do2.id
-        AND (sah.info = 'DELIVERY ORDER CREATE' OR sah.info = 'DELIVERY ORDER RECEIVE');
+      WHERE sah."deliveryOrderId"::integer = do2.id
+        AND sah.info = 'DELIVERY ORDER CREATE'
+        AND do2."createdAt" > '2024-08-11';
+    `);
+
+    await queryInterface.sequelize.query(`
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2."deliveryOrderId"::text
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId"::integer = do2.id
+        AND sah.info = 'DELIVERY ORDER RECEIVE';
+    `);
+
+    await queryInterface.sequelize.query(`
+      UPDATE "Stock_Adjustment_Histories" sah
+      SET "deliveryOrderId_temp" = do2."deliveryOrderId"::text
+      FROM "Delivery_Orders" do2
+      WHERE sah."deliveryOrderId"::integer = do2.id
+        AND sah.info = 'DELIVERY ORDER CREATE'
+        AND do2."createdAt" < '2024-08-11';
     `);
 
     // Step 3: Drop the new INTEGER column

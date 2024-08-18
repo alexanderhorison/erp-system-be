@@ -79,19 +79,19 @@ module.exports = {
       "idx_Delivery_Order_Products_productWarehouseId"
     );
     await queryInterface.removeConstraint(
-      "Delivery_Order_Products",
+      "Delivery_Orders",
       "fk_Delivery_Orders_warehouseDestinationId"
     );
     await queryInterface.removeConstraint(
-      "Delivery_Order_Products",
+      "Delivery_Orders",
       "fk_Delivery_Orders_warehouseOriginId"
     );
     await queryInterface.removeConstraint(
-      "Delivery_Order_Products",
+      "Delivery_Orders",
       "fk_Delivery_Orders_receivedBy"
     );
     await queryInterface.removeConstraint(
-      "Delivery_Order_Products",
+      "Delivery_Orders",
       "fk_Delivery_Orders_createdBy"
     );
   },
