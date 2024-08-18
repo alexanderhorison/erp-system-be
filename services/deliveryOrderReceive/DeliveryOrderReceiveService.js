@@ -104,7 +104,7 @@ class DeliveryOrderReceiveService {
             adjustmentType: "PLUS",
             quantity: product.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            deliveryOrderId: originid,
+            deliveryOrderId: origin.id,
             lastQuantity: destinationProduct.quantity,
             transaction,
           })
