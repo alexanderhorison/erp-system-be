@@ -1,5 +1,6 @@
 const { formatDate, formatDateWithTime } = require("../../helpers/formatDate");
 const { wordingHistory, titleInfo, infoType } = require("../../helpers/producWarehouse/wordingHistory");
+const { generateFilter } = require("../../helpers/queryGenerator");
 const {
   sequelize: sq,
   Master_Product,
@@ -169,20 +170,27 @@ class ProductWarehouseService {
 
   static async findProductByWarehouseId({ id, query }) {
     try {
+      let queryFilter = {};
+      if (query != {}) {
+        const filters = [
+          { column: "categoryId", operator: "=", value: query.categoryId, model: "Master_Product" },
+          { column: "typeId", operator: "=", value: query.typeId, model: "Master_Product" },
+          { column: "companyId", operator: "=", value: query.companyId, model: "Master_Product" },
+          { column: "unitId", operator: "=", value: query.unitId, model: "Warehouse_Product" },
+          { column: "warehouseRackId", operator: "=", value: query.warehouseRackId, model: "Warehouse_Product" },
+        ];
+        queryFilter = generateFilter(filters);
+      }
+      
       const data = await Warehouse_Product.findAll({
         where: {
           warehouseId: id,
-          ...(query?.unitId && { unitId: query.unitId }),
-          ...(query?.warehouseRackId && { warehouseRackId: query.warehouseRackId }),
+          ...queryFilter.Warehouse_Product
         },
         include: [
           {
             model: Master_Product,
-            where: {
-              ...(query?.typeId && { typeId: query.typeId }),
-              ...(query?.companyId && { companyId: query.companyId }),
-              ...(query?.categoryId && { categoryId: query.categoryId }),
-            },
+            where: queryFilter.Master_Product,
             include: [Master_Category, Master_Type, Master_Company],
           },
           Master_Unit,

@@ -3,25 +3,33 @@ const { Op } = require("sequelize");
 
 function generateFilter(filters) {
   const filter = {};
-  filters.forEach(({ column, operator, value }) => {
+  filters.forEach(({ column, operator, value, model }) => {
+    /**
+     * Definition
+     * 1. Column for ur database column name
+     * 2. operator for query type (=, !=, contains)
+     * 3. value for query value
+     * 4. model define in ur models (Warehouse_Product, Master_Product)
+     */
     if (column && operator && value !== undefined && value !== null && value !== '') {
+      const target = model ? filter[model] = filter[model] || {} : filter
       switch (operator) {
         case "=":
-          filter[column] = value;
+          target[column] = value;
           break;
         case "!=":
-          filter[column] = { $ne: value };
+          target[column] = { $ne: value };
           break;
         case "contains":
-          filter[column] = { $regex: `.*${value}.*`, $options: "i" };
+          target[column] = { [Op.like]: `%${value}%` };
           break;
         // Handle "active" status where deletedAt is null
         case "active":
-          filter[column] = { [Op.eq]: null };
+          target[column] = { [Op.eq]: null };
           break;
         // Handle "not active" status where deletedAt is not null
         case "notActive":
-          filter[column] = { [Op.not]: null };
+          target[column] = { [Op.not]: null };
           break;
         // Add more cases for other operators as needed
         default:
