@@ -1,5 +1,10 @@
 const { formatDate, formatDateWithTime } = require("../../helpers/formatDate");
-const { wordingHistory, titleInfo, infoType } = require("../../helpers/producWarehouse/wordingHistory");
+const {
+  wordingHistory,
+  titleInfo,
+  infoType,
+} = require("../../helpers/producWarehouse/wordingHistory");
+const { generateFilter } = require("../../helpers/queryGenerator");
 const {
   sequelize: sq,
   Master_Product,
@@ -38,12 +43,15 @@ class ProductWarehouseService {
           },
           {
             model: Master_Unit,
-          }
-        ]
+          },
+        ],
       });
 
       if (exsistingData.length) {
-        const productDuplicate = exsistingData.map((item) => `${item.Master_Product.name}- Unit: ${item.Master_Unit.name}`);
+        const productDuplicate = exsistingData.map(
+          (item) =>
+            `${item.Master_Product.name}- Unit: ${item.Master_Unit.name}`
+        );
         throw {
           code: 400,
           message: `Produk: ${productDuplicate[0]} sudah ada dalam database`,
@@ -158,7 +166,7 @@ class ProductWarehouseService {
         warehouseName: data.Master_Warehouse.name,
         quantity: data.quantity,
         minimumStock: data.minimumStock,
-        warehouseRackId: data?.Master_Warehouse_Rack?.id
+        warehouseRackId: data?.Master_Warehouse_Rack?.id,
       };
 
       return result;
@@ -169,25 +177,57 @@ class ProductWarehouseService {
 
   static async findProductByWarehouseId({ id, query }) {
     try {
+      let queryFilter = {};
+      if (query != {}) {
+        const filters = [
+          {
+            column: "categoryId",
+            operator: "=",
+            value: query.categoryId,
+            model: "Master_Product",
+          },
+          {
+            column: "typeId",
+            operator: "=",
+            value: query.typeId,
+            model: "Master_Product",
+          },
+          {
+            column: "companyId",
+            operator: "=",
+            value: query.companyId,
+            model: "Master_Product",
+          },
+          {
+            column: "unitId",
+            operator: "=",
+            value: query.unitId,
+            model: "Warehouse_Product",
+          },
+          {
+            column: "warehouseRackId",
+            operator: "=",
+            value: query.warehouseRackId,
+            model: "Warehouse_Product",
+          },
+        ];
+        queryFilter = generateFilter(filters);
+      }
+
       const data = await Warehouse_Product.findAll({
         where: {
           warehouseId: id,
-          ...(query?.unitId && { unitId: query.unitId }),
-          ...(query?.warehouseRackId && { warehouseRackId: query.warehouseRackId }),
+          ...queryFilter.Warehouse_Product,
         },
         include: [
           {
             model: Master_Product,
-            where: {
-              ...(query?.typeId && { typeId: query.typeId }),
-              ...(query?.companyId && { companyId: query.companyId }),
-              ...(query?.categoryId && { categoryId: query.categoryId }),
-            },
+            where: queryFilter.Master_Product,
             include: [Master_Category, Master_Type, Master_Company],
           },
           Master_Unit,
           Master_Warehouse,
-          Master_Warehouse_Rack
+          Master_Warehouse_Rack,
         ],
       });
 
@@ -248,7 +288,7 @@ class ProductWarehouseService {
           Master_Warehouse,
           Master_Warehouse_Rack,
         ],
-      })
+      });
 
       const mappingHistory = data.map((item) => {
         return {
@@ -259,39 +299,40 @@ class ProductWarehouseService {
           date: formatDateWithTime(item?.createdAt).split("-")[0],
           time: formatDateWithTime(item?.createdAt).split("-")[1],
           adjustmentType: item?.adjustmentType,
-          ...(item?.info === "TRANSFORMATION PRODUCT" || item?.info === "TRANSFORMATION_PRODUCT") && {
-            formula: `Rumus: ${item?.description}`
-          },
-          ...(item?.info === "GOODS IN") && {
+          ...((item?.info === "TRANSFORMATION PRODUCT" ||
+            item?.info === "TRANSFORMATION_PRODUCT") && {
+            formula: `Rumus: ${item?.description}`,
+          }),
+          ...(item?.info === "GOODS IN" && {
             goodsIn: `Barang Masuk: ${item?.Adjustment_Goods_In?.code}`,
             notes: item?.Adjustment_Goods_In?.notes,
-            goodsInCode: item?.Adjustment_Goods_In?.code
-          },
-          ...(item?.info === "GOODS OUT") && {
+            goodsInCode: item?.Adjustment_Goods_In?.code,
+          }),
+          ...(item?.info === "GOODS OUT" && {
             goodsOut: `Barang Keluar: ${item?.Adjustment_Goods_Out?.code}`,
             notes: item?.Adjustment_Goods_Out?.notes,
-            goodsOutCode: item?.Adjustment_Goods_Out?.code
-          },
-          ...(item?.info === "DELIVERY ORDER CREATE") && {
+            goodsOutCode: item?.Adjustment_Goods_Out?.code,
+          }),
+          ...(item?.info === "DELIVERY ORDER CREATE" && {
             deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
             notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.code
-          },
-          ...(item?.info === "DELIVERY ORDER RECEIVE") && {
+            deliveryOrderCode: item?.Delivery_Order?.code,
+          }),
+          ...(item?.info === "DELIVERY ORDER RECEIVE" && {
             deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
             notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.code
-          },
+            deliveryOrderCode: item?.Delivery_Order?.code,
+          }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,
-        }
-      })
+        };
+      });
 
       const mappingProduct = {
         productName: dataProduct?.Master_Product?.name,
         unitName: dataProduct?.Master_Unit?.name,
-        rackName: dataProduct?.Master_Warehouse_Rack?.name
-      }
+        rackName: dataProduct?.Master_Warehouse_Rack?.name,
+      };
 
       const result = {
         product: mappingProduct,

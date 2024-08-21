@@ -204,8 +204,8 @@ class UserService {
       let queryFilter = {};
       if (req.query != {}) {
         const filters = [
-          { column: "roleId", operator: "=", value: roleId },
-          { column: "deletedAt", operator: status, value: status },
+          { column: "roleId", operator: "=", value: roleId, model: "Master_User" },
+          { column: "deletedAt", operator: status, value: status, model: "Master_User" },
         ];
         queryFilter = generateFilter(filters);
       }
@@ -222,7 +222,7 @@ class UserService {
         ],
         include: [{ model: Master_Role, attributes: ["name", "description"] }],
         paranoid: false,
-        where: queryFilter,
+        where: queryFilter.Master_User,
       });
       res.status(200).json(responses(true, "Berhasil", getAllUser));
     } catch (error) {

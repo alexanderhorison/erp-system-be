@@ -150,9 +150,9 @@ class MasterDataProductService {
 
       if (req.query != {}) {
         const filters = [
-          { column: "categoryId", operator: "=", value: categoryId },
-          { column: "typeId", operator: "=", value: typeId },
-          { column: "companyId", operator: "=", value: companyId },
+          { column: "categoryId", operator: "=", value: categoryId, model: "Master_Product" },
+          { column: "typeId", operator: "=", value: typeId,  model: "Master_Product" },
+          { column: "companyId", operator: "=", value: companyId,  model: "Master_Product" },
         ];
         queryFilter = generateFilter(filters);
       }
@@ -174,7 +174,7 @@ class MasterDataProductService {
             attributes: ["name"],
           },
         ],
-        where: queryFilter,
+        where: queryFilter.Master_Product,
       });
 
       const result = data.map((item) => ({
