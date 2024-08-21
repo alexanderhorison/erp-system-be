@@ -275,7 +275,7 @@ class StockOpnameService {
       // IF ALREADY IMPLEMENTED PENDING STATUS, CODE WILL BE DEPRECATED
       if (existingStockOpname.status === "DRAFT") {
         existingStockOpname.Stock_Opname_Products.forEach((item) => {
-          if (!item.actualStock) throw { code: 400, message: "Data belum lengkap" }
+          if (isNaN(item.actualStock)) throw { code: 400, message: "Data belum lengkap" }
         })
       }
       // ======================================================================
