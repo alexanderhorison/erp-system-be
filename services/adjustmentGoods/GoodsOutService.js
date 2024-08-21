@@ -48,7 +48,8 @@ class GoodsOutService {
             model: Master_User,
             as: "deleter"
           }
-        ]
+        ],
+        order: [["createdAt", "DESC"]]
       })
 
       const sendData = goodsOut.map((item) => {
