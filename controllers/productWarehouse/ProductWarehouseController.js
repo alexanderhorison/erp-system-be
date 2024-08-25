@@ -188,6 +188,26 @@ class ProductWarehouseController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async getProductWarehouseInternalTransfer(req, res) {
+    try {
+      const schemaParams = yup
+        .number()
+        .required("Id produk warehouse tidak boleh kosong");
+
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const data = await ProductWarehouseService.getProductInternalTransfer({
+        id: id,
+      });
+
+      res.status(200).json(responses(true, "Success get product internal transfer", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ProductWarehouseController;

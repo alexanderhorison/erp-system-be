@@ -59,4 +59,14 @@ ID MENU : NAMA
 15  Stock Opname
 16  Barang Masuk
 17  Barang Keluar
+18  Internal Transfer
+```
+
+
+### API Migration (15 Agustus 2024)
+Penambahan untuk api migration
+
+```
+1. Last Quantity (STOCK ADJUSTMENT HISTORY)
+hit postman isi body dengan "MIGRATION LAST QUANTITY"
 ```

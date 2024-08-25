@@ -1,4 +1,10 @@
-const { Delivery_Order, Stock_Opname, Adjustment_Goods_Out, Adjustment_Goods_In } = require("../models");
+const {
+  Delivery_Order,
+  Stock_Opname,
+  Adjustment_Goods_Out,
+  Adjustment_Goods_In,
+  Internal_Transfer,
+} = require("../models");
 
 async function codeGenerator(digits = 8, prefix = "TBA") {
   try {
@@ -10,7 +16,7 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       let tempId = Math.floor(
         minNumber + Math.random() * (maxNumber - minNumber + 1)
       );
-      let exsisting = false
+      let exsisting = false;
       generatedCode = `${prefix}-${tempId}`;
       if (prefix === "TBA") {
         exsisting = await Delivery_Order.findOne({
@@ -20,17 +26,22 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       if (prefix === "STO") {
         exsisting = await Stock_Opname.findOne({
           where: { code: generatedCode },
-        })
+        });
       }
       if (prefix === "GDO") {
         exsisting = await Adjustment_Goods_Out.findOne({
           where: { code: generatedCode },
-        })
+        });
       }
       if (prefix === "GDI") {
         exsisting = await Adjustment_Goods_In.findOne({
           where: { code: generatedCode },
-        })
+        });
+      }
+      if (prefix === "IT") {
+        exsisting = await Internal_Transfer.findOne({
+          where: { code: generatedCode },
+        });
       }
       exsisting ? (notDuplicate = true) : (notDuplicate = false);
     } while (notDuplicate);

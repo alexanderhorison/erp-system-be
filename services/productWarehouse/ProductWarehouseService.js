@@ -343,6 +343,59 @@ class ProductWarehouseService {
       throw error;
     }
   }
+
+  static async getProductInternalTransfer({ id }) {
+    try {
+      const data = await Warehouse_Product.findAll({
+        where: {
+          warehouseId: id,
+        },
+        include: [
+          {
+            model: Master_Unit,
+            paranoid: false,
+            attribute: ["id", "name"]
+          },
+          {
+            model: Master_Warehouse_Rack,
+            attribute: ["id", "name"]
+          },
+          {
+            model: Master_Product,
+            paranoid: false,
+            attribute: ["id", "name"],
+            include: [
+              {
+                model: Master_Category,
+                attribute: ["id", "name"],
+                paranoid: false,
+              },
+              {
+                model: Master_Company,
+                attribute: ["id", "name"]
+              }
+            ]
+          },
+        ],
+      });
+
+      const result = data.map((item) => {
+        return {
+          warehouseProductId: item.id,
+          productName: `${item.Master_Product.name} - ${item.Master_Unit.name}`,
+          categoryName: item.Master_Product.Master_Category.name,
+          rackName: item.Master_Warehouse_Rack.name,
+          warehouseRackFromId: item.Master_Warehouse_Rack.id,
+          unitName: item.Master_Unit.name,
+          companyName: item.Master_Product.Master_Company.name,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductWarehouseService;

@@ -29,6 +29,9 @@ module.exports = {
         defaultValue: "PENDING",
         allowNull: false,
       },
+      notes: {
+        type: Sequelize.STRING,
+      },
       createdBy: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -61,8 +64,21 @@ module.exports = {
       },
     });
     await queryInterface.addIndex("Internal_Transfers", ["warehouseId"]);
+    await queryInterface.bulkInsert("Master_Menus", [
+      {
+        name: "Internal Transfer",
+        description: "Internal Transfer",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        menuId: 18,
+      },
+    ]);
   },
   async down(queryInterface, Sequelize) {
+    await queryInterface.bulkDelete("Master_Menus", {
+      name: "Internal Transfer",
+      menuId: 18,
+    });
     await queryInterface.dropTable("Internal_Transfers");
   },
 };
