@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       Master_Warehouse_Rack.hasMany(models.Master_Warehouse_Rack_Attribute, {
         foreignKey: "warehouseRackId",
       })
+      Master_Warehouse_Rack.hasOne(models.Warehouse_Product, { foreignKey: 'warehouseRackId' });
     }
   }
   Master_Warehouse_Rack.init(

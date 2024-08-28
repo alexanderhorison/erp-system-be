@@ -9,6 +9,7 @@ const {
   Warehouse_Product,
   Delivery_Order,
   Delivery_Order_Product,
+  Master_Warehouse_Rack,
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
@@ -54,10 +55,10 @@ class DeliveryOrderService {
         // CHECK STOCK
         const stockExsisting = await Warehouse_Product.findOne({
           where: {
-            id: item.productWarehouseId
+            id: item.productWarehouseId,
           },
           attributes: ["quantity"],
-        })
+        });
 
         stockjustmentHistory.push({
           productWarehouseId: item.productWarehouseId,
@@ -67,7 +68,7 @@ class DeliveryOrderService {
           userId: user.id,
           info: "DELIVERY ORDER CREATE",
           deliveryOrderId: createdDeliveryOrder.id,
-          lastQuantity: +stockExsisting.quantity - +item.qty
+          lastQuantity: +stockExsisting.quantity - +item.qty,
         });
       }
 
@@ -113,7 +114,7 @@ class DeliveryOrderService {
                 model: Master_Role,
               },
             ],
-            as: "creatorBy"
+            as: "creatorBy",
           },
           {
             model: Master_User,
@@ -123,7 +124,7 @@ class DeliveryOrderService {
                 model: Master_Role,
               },
             ],
-            as: "receiverBy"
+            as: "receiverBy",
           },
           {
             model: Master_Warehouse,
@@ -139,12 +140,12 @@ class DeliveryOrderService {
           },
         ],
         order: [["createdAt", "DESC"]],
-      }
+      };
 
       if (payload.user.roleId == 3) {
         queryOption.where = {
-          warehouseDestinationId: payload.user.warehouseId
-        }
+          warehouseDestinationId: payload.user.warehouseId,
+        };
       }
 
       const data = await Delivery_Order.findAll(queryOption);
@@ -195,8 +196,12 @@ class DeliveryOrderService {
               {
                 model: Master_Category,
                 paranoid: false,
-              }
-            ]
+              },
+            ],
+          },
+          {
+            model: Master_Warehouse_Rack,
+            attributes: ["id", "name"],
           },
         ],
       });
@@ -208,6 +213,7 @@ class DeliveryOrderService {
           categoryName: item.Master_Product.Master_Category.name,
           quantity: item.quantity,
           masterProductId: item.Master_Product.id,
+          rackName: item.Master_Warehouse_Rack.name,
         };
       });
 
@@ -219,28 +225,29 @@ class DeliveryOrderService {
 
   static async getDetailDeliveryOrder(code) {
     try {
+      // find Delivery Order
       const data = await Delivery_Order.findOne({
         where: {
           code: code,
         },
         include: [
-          {
-            model: Delivery_Order_Product,
-            include: [
-              {
-                model: Warehouse_Product,
-                include: [
-                  {
-                    model: Master_Product,
-                  },
-                  {
-                    model: Master_Unit,
-                    attributes: ["name"],
-                  },
-                ],
-              },
-            ],
-          },
+          // {
+          //   model: Delivery_Order_Product,
+          //   include: [
+          //     {
+          //       model: Warehouse_Product,
+          //       include: [
+          //         {
+          //           model: Master_Product,
+          //         },
+          //         {
+          //           model: Master_Unit,
+          //           attributes: ["name"],
+          //         },
+          //       ],
+          //     },
+          //   ],
+          // },
           {
             model: Master_Warehouse,
             as: "warehouseOrigin",
@@ -254,17 +261,75 @@ class DeliveryOrderService {
           {
             model: Master_User,
             attributes: ["name"],
-            as: "creatorBy"
+            as: "creatorBy",
           },
           {
             model: Master_User,
             attributes: ["name"],
-            as: "receiverBy"
+            as: "receiverBy",
           },
         ],
       });
 
-      return data;
+      // find delivery order products
+      const products = await Delivery_Order_Product.findAll({
+        where: {
+          deliveryOrderId: data.id,
+        },
+        include: [
+          {
+            model: Warehouse_Product,
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["id", "name"],
+              },
+              {
+                model: Master_Unit,
+                attributes: ["name"],
+              },
+              {
+                model: Master_Warehouse_Rack,
+                attributes: ["id", "name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      const listProducts = products.map((item) => {
+        return {
+          productName: item.Warehouse_Product?.Master_Product?.name,
+          rackName: item.Warehouse_Product?.Master_Warehouse_Rack?.name,
+          unitName: item.Warehouse_Product?.Master_Unit?.name,
+          quantity: item.quantity,
+          productWarehouseId: item.warehouse_ProductId,
+        };
+      });
+
+      let sendData = {
+        code: data.code,
+        warehouseOrigin: {
+          name: data.warehouseOrigin?.name,
+          location: data.warehouseOrigin?.location,
+        },
+        warehouseDestination: {
+          name: data.warehouseDestination?.name,
+          location: data.warehouseDestination?.location,
+        },
+        listProducts: listProducts,
+        notes: data.notes,
+        creatorBy: {
+          name: data.creatorBy?.name,
+        },
+        receiverBy: {
+          name: data.receiverBy?.name,
+        },
+        createdAt: data?.createdAt,
+        receivedAt: data?.receivedAt,
+      }
+
+      return sendData;
     } catch (error) {
       throwValidation(error.code, error.message);
     }
