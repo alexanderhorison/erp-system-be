@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
     warehouseProductId: DataTypes.INTEGER,
     systemStock: DataTypes.INTEGER,
     actualStock: DataTypes.INTEGER,
-    diff: DataTypes.INTEGER
+    diff: DataTypes.INTEGER,
+    isAdjustment: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Stock_Opname_Product',

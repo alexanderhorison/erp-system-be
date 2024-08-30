@@ -41,15 +41,14 @@ class StockOpnameController {
     }
   }
 
-  static async getDetailStockOpnameById(req, res) {
+  static async getDetailStockOpnameByCode(req, res) {
     try {
-      const schema = yup.object({
-        id: yup.number().required("Id stock opname harus diisi"),
-      });
+      const params = req.params
 
-      const body = await yupSchemaValidation(req.params, schema);
+      const schemaParams = yup.string().required("Code goods out harus diisi");
+      const code = await yupSchemaValidation(params.code, schemaParams);
 
-      const data = await StockOpnameService.getDetailById(body.id);
+      const data = await StockOpnameService.getDetailByCode(code);
 
       res.status(200).json(responses(true, "Success get data detail stock opname", data));
     } catch (error) {
@@ -59,10 +58,10 @@ class StockOpnameController {
     }
   }
 
-  static async updateDetailStockOpnameById(req, res) {
+  static async updateDetailStockOpnameByCode(req, res) {
     try {
       const schemaParams = yup.object({
-        id: yup.number().required("Id stock opname harus diisi"),
+        code: yup.string().required("Code stock opname harus diisi"),
       });
 
       const schemaBody = yup.object({
@@ -75,7 +74,7 @@ class StockOpnameController {
       const params = await yupSchemaValidation(req.params, schemaParams);
       const user = req.userData;
 
-      const data = await StockOpnameService.update(params.id, body, user);
+      const data = await StockOpnameService.update(params.code, body, user);
 
       res.status(200).json(responses(true, "Success update detail stock opname", data));
     } catch (error) {
@@ -85,16 +84,16 @@ class StockOpnameController {
     }
   }
 
-  static async deleteStockOpnameById(req, res) {
+  static async deleteStockOpnameByCode(req, res) {
     try {
       const schema = yup.object({
-        id: yup.number().required("Id stock opname harus diisi"),
+        code: yup.string().required("Code stock opname harus diisi"),
       });
 
       const params = await yupSchemaValidation(req.params, schema);
 
       const user = req.userData;
-      const data = await StockOpnameService.delete(params.id, user);
+      const data = await StockOpnameService.delete(params.code, user);
       res.status(200).json(responses(true, "Success delete detail stock opname", data));
     } catch (error) {
       res
@@ -103,16 +102,16 @@ class StockOpnameController {
     }
   }
 
-  static async approveStockOpnameById(req, res) {
+  static async approveStockOpnameByCode(req, res) {
     try {
       const schema = yup.object({
-        id: yup.number().required("Id stock opname harus diisi"),
+        code: yup.string().required("Code stock opname harus diisi"),
       });
 
       const params = await yupSchemaValidation(req.params, schema);
 
       const user = req.userData;
-      const data = await StockOpnameService.approve(params.id, user);
+      const data = await StockOpnameService.approve(params.code, user);
       res.status(200).json(responses(true, "Success approve detail stock opname", data));
     } catch (error) {
       res
@@ -121,18 +120,40 @@ class StockOpnameController {
     }
   }
 
-  static async rejectStockOpnameById(req, res) {
+  static async rejectStockOpnameByCode(req, res) {
     try {
-      const schema = yup.object({
-        id: yup.number().required("Id stock opname harus diisi"),
-      });
+      const params = req.params
 
-      const params = await yupSchemaValidation(req.params, schema);
+      const schemaParams = yup.string().required("Code goods out harus diisi");
+      const code = await yupSchemaValidation(params.code, schemaParams);
 
       const user = req.userData;
-      const data = await StockOpnameService.reject(params.id, user);
+      const data = await StockOpnameService.reject(code, user);
       res.status(200).json(responses(true, "Success reject detail stock opname", data));
     } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async confirmStockOpnameByCode(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code stock opname harus diisi"),
+      })
+
+      const schema = yup.array();
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+      const body = await yupSchemaValidation(req.body, schema);
+
+      const user = req.userData;
+      const data = await StockOpnameService.confirm({ code: params.code, data: body, user });
+      res.status(200).json(responses(true, "Success confirm detail stock opname", data));
+    } catch (error) {
+      console.log(error);
+
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));

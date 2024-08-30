@@ -20,6 +20,7 @@ const {
   Adjustment_Goods_In,
   Adjustment_Goods_Out,
   Master_User,
+  Stock_Opname,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -276,6 +277,7 @@ class ProductWarehouseService {
           Delivery_Order,
           Adjustment_Goods_In,
           Adjustment_Goods_Out,
+          Stock_Opname,
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -322,6 +324,11 @@ class ProductWarehouseService {
             deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
             notes: item?.Delivery_Order?.notes,
             deliveryOrderCode: item?.Delivery_Order?.code,
+          }),
+          ...(item?.info === "STOCK OPNAME" && {
+            stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
+            notes: item?.Stock_Opname?.notes,
+            stockOpnameCode: item?.Stock_Opname?.code,
           }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,
