@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       Master_Warehouse.hasMany(models.Delivery_Order, {
         foreignKey: "warehouseDestinationId",
       });
+      Master_Warehouse.hasMany(models.Stock_Opname, { foreignKey: "warehouseId" });
     }
   }
   Master_Warehouse.init(

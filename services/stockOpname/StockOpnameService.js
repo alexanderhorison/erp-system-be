@@ -374,7 +374,7 @@ class StockOpnameService {
           }
       }
 
-      // CHECK DATA ACTUAL STOCK BEFORE APPROVE FROM DRAFT BEFORE IMPLEMENT 
+      // CHECK DATA ACTUAL STOCK BEFORE APPROVE FROM DRAFT BEFORE IMPLEMENT
       const createdHistory = []
       if (data?.length > 0) {
         for (const item of data) {
@@ -440,6 +440,41 @@ class StockOpnameService {
     }
   }
 
+  static async checkStockOpnameWarehouse(id) {
+    try {
+      const data = await Master_Warehouse.findOne({
+        where: {
+          id,
+        },
+        include: [
+          {
+            model: Stock_Opname,
+            where: {
+              status: ["APPROVED", "PENDING", "DRAFT"],
+            },
+            required: false,
+          },
+        ],
+      });
+
+      if (!data) {
+        throw { code: 404, message: "Warehouse tidak ditemukan" };
+      }
+
+      const result = {
+        id: data.id,
+        name: data.name,
+        isHaveStockOpname: data?.Stock_Opnames.length > 0 ? true : false,
+        message: `Sudah ada stock opname dengan code: ${data?.Stock_Opnames[0]?.code} dan status ${data?.Stock_Opnames[0]?.status}. Mohon di selesaikan dahulu`,
+        stockOpnameCode: data?.Stock_Opnames[0]?.code,
+        stockOpnameStatus: data?.Stock_Opnames[0]?.status,
+      };
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = StockOpnameService
