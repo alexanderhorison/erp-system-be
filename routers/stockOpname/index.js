@@ -4,10 +4,11 @@ const StockOpnameController = require("../../controllers/stockOpname/StockOpname
 
 router.get("/", StockOpnameController.getAllStockOpname);
 router.post("/create", StockOpnameController.createStockOpname);
-router.get("/detail/:id", StockOpnameController.getDetailStockOpnameById);
-router.put("/approve/:id", StockOpnameController.approveStockOpnameById);
-router.put("/reject/:id", StockOpnameController.rejectStockOpnameById);
-router.put("/:id", StockOpnameController.updateDetailStockOpnameById);
-router.delete("/:id", StockOpnameController.deleteStockOpnameById);
+router.get("/detail/:code", StockOpnameController.getDetailStockOpnameByCode);
+router.put("/approve/:code", StockOpnameController.approveStockOpnameByCode);
+router.put("/reject/:code", StockOpnameController.rejectStockOpnameByCode);
+router.post("/confirm/:code", StockOpnameController.confirmStockOpnameByCode);
+router.put("/:code", StockOpnameController.updateDetailStockOpnameByCode);
+router.delete("/:code", StockOpnameController.deleteStockOpnameByCode);
 
 module.exports = router

@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const {
@@ -11,7 +12,8 @@ const {
   Master_Unit,
   Master_Warehouse_Rack,
   Master_Company,
-} = require("../../models")
+} = require("../../models");
+const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class StockOpnameService {
 
@@ -54,11 +56,11 @@ class StockOpnameService {
     }
   }
 
-  static async getDetailById(id) {
+  static async getDetailByCode(code) {
     try {
       const data = await Stock_Opname.findOne({
         where: {
-          id
+          code
         },
         include: [
           {
@@ -112,6 +114,7 @@ class StockOpnameService {
           systemStock: item?.systemStock,
           actualStock: item?.actualStock,
           diff: item?.diff,
+          isAdjustment: item.isAdjustment,
           companyName: item.Warehouse_Product.Master_Product.dataValues.Master_C
         }
       })
@@ -145,6 +148,15 @@ class StockOpnameService {
   static async create(data, user) {
     const transaction = await sq.transaction();
     try {
+      const checkStockOpname = await Stock_Opname.findOne({
+        where: {
+          warehouseId: data.warehouseId,
+          status: { [Op.notIn]: ["CLOSED", "REJECTED"] }
+        }
+      })
+
+      if (checkStockOpname) throw { code: 400, message: "Stock Opname sudah ada, mohon selesaikan dahulu stock opname sebelumnya" }
+
       const code = await codeGenerator(8, "STO");
       const created = {
         code,
@@ -175,12 +187,12 @@ class StockOpnameService {
     }
   }
 
-  static async update(id, data, user) {
+  static async update(code, data, user) {
     const transaction = await sq.transaction();
     try {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id: id
+          code,
         }
       });
 
@@ -215,12 +227,12 @@ class StockOpnameService {
     }
   }
 
-  static async delete(id, user) {
+  static async delete(code, user) {
     const transaction = await sq.transaction();
     try {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id
+          code
         }
       });
 
@@ -230,7 +242,7 @@ class StockOpnameService {
 
       await Stock_Opname.destroy({
         where: {
-          id
+          code
         },
         transaction
       });
@@ -244,11 +256,11 @@ class StockOpnameService {
     }
   }
 
-  static async approve(id, user) {
+  static async approve(code, user) {
     try {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id
+          code
         },
         include: [
           {
@@ -280,7 +292,7 @@ class StockOpnameService {
       }
       // ======================================================================
 
-      const updatedStockOpname = await Stock_Opname.update({ status: "APPROVED", updatedBy: user?.id }, { where: { id } });
+      const updatedStockOpname = await Stock_Opname.update({ status: "APPROVED", updatedBy: user?.id }, { where: { code } });
 
       return updatedStockOpname
     } catch (error) {
@@ -288,11 +300,11 @@ class StockOpnameService {
     }
   }
 
-  static async reject(id, user) {
+  static async reject(code, user) {
     try {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id
+          code
         }
       });
 
@@ -301,26 +313,24 @@ class StockOpnameService {
           throw { code: 400, message: "Stock Opname sudah di approve" };
         case "REJECTED":
           throw { code: 400, message: "Stock Opname sudah di reject" };
-        // case "DRAFT":
-        //   throw { code: 400, message: "Stock Opname masih tahap draft" };
         default:
           if (!existingStockOpname) {
             throw { code: 404, message: "Stock Opname tidak ditemukan" };
           }
       }
 
-      const updatedStockOpname = await Stock_Opname.update({ status: "REJECTED", updatedBy: user?.id }, { where: { id } });
+      const updatedStockOpname = await Stock_Opname.update({ status: "REJECTED", updatedBy: user?.id }, { where: { code } });
       return updatedStockOpname
     } catch (error) {
       throw error
     }
   }
 
-  static async pending(id, user) {
+  static async pending(code, user) {
     try {
       const existingStockOpname = await Stock_Opname.findOne({
         where: {
-          id
+          code
         }
       });
 
@@ -344,6 +354,91 @@ class StockOpnameService {
     }
   }
 
+  static async confirm({ code, data, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const existingStockOpname = await Stock_Opname.findOne({
+        where: {
+          code
+        }
+      });
+
+      switch (existingStockOpname.status) {
+        case "CLOSED":
+          throw { code: 400, message: "Stock Opname sudah selesai" };
+        case "DRAFT":
+          throw { code: 400, message: "Stock Opname masih tahap draft" };
+        default:
+          if (!existingStockOpname) {
+            throw { code: 404, message: "Stock Opname tidak ditemukan" };
+          }
+      }
+
+      // CHECK DATA ACTUAL STOCK BEFORE APPROVE FROM DRAFT BEFORE IMPLEMENT 
+      const createdHistory = []
+      if (data?.length > 0) {
+        for (const item of data) {
+          // UPDATE STATUS STOCK OPNAME PRODUCT
+          const stockOpnameProduct = await Stock_Opname_Product.findOne({
+            where: {
+              id: item
+            },
+            transaction
+          })
+
+          // CHECK MINUS OR PLUS
+          const type = stockOpnameProduct.actualStock - stockOpnameProduct.systemStock;
+          const result = type < 0 ? 'MINUS' : 'PLUS';
+
+          // Skip the rest of the operations if actual stock - system stock is 0
+          if (type === 0) {
+            continue;
+          }
+
+          stockOpnameProduct.isAdjustment = true
+          await stockOpnameProduct.save({ transaction })
+
+          // UPDATE QUANTITY BASED ON STOCK OPNAME PRODUCT
+          const warehouseProduct = await Warehouse_Product.findOne({
+            where: {
+              id: stockOpnameProduct.warehouseProductId
+            },
+            transaction
+          })
+
+          warehouseProduct.quantity = stockOpnameProduct.actualStock
+          await warehouseProduct.save({ transaction })
+
+          // CREATE HISTORY
+          createdHistory.push({
+            productWarehouseId: warehouseProduct.id, // AMBIL DARI WAREHOUSE PRODUCT
+            quantity: stockOpnameProduct.diff, // AMBIL DARI STOCK OPNAME
+            warehouseId: warehouseProduct.warehouseId, // AMBIL DARI WAREHOUSE PRODUCT
+            adjustmentType: result, // AMBIL DARI STOCK OPNAME HASIL PENGURANGAN SYSTEM STOCK DENGAN ACTUAL STOCK
+            info: "STOCK OPNAME",
+            userId: user?.id, // AMBIL DARI USER YANG APPROVE
+            description: JSON.stringify({
+              stockBefore: stockOpnameProduct.systemStock,
+              stockAfter: stockOpnameProduct.actualStock
+            }),
+            lastQuantity: warehouseProduct.quantity, // AMBIL DARI WAREHOUSE PRODUCT YANG SUDAH DIUPDATE
+            stockOpnameId: existingStockOpname.id, // AMBIL DARI STOCK OPNAME
+          })
+        }
+      }
+
+      // CREATE HISTORY
+      await StockAdjustmentHistoryService.bulkCreate({ data: createdHistory, transaction })
+
+      // UPDATE STATUS STOCK OPNAME
+      await Stock_Opname.update({ status: "CLOSED", updatedBy: user?.id }, { where: { code }, transaction })
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error
+    }
+  }
 
 }
 

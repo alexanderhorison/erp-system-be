@@ -96,7 +96,7 @@ class DeliveryOrderReceiveService {
         } else {
           // IN JIKA ADA, LANGSUNG TAMBAHKAN
           destinationProduct.quantity += product.quantity
-          destinationProduct.save({ transaction })
+          await destinationProduct.save({ transaction })
 
           await StockAdjustmentHistoryService.createOne({
             data: destinationProduct,
