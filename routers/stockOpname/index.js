@@ -4,6 +4,7 @@ const StockOpnameController = require("../../controllers/stockOpname/StockOpname
 
 router.get("/", StockOpnameController.getAllStockOpname);
 router.post("/create", StockOpnameController.createStockOpname);
+router.get("/check-warehouse/:warehouseId",StockOpnameController.checkStockOpnameWarehouse);
 router.get("/detail/:code", StockOpnameController.getDetailStockOpnameByCode);
 router.put("/approve/:code", StockOpnameController.approveStockOpnameByCode);
 router.put("/reject/:code", StockOpnameController.rejectStockOpnameByCode);

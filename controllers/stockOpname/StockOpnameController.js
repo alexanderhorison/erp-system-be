@@ -160,6 +160,22 @@ class StockOpnameController {
     }
   }
 
+  static async checkStockOpnameWarehouse(req, res) {
+    try {
+      const schemaParams = yup.object({
+        warehouseId: yup.number().required("Warehouse harus diisi"),
+      });
+      const params = await yupSchemaValidation(req.params, schemaParams);
+      const data = await StockOpnameService.checkStockOpnameWarehouse(
+        params.warehouseId
+      );
+      res.status(200).json(responses(true, "Success check stock opname", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = StockOpnameController
