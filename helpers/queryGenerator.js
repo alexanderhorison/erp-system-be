@@ -18,7 +18,7 @@ function generateFilter(filters) {
           target[column] = value;
           break;
         case "!=":
-          target[column] = { $ne: value };
+          target[column] = { [Op.ne]: value };
           break;
         case "contains":
           target[column] = { [Op.like]: `%${value}%` };

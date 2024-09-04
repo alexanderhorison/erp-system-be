@@ -5,6 +5,11 @@ const Auth = require("../../helpers/auth");
 
 router.use(Auth.AuthenticationRoleSuratJalanReceive);
 
+router.get("/all", DeliveryOrderReceiveController.getAllDeliveryOrderReceive);
+router.post("/create", DeliveryOrderReceiveController.createDeliveryOrderReceive);
+
+router.get("/:id", DeliveryOrderReceiveController.getDetailDeliveryOrderReceive);
+
 // Update or terima Surat Jalan
 router.put("/:deliveryOrderId", DeliveryOrderReceiveController.updateDeliveryOrder);
 

@@ -45,7 +45,7 @@ class DeliveryOrderController {
     try {
       const user = req.userData;
       const getAllDeliveryOrder =
-        await DeliveryOrderService.getAllDeliveryOrder({ user });
+        await DeliveryOrderService.getAllDeliveryOrder({ user, query: req.query });
 
       res.status(200).json(responses(true, "Berhasil", getAllDeliveryOrder));
     } catch (error) {

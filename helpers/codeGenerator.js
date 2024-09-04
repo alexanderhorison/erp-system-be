@@ -4,6 +4,8 @@ const {
   Adjustment_Goods_Out,
   Adjustment_Goods_In,
   Internal_Transfer,
+  Delivery_Order_Receipt,
+  Delivery_Order_Receipt_Outstanding,
 } = require("../models");
 
 async function codeGenerator(digits = 8, prefix = "TBA") {
@@ -40,6 +42,16 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       }
       if (prefix === "IT") {
         exsisting = await Internal_Transfer.findOne({
+          where: { code: generatedCode },
+        });
+      }
+      if (prefix === "DOR") {
+        exsisting = await Delivery_Order_Receipt.findOne({
+          where: { code: generatedCode },
+        });
+      }
+      if (prefix === "DOO") {
+        exsisting = await Delivery_Order_Receipt_Outstanding.findOne({
           where: { code: generatedCode },
         });
       }

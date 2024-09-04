@@ -9,7 +9,7 @@ function responses(success, message, data = "") {
   return response;
 }
 
-function throwValidation(code, message = "failed") {
+function throwValidation(code = 500, message = "failed") {
   throw {
     code: code,
     message: message,

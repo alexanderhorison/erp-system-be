@@ -147,6 +147,12 @@ class DeliveryOrderService {
           warehouseDestinationId: payload.user.warehouseId,
         };
       }
+      // query untuk receive order hanya mengambil yang belum selesai
+      if (payload.query.receiveOrder) {
+        queryOption.where = {
+          status : "PENDING"
+        }
+      }
 
       const data = await Delivery_Order.findAll(queryOption);
       const result = data.map((item) => {
@@ -231,23 +237,6 @@ class DeliveryOrderService {
           code: code,
         },
         include: [
-          // {
-          //   model: Delivery_Order_Product,
-          //   include: [
-          //     {
-          //       model: Warehouse_Product,
-          //       include: [
-          //         {
-          //           model: Master_Product,
-          //         },
-          //         {
-          //           model: Master_Unit,
-          //           attributes: ["name"],
-          //         },
-          //       ],
-          //     },
-          //   ],
-          // },
           {
             model: Master_Warehouse,
             as: "warehouseOrigin",
@@ -304,6 +293,7 @@ class DeliveryOrderService {
           unitName: item.Warehouse_Product?.Master_Unit?.name,
           quantity: item.quantity,
           productWarehouseId: item.warehouse_ProductId,
+          deliveryOrderProductId: item.id,
         };
       });
 
@@ -327,6 +317,7 @@ class DeliveryOrderService {
         },
         createdAt: data?.createdAt,
         receivedAt: data?.receivedAt,
+        id: data?.id,
       }
 
       return sendData;
