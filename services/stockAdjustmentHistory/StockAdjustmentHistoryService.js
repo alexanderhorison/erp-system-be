@@ -8,6 +8,8 @@ class StockAdjustmentHistoryService {
     quantity,
     info = null,
     deliveryOrderId = null,
+    deliveryOrderReceiptId = null,
+    deliveryOrderReceiptOutstandingId = null,
     transaction,
     description = null,
     lastQuantity = null,
@@ -23,6 +25,8 @@ class StockAdjustmentHistoryService {
         userId: user.id,
         description,
         lastQuantity,
+        deliveryOrderReceiptId,
+        deliveryOrderReceiptOutstandingId,
       };
 
       const createHistoryAdjusment = await Stock_Adjustment_History.create(

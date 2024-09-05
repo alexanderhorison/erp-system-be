@@ -257,6 +257,7 @@ class DeliveryOrderReceiveService {
         {
           deliveryOrderId: data.deliveryOrderId,
           deliveryOrderReceiptProduct: deliveryOrderReceiptProduct,
+          deliveryOrderReceiptId: createdOrderReceipt.id,
           user,
         },
         transaction
@@ -344,7 +345,7 @@ class DeliveryOrderReceiveService {
             adjustmentType: "INITIATE",
             quantity: initiated.quantity,
             info: "DELIVERY ORDER RECEIVE",
-            deliveryOrderId: origin.id,
+            deliveryOrderReceiptId: payload.deliveryOrderReceiptId,
             lastQuantity: initiated.quantity,
             transaction,
           });
@@ -359,7 +360,7 @@ class DeliveryOrderReceiveService {
             adjustmentType: "PLUS",
             quantity: findReceipt.receiveQuantity,
             info: "DELIVERY ORDER RECEIVE",
-            deliveryOrderId: origin.id,
+            deliveryOrderReceiptId: payload.deliveryOrderReceiptId,
             lastQuantity: destinationProduct.quantity,
             transaction,
           });

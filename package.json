@@ -27,7 +27,7 @@
     "db:create": "npx sequelize db:create",
     "db:migrate": "npx sequelize db:migrate",
     "db:create:model": "npx sequelize model:generate --name Delivery_Order_Receipt_Outstanding_Product --attributes deliveryOrderReceiptOutstandingId:integer,deliveryOrderProductId:integer,outstandingQuantity:integer",
-    "db:create:migration": "npx sequelize migration:generate --name=add-constraint-delivery-order",
+    "db:create:migration": "npx sequelize migration:generate --name=alter-stock-adjustment-histories",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:seed:all": "npx sequelize db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo",
