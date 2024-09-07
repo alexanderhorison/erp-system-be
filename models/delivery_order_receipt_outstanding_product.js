@@ -22,7 +22,8 @@ module.exports = (sequelize, DataTypes) => {
   Delivery_Order_Receipt_Outstanding_Product.init({
     deliveryOrderReceiptOutstandingId: DataTypes.INTEGER,
     deliveryOrderProductId: DataTypes.INTEGER,
-    outstandingQuantity: DataTypes.INTEGER
+    outstandingQuantity: DataTypes.INTEGER,
+    status: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Delivery_Order_Receipt_Outstanding_Product',

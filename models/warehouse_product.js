@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "productWarehouseId",
       });
       Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, { foreignKey: "warehouseRackId" });
+      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, { foreignKey: "warehouseRackId", as: "mwr" });
     }
   }
   Warehouse_Product.init(

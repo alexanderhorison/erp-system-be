@@ -18,8 +18,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "createdBy",
         as: "creator",
       });
+      Delivery_Order_Receipt_Outstanding.belongsTo(models.Master_User, {
+        foreignKey: "approvedBy",
+        as: "approver",
+      });
       Delivery_Order_Receipt_Outstanding.hasMany(models.Delivery_Order_Receipt_Outstanding_Product, {
         foreignKey: "deliveryOrderReceiptOutstandingId",
+        as: "productOutstandings",
       });
     }
   }
@@ -27,7 +32,9 @@ module.exports = (sequelize, DataTypes) => {
     code: DataTypes.STRING,
     deliveryOrderReceiptId: DataTypes.INTEGER,
     status: DataTypes.STRING,
-    createdBy: DataTypes.INTEGER
+    createdBy: DataTypes.INTEGER,
+    approvedBy: DataTypes.INTEGER,
+    approvedAt: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'Delivery_Order_Receipt_Outstanding',

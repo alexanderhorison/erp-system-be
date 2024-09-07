@@ -60,6 +60,7 @@ ID MENU : NAMA
 16  Barang Masuk
 17  Barang Keluar
 18  Internal Transfer
+19  Outstanding Product (Produk yang selisih dari penerimaan surat jalan)
 ```
 
 

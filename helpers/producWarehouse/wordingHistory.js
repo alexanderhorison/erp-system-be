@@ -8,6 +8,7 @@ const wordingHistory = {
   "GOODS OUT": "Barang Keluar",
   "TRANSFORMATION PRODUCT": "Transformasi Produk",
   "TRANSFORMATION_PRODUCT": "Transformasi Produk",
+  "OUTSTANDING": "Surat Jalan Outstanding",
 }
 
 const titleInfo = (item) => {
@@ -28,6 +29,9 @@ const titleInfo = (item) => {
       break;
     case "GOODS OUT":
       result = "Barang Keluar"
+      break;
+    case "OUTSTANDING":
+      result = "Surat Jalan Outstanding"
       break;
     default:
       result = "Penyesuaian Stock Product"
