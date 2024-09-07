@@ -21,6 +21,8 @@ const {
   Adjustment_Goods_Out,
   Master_User,
   Stock_Opname,
+  Delivery_Order_Receipt_Outstanding,
+  Delivery_Order_Receipt,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -278,6 +280,7 @@ class ProductWarehouseService {
           Adjustment_Goods_In,
           Adjustment_Goods_Out,
           Stock_Opname,
+          Delivery_Order_Receipt_Outstanding,
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -292,8 +295,45 @@ class ProductWarehouseService {
         ],
       });
 
-      const mappingHistory = data.map((item) => {
-        return {
+      const mappingHistory = []
+
+      for (const item of data) {
+        let notes = ""
+        let deliveryOrder = {}
+        let deliveryOrderReceipt = {}
+        if (item?.info === "OUTSTANDING") {
+          const data = await Delivery_Order_Receipt_Outstanding.findOne({
+            where: {
+              id: item?.deliveryOrderReceiptOutstandingId
+            },
+            include: [
+              {
+                model: Delivery_Order_Receipt,
+                attributes: ["id", "code"],
+                include: [
+                  {
+                    model: Delivery_Order,
+                    attributes: ["id", "code", "notes"],
+                    include: [
+                      {
+                        model: Master_Warehouse,
+                        as: "warehouseOrigin",
+                      },
+                      {
+                        model: Master_Warehouse,
+                        as: "warehouseDestination",
+                      },
+                    ],
+                  }
+                ]
+              },
+            ]
+          })
+          notes = data?.Delivery_Order_Receipt?.Delivery_Order?.notes
+          deliveryOrder = data?.Delivery_Order_Receipt?.Delivery_Order
+          deliveryOrderReceipt = data?.Delivery_Order_Receipt
+        }
+        mappingHistory.push({
           title: infoType(item),
           titleInfo: titleInfo(item),
           infoType: infoType(item),
@@ -330,10 +370,20 @@ class ProductWarehouseService {
             notes: item?.Stock_Opname?.notes,
             stockOpnameCode: item?.Stock_Opname?.code,
           }),
+          ...(item?.info === "OUTSTANDING" && {
+            notes: notes,
+            outstanding: `Surat Outstanding: ${item?.Delivery_Order_Receipt_Outstanding?.code}`,
+            outstandingCode: item?.Delivery_Order_Receipt_Outstanding?.code,
+            deliveryOrder: `Surat Jalan: ${deliveryOrder?.code}`,
+            deliveryOrderCode: deliveryOrder?.code,
+            deliveryOrderReceipt: `Penerimaan Surat Jalan: ${deliveryOrderReceipt?.code}`,
+            deliveryOrderReceiptCode: deliveryOrderReceipt?.code,
+          }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,
-        };
-      });
+        });
+      }
+
 
       const mappingProduct = {
         productName: dataProduct?.Master_Product?.name,
