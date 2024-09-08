@@ -152,6 +152,7 @@ class DeliveryOrderReceiveService {
           },
           {
             model: Delivery_Order,
+            attributes: ["id", "code"],
           },
         ],
         order: [["createdAt", "DESC"]],
@@ -161,7 +162,8 @@ class DeliveryOrderReceiveService {
       const result = data.map((item) => {
         return {
           id: item.id,
-          code: item.code,
+          codeReceipt: item.code,
+          codeDeliveryOrder: item.Delivery_Order.code,
           createdAt: formatDate(item.createdAt),
           createdBy: {
             name: item.creator.name,
@@ -473,7 +475,8 @@ class DeliveryOrderReceiveService {
 
       let sendData = {
         id: data?.id,
-        code: data.code,
+        codeReceipt: data.code,
+        codeDeliveryOrder: data.Delivery_Order?.code,
         warehouseOrigin: {
           name: data.Delivery_Order?.warehouseOrigin?.name,
           location: data.Delivery_Order?.warehouseOrigin?.location,
