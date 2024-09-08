@@ -190,6 +190,7 @@ class DeliveryOrderReceiveService {
         code: code,
         deliveryOrderId: data.deliveryOrderId,
         createdBy: user.id,
+        notes: data.notes,
       };
 
       // BUAT SURAT PENERIMAAN
@@ -486,7 +487,7 @@ class DeliveryOrderReceiveService {
           location: data.Delivery_Order?.warehouseDestination?.location,
         },
         listProducts: listProducts,
-        notes: data.Delivery_Order?.notes,
+        notes: data.notes,
         creatorBy: {
           name: data.Delivery_Order?.creatorBy?.name,
         },

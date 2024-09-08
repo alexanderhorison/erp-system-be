@@ -26,7 +26,8 @@ module.exports = (sequelize, DataTypes) => {
   Delivery_Order_Receipt.init({
     code: DataTypes.STRING,
     deliveryOrderId: DataTypes.INTEGER,
-    createdBy: DataTypes.INTEGER
+    createdBy: DataTypes.INTEGER,
+    notes: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'Delivery_Order_Receipt',

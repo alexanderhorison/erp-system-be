@@ -67,6 +67,7 @@ class DeliveryOrderReceiveController {
               ),
           })
         ),
+        notes: yup.string().optional(),
         deliveryOrderId: yup.number().required("Delivery order id harus ada"),
       });
 
