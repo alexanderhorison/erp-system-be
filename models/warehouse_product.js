@@ -8,12 +8,25 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "productId",
       });
       Warehouse_Product.belongsTo(models.Master_Unit, { foreignKey: "unitId" });
-      Warehouse_Product.belongsTo(models.Master_Warehouse, { foreignKey: "warehouseId" });
+      Warehouse_Product.belongsTo(models.Master_Warehouse, {
+        foreignKey: "warehouseId",
+      });
       Warehouse_Product.hasMany(models.Delivery_Order_Product, {
         foreignKey: "productWarehouseId",
       });
-      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, { foreignKey: "warehouseRackId" });
-      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, { foreignKey: "warehouseRackId", as: "mwr" });
+      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, {
+        foreignKey: "warehouseRackId",
+      });
+      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, {
+        foreignKey: "warehouseRackId",
+        as: "mwr",
+      });
+      Warehouse_Product.hasMany(
+        models.Delivery_Order_Receipt_Outstanding_Product,
+        {
+          foreignKey: "productWarehouseId",
+        }
+      );
     }
   }
   Warehouse_Product.init(

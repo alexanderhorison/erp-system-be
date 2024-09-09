@@ -247,20 +247,26 @@ class DeliveryOrderReceiveService {
         }
       );
 
+      let updatedOutstandingProduct = null;
+
       // Buat produk Delivery Order Receipt Outstanding Product
       if (deliveryOrderReceiptOutstandingProduct.length > 0) {
-        await Delivery_Order_Receipt_Outstanding_Product.bulkCreate(
-          deliveryOrderReceiptOutstandingProduct,
-          { transaction }
-        );
+        updatedOutstandingProduct =
+          await Delivery_Order_Receipt_Outstanding_Product.bulkCreate(
+            deliveryOrderReceiptOutstandingProduct,
+            { transaction, returning: true }
+          );
       }
-
       // Update quantity produk deliveryOrder
       await this.processDeliveryOrderReceive(
         {
           deliveryOrderId: data.deliveryOrderId,
           deliveryOrderReceiptProduct: deliveryOrderReceiptProduct,
           deliveryOrderReceiptId: createdOrderReceipt.id,
+          deliveryOrderReceiptOutstandingProduct: updatedOutstandingProduct,
+          // to flag have outstanding product
+          haveOutstandingProduct:
+            updatedOutstandingProduct.length > 0 ? true : false,
           user,
         },
         transaction
@@ -320,6 +326,15 @@ class DeliveryOrderReceiveService {
           (el) => el.deliveryOrderProductId === product.id
         );
 
+        let findOutstanding = null;
+
+        // find outstandingProduct
+        if (payload.haveOutstandingProduct) {
+          findOutstanding = payload.deliveryOrderReceiptOutstandingProduct.find(
+            (el) => el.deliveryOrderProductId === product.id
+          );
+        }
+
         if (!destinationProduct) {
           // find default rack
           const defaultRack = await Master_Warehouse_Rack.findOne({
@@ -352,6 +367,21 @@ class DeliveryOrderReceiveService {
             lastQuantity: initiated.quantity,
             transaction,
           });
+
+          // update delivery order receipt outstanding product (add productWarehouse Destination)
+          if (payload.haveOutstandingProduct && findOutstanding) {
+            await Delivery_Order_Receipt_Outstanding_Product.update(
+              {
+                productWarehouseId: initiated.id,
+              },
+              {
+                where: {
+                  id: findOutstanding.id,
+                },
+                transaction,
+              }
+            );
+          }
         } else {
           // IN JIKA ADA, LANGSUNG TAMBAHKAN
           destinationProduct.quantity += findReceipt.receiveQuantity;
@@ -367,6 +397,21 @@ class DeliveryOrderReceiveService {
             lastQuantity: destinationProduct.quantity,
             transaction,
           });
+
+          // update delivery order receipt outstanding product (add productWarehouse Destination)
+          if (payload.haveOutstandingProduct && findOutstanding) {
+            await Delivery_Order_Receipt_Outstanding_Product.update(
+              {
+                productWarehouseId: destinationProduct.id,
+              },
+              {
+                where: {
+                  id: findOutstanding.id,
+                },
+                transaction,
+              }
+            );
+          }
         }
       }
       // UPDATE STATUS DELIVERY
