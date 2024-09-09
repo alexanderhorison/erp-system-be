@@ -35,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
     createdBy: DataTypes.INTEGER,
     approvedBy: DataTypes.INTEGER,
     approvedAt: DataTypes.DATE,
+    notes: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'Delivery_Order_Receipt_Outstanding',

@@ -25,6 +25,9 @@ class DeliveryOrderReceiveOutstandingService {
       const data = await Delivery_Order_Receipt_Outstanding.findAll({
         include: [
           {
+            model: Delivery_Order_Receipt,
+          },
+          {
             model: Master_User,
             attributes: ["id", "name"],
             include: [
@@ -46,13 +49,15 @@ class DeliveryOrderReceiveOutstandingService {
             ],
             as: "approver",
           },
-        ]
+        ],
+        order: [["createdAt", "DESC"]],
       })
 
       const result = data.map((item) => {
         return {
           id: item.id,
           code: item.code,
+          deliveryOrderReceiptCode: item.Delivery_Order_Receipt.code,
           createdAt: item.createdAt,
           status: item.status,
           approvedAt: item.approvedAt,
@@ -79,7 +84,7 @@ class DeliveryOrderReceiveOutstandingService {
     try {
       const data = await Delivery_Order_Receipt_Outstanding.findOne({
         where: { code },
-        attributes: ["id", "code", "status", "createdAt", "approvedAt", "approvedBy"],
+        attributes: ["id", "code", "status", "createdAt", "approvedAt", "approvedBy", "notes"],
         include: [
           {
             model: Master_User,
@@ -158,6 +163,9 @@ class DeliveryOrderReceiveOutstandingService {
               },
             ]
           }
+        ],
+        order: [
+          ["createdAt", "DESC"],
         ]
       })
 
@@ -201,7 +209,7 @@ class DeliveryOrderReceiveOutstandingService {
             rackName: item?.Delivery_Order_Product?.Warehouse_Product?.mwr?.name
           }
         }),
-        notes: data?.Delivery_Order_Receipt?.Delivery_Order?.notes
+        notes: data?.notes
       }
 
       return result
@@ -210,7 +218,7 @@ class DeliveryOrderReceiveOutstandingService {
     }
   }
 
-  static async saveToDraft({ data }) {
+  static async saveToDraft({ code, data, notes }) {
     const transaction = await sq.transaction();
     try {
       if (data.length > 0) {
@@ -230,6 +238,18 @@ class DeliveryOrderReceiveOutstandingService {
         }
       }
 
+      if (notes) {
+        const updateNotes = await Delivery_Order_Receipt_Outstanding.findOne({
+          where: {
+            code: code
+          },
+          transaction
+        })
+
+        updateNotes.notes = notes
+        await updateNotes.save({ transaction });
+      }
+
       await transaction.commit();
       return
     } catch (error) {
@@ -238,9 +258,33 @@ class DeliveryOrderReceiveOutstandingService {
     }
   }
 
-  static async approve({ code, user }) {
+  static async approve({ code, user, notes, products }) {
     const transaction = await sq.transaction();
     try {
+      if (products.length > 0) {
+        for (const item of products) {
+          const product = await Delivery_Order_Receipt_Outstanding_Product.findOne({
+            where: {
+              id: item.id
+            },
+            transaction
+          })
+          if (!product) {
+            throw { code: 400, message: "Product not found" }
+          }
+          product.status = item.status
+          await product.save({ transaction });
+        }
+      }
+      const updateNotes = await Delivery_Order_Receipt_Outstanding.findOne({
+        where: {
+          code: code
+        },
+        transaction
+      })
+      updateNotes.notes = notes
+      await updateNotes.save({ transaction });
+
       const exsistingData = await Delivery_Order_Receipt_Outstanding.findOne({
         where: {
           code: code
@@ -251,18 +295,11 @@ class DeliveryOrderReceiveOutstandingService {
             attributes: ["id", "code"],
             include: [
               {
+                model: Delivery_Order_Receipt_Product,
+              },
+              {
                 model: Delivery_Order,
-                attributes: ["id", "code", "notes"],
-                include: [
-                  {
-                    model: Master_Warehouse,
-                    as: "warehouseOrigin",
-                  },
-                  {
-                    model: Master_Warehouse,
-                    as: "warehouseDestination",
-                  },
-                ],
+                attributes: ["id", "code", "notes", "warehouseDestinationId"],
               }
             ]
           },
@@ -275,7 +312,8 @@ class DeliveryOrderReceiveOutstandingService {
               }
             ]
           }
-        ]
+        ],
+        transaction
       })
 
       switch (exsistingData?.status) {
@@ -288,14 +326,13 @@ class DeliveryOrderReceiveOutstandingService {
       }
 
       const stockAjustmentHistory = []
-
       // CHECK PRODUK PLUS UPDATE QUANTITY
       const listProduct = exsistingData?.productOutstandings
       for (const item of listProduct) {
         if (item.status === 'solved') {
           const product = await Warehouse_Product.findOne({
             where: {
-              id: item?.Delivery_Order_Product?.productWarehouseId
+              id: item?.productWarehouseId
             },
             transaction
           })
@@ -306,7 +343,7 @@ class DeliveryOrderReceiveOutstandingService {
           if (!product) {
             throw { code: 400, message: "Product not found" }
           }
-
+          const warehouseDestination = exsistingData?.Delivery_Order_Receipt?.Delivery_Order
           stockAjustmentHistory.push({
             productWarehouseId: product.id,
             quantity: item.outstandingQuantity,
@@ -329,6 +366,7 @@ class DeliveryOrderReceiveOutstandingService {
       await StockAdjustmentHistoryService.bulkCreate({ data: stockAjustmentHistory, transaction })
 
       transaction.commit();
+      // transaction.rollback();
       return
     } catch (error) {
       transaction.rollback()

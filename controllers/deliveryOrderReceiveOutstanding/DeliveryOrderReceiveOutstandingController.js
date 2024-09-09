@@ -37,18 +37,23 @@ class DeliveryOrderReceiveOutstandingController {
 
   static async saveToDraftDeliveryOrderReceiveOutstanding(req, res) {
     try {
-      const schemaBody = yup.array({
-      }).of(
-        yup.object({
-          id: yup.string().required("Code Surat Outstanding harus diisi"),
-          status: yup.string().required("Status harus diisi"),
-        })
-      ).optional();
+      const schemaBody = yup.object({
+        product: yup.array().optional(),
+        notes: yup.string().optional(),
+      })
+
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Surat Outstanding harus diisi"),
+      })
 
       const body = await yupSchemaValidation(req.body, schemaBody);
 
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
       const data = await DeliveryOrderReceiveOutstandingService.saveToDraft({
-        data: req.body,
+        data: body?.product,
+        notes: body?.notes,
+        code: params?.code
       })
 
       res
@@ -67,12 +72,20 @@ class DeliveryOrderReceiveOutstandingController {
         code: yup.string().required("Code Surat Outstanding harus diisi"),
       }).required("Code Surat Outstanding harus diisi");
 
+      const schemaBody = yup.object({
+        notes: yup.string().optional(),
+        products: yup.array().optional(),
+      })
+
       const params = await yupSchemaValidation(req.params, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
 
       const user = req.userData;
 
       const data = await DeliveryOrderReceiveOutstandingService.approve({
         code: params.code,
+        notes: body.notes,
+        products: body.products,
         user
       })
       res

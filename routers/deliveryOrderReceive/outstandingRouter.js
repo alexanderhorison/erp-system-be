@@ -3,7 +3,7 @@ const DeliveryOrderReceiveOutstandingController = require("../../controllers/del
 const router = require("express").Router();
 
 router.get("/all", DeliveryOrderReceiveOutstandingController.getAllDeliveryOrderReceiveOutstanding)
-router.put("/draft", DeliveryOrderReceiveOutstandingController.saveToDraftDeliveryOrderReceiveOutstanding)
+router.put("/draft/:code", DeliveryOrderReceiveOutstandingController.saveToDraftDeliveryOrderReceiveOutstanding)
 router.post("/approve/:code", DeliveryOrderReceiveOutstandingController.approveDeliveryOrderReceiveOutstanding)
 router.get("/:code", DeliveryOrderReceiveOutstandingController.getDeliveryOrderReceiveOutstandingByCode)
 
