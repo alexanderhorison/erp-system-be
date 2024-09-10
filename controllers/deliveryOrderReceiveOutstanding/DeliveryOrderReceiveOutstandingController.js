@@ -39,7 +39,7 @@ class DeliveryOrderReceiveOutstandingController {
     try {
       const schemaBody = yup.object({
         product: yup.array().optional(),
-        notes: yup.string().optional(),
+        notes: yup.string().optional().nullable(),
       })
 
       const schemaParams = yup.object({
@@ -73,7 +73,7 @@ class DeliveryOrderReceiveOutstandingController {
       }).required("Code Surat Outstanding harus diisi");
 
       const schemaBody = yup.object({
-        notes: yup.string().optional(),
+        notes: yup.string().optional().nullable(),
         products: yup.array().optional(),
       })
 
