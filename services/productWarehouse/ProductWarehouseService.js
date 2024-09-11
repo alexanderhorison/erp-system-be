@@ -178,7 +178,7 @@ class ProductWarehouseService {
     }
   }
 
-  static async findProductByWarehouseId({ id, query }) {
+  static async findProductByWarehouseId({ id, query = {} }) {
     try {
       let queryFilter = {};
       if (query != {}) {
@@ -281,6 +281,7 @@ class ProductWarehouseService {
           Adjustment_Goods_Out,
           Stock_Opname,
           Delivery_Order_Receipt_Outstanding,
+          Delivery_Order_Receipt,
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -295,16 +296,16 @@ class ProductWarehouseService {
         ],
       });
 
-      const mappingHistory = []
+      const mappingHistory = [];
 
       for (const item of data) {
-        let notes = ""
-        let deliveryOrder = {}
-        let deliveryOrderReceipt = {}
+        let notes = "";
+        let deliveryOrder = {};
+        let deliveryOrderReceipt = {};
         if (item?.info === "OUTSTANDING") {
           const data = await Delivery_Order_Receipt_Outstanding.findOne({
             where: {
-              id: item?.deliveryOrderReceiptOutstandingId
+              id: item?.deliveryOrderReceiptOutstandingId,
             },
             include: [
               {
@@ -324,14 +325,41 @@ class ProductWarehouseService {
                         as: "warehouseDestination",
                       },
                     ],
-                  }
-                ]
+                  },
+                ],
               },
-            ]
-          })
-          notes = data?.Delivery_Order_Receipt?.Delivery_Order?.notes
-          deliveryOrder = data?.Delivery_Order_Receipt?.Delivery_Order
-          deliveryOrderReceipt = data?.Delivery_Order_Receipt
+            ],
+          });
+          notes = data?.Delivery_Order_Receipt?.Delivery_Order?.notes;
+          deliveryOrder = data?.Delivery_Order_Receipt?.Delivery_Order;
+          deliveryOrderReceipt = data?.Delivery_Order_Receipt;
+        } else if (
+          // Jika delivery order receive menerapkan sistem penerimaan surat jalan yang baru
+          item?.info == "DELIVERY ORDER RECEIVE" &&
+          item?.deliveryOrderReceiptId
+        ) {
+          const data = await Delivery_Order_Receipt.findOne({
+            where: {
+              id: item?.deliveryOrderReceiptId,
+            },
+            include: [
+              {
+                model: Delivery_Order,
+                attributes: ["id", "code"],
+                include: [
+                  {
+                    model: Master_Warehouse,
+                    as: "warehouseOrigin",
+                  },
+                  {
+                    model: Master_Warehouse,
+                    as: "warehouseDestination",
+                  },
+                ],
+              },
+            ],
+          });
+          deliveryOrder = data?.Delivery_Order;
         }
         mappingHistory.push({
           title: infoType(item),
@@ -360,11 +388,22 @@ class ProductWarehouseService {
             notes: item?.Delivery_Order?.notes,
             deliveryOrderCode: item?.Delivery_Order?.code,
           }),
-          ...(item?.info === "DELIVERY ORDER RECEIVE" && {
-            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
-            notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.code,
-          }),
+          // ini untuk case yang delivery order receive yang lama
+          ...(item?.info === "DELIVERY ORDER RECEIVE" &&
+            item?.deliveryOrderId && {
+              deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
+              notes: item?.Delivery_Order?.notes,
+              deliveryOrderCode: item?.Delivery_Order?.code,
+            }),
+          // ini untuk case yang delivery order receive terbaru
+          ...(item?.info === "DELIVERY ORDER RECEIVE" &&
+            item?.deliveryOrderReceiptId && {
+              deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
+              deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
+              deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
+              notes: item?.Delivery_Order_Receipt?.notes,
+              deliveryOrderCode: deliveryOrder.code,
+            }),
           ...(item?.info === "STOCK OPNAME" && {
             stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
             notes: item?.Stock_Opname?.notes,
@@ -383,7 +422,6 @@ class ProductWarehouseService {
           lastQuantity: item?.lastQuantity,
         });
       }
-
 
       const mappingProduct = {
         productName: dataProduct?.Master_Product?.name,
@@ -411,11 +449,11 @@ class ProductWarehouseService {
           {
             model: Master_Unit,
             paranoid: false,
-            attribute: ["id", "name"]
+            attribute: ["id", "name"],
           },
           {
             model: Master_Warehouse_Rack,
-            attribute: ["id", "name"]
+            attribute: ["id", "name"],
           },
           {
             model: Master_Product,
@@ -429,9 +467,9 @@ class ProductWarehouseService {
               },
               {
                 model: Master_Company,
-                attribute: ["id", "name"]
-              }
-            ]
+                attribute: ["id", "name"],
+              },
+            ],
           },
         ],
       });
