@@ -299,7 +299,6 @@ class ProductWarehouseService {
       const mappingHistory = [];
 
       for (const item of data) {
-        let notes = "";
         let deliveryOrder = {};
         let deliveryOrderReceipt = {};
         if (item?.info === "OUTSTANDING") {
@@ -330,7 +329,6 @@ class ProductWarehouseService {
               },
             ],
           });
-          notes = data?.Delivery_Order_Receipt?.Delivery_Order?.notes;
           deliveryOrder = data?.Delivery_Order_Receipt?.Delivery_Order;
           deliveryOrderReceipt = data?.Delivery_Order_Receipt;
         } else if (
@@ -410,11 +408,11 @@ class ProductWarehouseService {
             stockOpnameCode: item?.Stock_Opname?.code,
           }),
           ...(item?.info === "OUTSTANDING" && {
-            notes: notes,
+            notes: item?.Delivery_Order_Receipt_Outstanding?.notes,
             outstanding: `Surat Outstanding: ${item?.Delivery_Order_Receipt_Outstanding?.code}`,
             outstandingCode: item?.Delivery_Order_Receipt_Outstanding?.code,
-            deliveryOrder: `Surat Jalan: ${deliveryOrder?.code}`,
-            deliveryOrderCode: deliveryOrder?.code,
+            // deliveryOrder: `Surat Jalan: ${deliveryOrder?.code}`,
+            // deliveryOrderCode: deliveryOrder?.code,
             deliveryOrderReceipt: `Penerimaan Surat Jalan: ${deliveryOrderReceipt?.code}`,
             deliveryOrderReceiptCode: deliveryOrderReceipt?.code,
           }),
