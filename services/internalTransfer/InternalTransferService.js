@@ -24,6 +24,7 @@ class InternalTransferService {
         include: [
           {
             model: Master_Warehouse,
+            paranoid: false,
             attributes: ["name"],
           },
           {
@@ -90,7 +91,7 @@ class InternalTransferService {
 
       const createInternalTransferProducts = [];
       const listProduct = data?.listProduct;
-      
+
       for (const item of listProduct) {
         // check racks is exist
         const rackFrom = await Master_Warehouse_Rack.findByPk(
@@ -250,7 +251,11 @@ class InternalTransferService {
       const detail = await Internal_Transfer.findOne({
         where: { code: code },
         include: [
-          { model: Master_Warehouse, attributes: ["id", "name", "location"] },
+          {
+            model: Master_Warehouse,
+            attributes: ["id", "name", "location"],
+            paranoid: false,
+          },
           { model: Master_User, as: "creator", attributes: ["id", "name"] },
           { model: Master_User, as: "approver", attributes: ["id", "name"] },
         ],

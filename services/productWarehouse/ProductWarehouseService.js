@@ -318,10 +318,12 @@ class ProductWarehouseService {
                       {
                         model: Master_Warehouse,
                         as: "warehouseOrigin",
+                        paranoid: false,
                       },
                       {
                         model: Master_Warehouse,
                         as: "warehouseDestination",
+                        paranoid: false,
                       },
                     ],
                   },
@@ -348,10 +350,12 @@ class ProductWarehouseService {
                   {
                     model: Master_Warehouse,
                     as: "warehouseOrigin",
+                    paranoid: false,
                   },
                   {
                     model: Master_Warehouse,
                     as: "warehouseDestination",
+                    paranoid: false,
                   },
                 ],
               },
@@ -389,19 +393,19 @@ class ProductWarehouseService {
           // ini untuk case yang delivery order receive yang lama
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderId && {
-              deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
-              notes: item?.Delivery_Order?.notes,
-              deliveryOrderCode: item?.Delivery_Order?.code,
-            }),
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
+            notes: item?.Delivery_Order?.notes,
+            deliveryOrderCode: item?.Delivery_Order?.code,
+          }),
           // ini untuk case yang delivery order receive terbaru
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderReceiptId && {
-              deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
-              deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
-              deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
-              notes: item?.Delivery_Order_Receipt?.notes,
-              deliveryOrderCode: deliveryOrder.code,
-            }),
+            deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
+            deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
+            deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
+            notes: item?.Delivery_Order_Receipt?.notes,
+            deliveryOrderCode: deliveryOrder.code,
+          }),
           ...(item?.info === "STOCK OPNAME" && {
             stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
             notes: item?.Stock_Opname?.notes,

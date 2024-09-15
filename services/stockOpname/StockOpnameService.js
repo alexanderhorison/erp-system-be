@@ -25,13 +25,16 @@ class StockOpnameService {
           ...(warehouseId ? { warehouseId } : {})
         },
         include: [
-          { model: Master_Warehouse },
+          { model: Master_Warehouse, paranoid: false },
           { model: Master_User, as: "creator" },
           { model: Master_User, as: "updater" },
           { model: Master_User, as: "deleter" }
         ],
         order: [["opnameDate", "DESC"]]
       });
+
+      console.log(data);
+
 
       const result = data.map((item) => {
         return {
@@ -52,6 +55,8 @@ class StockOpnameService {
 
       return result
     } catch (error) {
+      console.log(error);
+
       throw error
     }
   }
@@ -65,6 +70,7 @@ class StockOpnameService {
         include: [
           {
             model: Master_Warehouse,
+            paranoid: false
           },
           { model: Master_User, as: "creator" },
           { model: Master_User, as: "updater" },

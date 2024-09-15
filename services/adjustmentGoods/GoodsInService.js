@@ -29,7 +29,8 @@ class GoodsInService {
         },
         include: [
           {
-            model: Master_Warehouse
+            model: Master_Warehouse,
+            paranoid: false,
           },
           {
             model: Master_User,
@@ -295,7 +296,8 @@ class GoodsInService {
             ]
           },
           {
-            model: Master_Warehouse
+            model: Master_Warehouse,
+            paranoid: false,
           },
           {
             model: Master_User,

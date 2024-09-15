@@ -41,8 +41,12 @@ class MasterDataWarehouseService {
 
   static async update(id, data, user) {
     try {
-      const { name, description, location } = data;
-      const existingWarehouse = await Master_Warehouse.findByPk(id);
+      const { name, description, location, status } = data;
+
+      const existingWarehouse = await Master_Warehouse.findOne({
+        where: { id },
+        paranoid: false
+      });
 
       if (!existingWarehouse) {
         throw {
@@ -56,6 +60,14 @@ class MasterDataWarehouseService {
         description: description,
         location: location,
       });
+      // RESTORE WHEN ACTIVE AGAIN
+      if (status === "active") {
+        await existingWarehouse.restore()
+      }
+      // DESTROY WHEN NOT ACTIVE
+      if (status === "not-active") {
+        await existingWarehouse.destroy()
+      }
 
       return updatedWarehouse;
     } catch (error) {
@@ -103,6 +115,7 @@ class MasterDataWarehouseService {
         ...(query?.status === "all" ? { paranoid: false } : {}),
         ...(query?.status === "active" ? { paranoid: true } : {}),
         ...(query?.status === "not-active" ? { where: { deletedAt: { [Op.not]: null } }, paranoid: false } : {}),
+        order: [['deletedAt', 'DESC']],
       });
 
       const result = data.map((item) => ({
@@ -119,7 +132,10 @@ class MasterDataWarehouseService {
 
   static async findOne(id) {
     try {
-      const warehouse = await Master_Warehouse.findByPk(id);
+      const warehouse = await Master_Warehouse.findOne({
+        where: { id },
+        paranoid: false
+      });
 
       if (!warehouse) {
         throw {
@@ -132,6 +148,7 @@ class MasterDataWarehouseService {
         id: warehouse.id,
         name: warehouse.name,
         location: warehouse.location,
+        status: warehouse.deletedAt ? "not-active" : "active",
       };
 
       return result;

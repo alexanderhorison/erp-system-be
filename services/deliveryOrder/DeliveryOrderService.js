@@ -150,7 +150,7 @@ class DeliveryOrderService {
       // query untuk receive order hanya mengambil yang belum selesai
       if (payload.query.receiveOrder) {
         queryOption.where = {
-          status : "PENDING"
+          status: "PENDING"
         }
       }
 
@@ -240,11 +240,13 @@ class DeliveryOrderService {
           {
             model: Master_Warehouse,
             as: "warehouseOrigin",
+            paranoid: false,
             attributes: ["name", "location"],
           },
           {
             model: Master_Warehouse,
             as: "warehouseDestination",
+            paranoid: false,
             attributes: ["name", "location"],
           },
           {

@@ -33,6 +33,7 @@ class MasterDataWarehouseController {
         id: yup.number().required("Id gudang harus diisi"),
         name: yup.string().required("Nama gudang harus diisi"),
         location: yup.string().required("Lokasi gudang harus diisi"),
+        status: yup.string().required("Status gudang harus diisi"),
         description: yup.string().optional(),
       });
 

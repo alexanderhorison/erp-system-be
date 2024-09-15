@@ -441,11 +441,13 @@ class DeliveryOrderReceiveService {
                 model: Master_Warehouse,
                 as: "warehouseOrigin",
                 attributes: ["name", "location"],
+                paranoid: false,
               },
               {
                 model: Master_Warehouse,
                 as: "warehouseDestination",
                 attributes: ["name", "location"],
+                paranoid: false,
               },
               {
                 model: Master_User,

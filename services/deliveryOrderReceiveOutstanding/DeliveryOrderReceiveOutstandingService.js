@@ -122,11 +122,13 @@ class DeliveryOrderReceiveOutstandingService {
                 include: [
                   {
                     model: Master_Warehouse,
+                    paranoid: false,
                     as: "warehouseOrigin",
                   },
                   {
                     model: Master_Warehouse,
                     as: "warehouseDestination",
+                    paranoid: false,
                   },
                 ],
               }
