@@ -15,7 +15,7 @@ class MasterDataCategoryService {
           message: "Nama kategori sudah ada dalam database",
         };
       }
-      
+
       return Master_Category.create({
         name: name,
         description: description,
@@ -28,7 +28,7 @@ class MasterDataCategoryService {
   static async update(id, data, user) {
     try {
       const { name, description } = data;
-      console.log(id);
+
       const existingMasterCategory = await Master_Category.findByPk(id);
 
       if (!existingMasterCategory) {

@@ -33,9 +33,6 @@ class StockOpnameService {
         order: [["opnameDate", "DESC"]]
       });
 
-      console.log(data);
-
-
       const result = data.map((item) => {
         return {
           id: item.id,
