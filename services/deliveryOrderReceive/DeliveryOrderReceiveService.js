@@ -266,7 +266,7 @@ class DeliveryOrderReceiveService {
           deliveryOrderReceiptOutstandingProduct: updatedOutstandingProduct,
           // to flag have outstanding product
           haveOutstandingProduct:
-            updatedOutstandingProduct.length > 0 ? true : false,
+            deliveryOrderReceiptOutstandingProduct.length > 0 ? true : false,
           user,
         },
         transaction
