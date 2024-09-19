@@ -10,7 +10,8 @@ const routerDeliveryOrderReceive = require("./deliveryOrderReceive");
 const routerStockOpname = require("./stockOpname");
 const routerAdjustmentGoods = require("./adjustmentGoods");
 const routerInternalTransfer = require("./internalTransfer");
-const MigrationController = require('../controllers/migration/MigrationController');
+const MigrationController = require("../controllers/migration/MigrationController");
+const routerDashboard = require("./dashboard");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -30,6 +31,9 @@ router.use("/menu", routerMenu);
 // Role
 router.use("/role", routerRole);
 
+// Dashboard
+router.use("/dashboard", routerDashboard);
+
 // Product Warehouse
 router.use("/product-warehouse", routerProductWarehouse);
 
@@ -46,10 +50,9 @@ router.use("/stock-opname", routerStockOpname);
 router.use("/adjustment-goods", routerAdjustmentGoods);
 
 // API Migrations
-router.post("/api-migrations", MigrationController.apiMigration)
+router.post("/api-migrations", MigrationController.apiMigration);
 
 // Internal Transfer
 router.use("/internal-transfer", routerInternalTransfer);
-
 
 module.exports = router;
