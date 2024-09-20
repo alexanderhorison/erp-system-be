@@ -61,6 +61,9 @@ ID MENU : NAMA
 17  Barang Keluar
 18  Internal Transfer
 19  Outstanding Product (Produk yang selisih dari penerimaan surat jalan)
+20  Dashboard
+21  Customer
+22  Rank
 ```
 
 

@@ -5,6 +5,8 @@ const routerMasterDataType = require("./masterDataTypeRouter");
 const routerMasterDataUnit = require("./masterDataUnitRouter");
 const routerMasterDataWarehouse = require("./masterDataWarehouseRouter");
 const routerMasterDataCompany = require("./masterDataCompanyRouter");
+const routerMasterDataRank = require("./masterDataRankRouter");
+const routerMasterDataCustomer = require("./masterDataCustomerRouter");
 const Auth = require("../../helpers/auth");
 
 // router.use(Auth.KepalaGudang);
@@ -14,5 +16,7 @@ router.use("/type", routerMasterDataType);
 router.use("/unit", routerMasterDataUnit);
 router.use("/warehouse", routerMasterDataWarehouse);
 router.use("/company", routerMasterDataCompany);
+router.use("/rank", routerMasterDataRank)
+router.use("/customer", routerMasterDataCustomer)
 
 module.exports = router;
