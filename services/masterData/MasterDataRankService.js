@@ -9,7 +9,7 @@ class MasterDataRankService {
 
       // Find rank that had level or name
       const existingRank = await Master_Rank.findOne({
-        where: { [Op.or]: [{ name: name }, { level: level }] },
+        where: { [Op.or]: [{ name: name }] },
       });
 
       if (existingRank) {
@@ -38,7 +38,7 @@ class MasterDataRankService {
 
       // Find rank that had level or name
       const rank = await Master_Rank.findOne({
-        where: { [Op.or]: [{ name: name }, { level: level }] },
+        where: { [Op.or]: [{ name: name }] },
       });
 
       if (rank && rank.id !== id) {
