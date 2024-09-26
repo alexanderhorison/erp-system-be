@@ -102,8 +102,8 @@ class DashboardService {
           { model: Master_Warehouse, attributes: ["name"] },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
-        limit: 10,
-        order: [["updatedAt", "ASC"]],
+        limit: 5,
+        order: [["updatedAt", "DESC"]],
       });
 
       let result = [];
@@ -134,20 +134,20 @@ class DashboardService {
   static async fastStock({ query }) {
     try {
       // get product from all warehouse that hasn't been update
-      let hours = 10;
+      // let hours = 10;
 
-      if (query.hours) {
-        hours = query.hours;
-      }
+      // if (query.hours) {
+      //   hours = query.hours;
+      // }
 
-      const timeThresold = moment().subtract(hours, "hours").toDate();
+      // const timeThresold = moment().subtract(hours, "hours").toDate();
 
       const getWarehouseProduct = await Warehouse_Product.findAll({
-        where: {
-          updatedAt: {
-            [Op.gt]: timeThresold, // Find records updated within the last XX hours
-          },
-        },
+        // where: {
+        //   updatedAt: {
+        //     [Op.gt]: timeThresold, // Find records updated within the last XX hours
+        //   },
+        // },
         include: [
           {
             model: Master_Product,
@@ -162,7 +162,7 @@ class DashboardService {
           { model: Master_Warehouse, attributes: ["name"] },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
-        limit: 10,
+        limit: 5,
         order: [["updatedAt", "DESC"]],
       });
 
