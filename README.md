@@ -64,6 +64,7 @@ ID MENU : NAMA
 20  Dashboard
 21  Customer
 22  Rank
+23  Sales Order
 ```
 
 
