@@ -33,6 +33,9 @@ const titleInfo = (item) => {
     case "OUTSTANDING":
       result = "Surat Jalan Outstanding"
       break;
+    case "SALES ORDER":
+      result = "Sales Order"
+      break;
     default:
       result = "Penyesuaian Stock Product"
   }

@@ -15,6 +15,7 @@ const {
   Sales_Order_Detail,
   Master_Customer,
   Stock_Adjustment_History,
+  Master_Rank,
 } = require("../../models");
 
 class SalesOrderService {
@@ -217,11 +218,11 @@ class SalesOrderService {
         // Kurangi stok product di warehouse
         await Warehouse_Product.update(
           {
-            quantity: warehouseProduct.quantity - item.quantity,
+            quantity: warehouseProduct?.quantity - item?.quantity,
           },
           {
             where: {
-              id: item.warehouseProductId,
+              id: item?.warehouseProductId,
             },
             transaction,
           }
@@ -230,14 +231,14 @@ class SalesOrderService {
         // catat stock adjustment histories
         await Stock_Adjustment_History.create(
           {
-            productWarehouseId: item.warehouseProductId,
-            quantity: item.quantity,
+            productWarehouseId: item?.warehouseProductId,
+            quantity: item?.quantity,
             adjustmentType: "MINUS",
-            warehouseId: warehouseProduct.warehouseId,
+            warehouseId: warehouseProduct?.warehouseId,
             userId: user?.id,
             info: "SALES ORDER",
-            salesOrderId: exsistingData.id,
-            lastQuantity: warehouseProduct.quantity - item.quantity, // stock product warehouse kurang product sales order
+            salesOrderId: exsistingData?.id,
+            lastQuantity: warehouseProduct?.quantity - item?.quantity, // stock product warehouse kurang product sales order
           },
           { transaction }
         );
@@ -312,7 +313,7 @@ class SalesOrderService {
           {
             model: Master_Warehouse,
             paranoid: false,
-            attributes: ["name"],
+            attributes: ["name", "location"],
           },
           {
             model: Master_Customer,
@@ -377,10 +378,10 @@ class SalesOrderService {
 
       const listProduct = salesOrderProducts.map((item) => {
         return {
-          id: item.id,
-          price: item.price,
-          quantity: item.quantity,
-          subTotal: item.subtotal,
+          id: item?.id,
+          price: item?.price,
+          quantity: item?.quantity,
+          subTotal: item?.subTotal,
           unitName: item?.Warehouse_Product?.Master_Unit?.name,
           productName: item?.Warehouse_Product?.Master_Product?.name,
           companyName:
@@ -395,14 +396,14 @@ class SalesOrderService {
         notes: detail?.notes,
         code: detail.code,
         customer: {
-          id: item?.customerId,
-          name: item?.Master_Customer?.name,
-          phoneNumber: item?.Master_Customer?.phoneNumber,
-          email: item?.Master_Customer?.email,
-          address: item?.Master_Customer?.address,
-          gender: item?.Master_Customer?.gender,
-          rankName: item?.Master_Customer?.Master_Rank?.name,
-          level: item?.Master_Customer?.Master_Rank?.level,
+          id: detail?.customerId,
+          name: detail?.Master_Customer?.name,
+          phoneNumber: detail?.Master_Customer?.phoneNumber,
+          email: detail?.Master_Customer?.email,
+          address: detail?.Master_Customer?.address,
+          gender: detail?.Master_Customer?.gender,
+          rankName: detail?.Master_Customer?.Master_Rank?.name,
+          level: detail?.Master_Customer?.Master_Rank?.level,
         },
         grandTotal: detail.grandTotal,
         warehouseId: detail?.warehouseId,
@@ -410,10 +411,10 @@ class SalesOrderService {
         warehouseLocation: detail?.Master_Warehouse?.location,
         createdBy: detail?.creator?.name,
         approvedBy: detail?.approver?.name,
-        approvedAt: formatDate(detail?.approvedAt),
-        createdAt: formatDate(detail?.createdAt),
+        approvedAt: detail?.approvedAt,
+        createdAt: detail?.createdAt,
         updatedAt: detail?.updatedAt,
-        listProduct: listProduct,
+        listProducts: listProduct,
         dueDate: detail?.dueDate,
       };
 

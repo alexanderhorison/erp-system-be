@@ -424,7 +424,7 @@ class ProductWarehouseService {
           }),
           // SALES ORDER
           ...(item?.info === "SALES ORDER" && {
-            salesOrder: `Order Penjualan: ${item?.Sales_Order?.code}`,
+            salesOrder: `Sales Order: ${item?.Sales_Order?.code}`,
             notes: item?.Sales_Order?.notes,
             salesOrderCode: item?.Sales_Order?.code,
           }),
