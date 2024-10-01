@@ -75,6 +75,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      dueDate: {
+        allowNull: false,
+        type: Sequelize.STRING,
+      },
     });
     await queryInterface.addIndex("Sales_Orders", ["warehouseId"]);
     // add Menu Sales Order

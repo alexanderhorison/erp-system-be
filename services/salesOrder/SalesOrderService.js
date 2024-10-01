@@ -1,0 +1,475 @@
+const { codeGenerator } = require("../../helpers/codeGenerator");
+const { formatDate } = require("../../helpers/formatDate");
+const { throwValidation } = require("../../helpers/responses");
+const {
+  sequelize: sq,
+  Master_Product,
+  Master_Unit,
+  Master_User,
+  Master_Company,
+  Master_Warehouse,
+  Master_Role,
+  Warehouse_Product,
+  Master_Warehouse_Rack,
+  Sales_Order,
+  Sales_Order_Detail,
+  Master_Customer,
+  Stock_Adjustment_History,
+} = require("../../models");
+
+class SalesOrderService {
+  static async getAll({ user }) {
+    try {
+      const allData = await Sales_Order.findAll({
+        where: {
+          ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
+        },
+        include: [
+          {
+            model: Master_Warehouse,
+            paranoid: false,
+            attributes: ["name"],
+          },
+          // {
+          //   model: Master_Customer,
+          //   include: [
+          //     {
+          //       model: Master_Rank,
+          //       attributes: ["name", "level"],
+          //     },
+          //   ],
+          // },
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: Master_User,
+            as: "approver",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      const sendData = allData.map((item) => {
+        return {
+          id: item.id,
+          code: item.code,
+          warehouseId: item?.warehouseId,
+          warehouseName: item?.Master_Warehouse?.name,
+          grandTotal: item?.grandTotal,
+          notes: item?.notes,
+          status: item?.status,
+          createdBy: {
+            name: item?.creator?.name,
+            roleName: item?.creator?.Master_Role?.name,
+          },
+          createdAt: item?.createdAt,
+          dateCreated: formatDate(item?.createdAt),
+          approverBy: {
+            name: item?.approver?.name,
+            roleName: item?.approver?.Master_Role?.name,
+          },
+          approvedAt: item?.approvedAt,
+          dateApproved: formatDate(item?.approvedAt),
+          dueDate: item?.dueDate,
+        };
+      });
+
+      return sendData;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async create({ data, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const generateCode = await codeGenerator(8, "SO");
+
+      const createdData = await Sales_Order.create(
+        {
+          code: generateCode,
+          warehouseId: data.warehouseId,
+          customerId: data.customerId,
+          grandTotal: data.grandTotal,
+          notes: data?.notes || "",
+          status: "PENDING",
+          createdBy: user?.id,
+          dueDate: data?.dueDate,
+        },
+        { transaction }
+      );
+
+      const createSalesOrderProducts = [];
+      const listProduct = data?.listProduct;
+
+      for (const item of listProduct) {
+        const findWarehouseProduct = await Warehouse_Product.findByPk(
+          item.warehouseProductId
+        );
+
+        if (!findWarehouseProduct) {
+          throwValidation(400, "Salah satu product warehouse tidak ditemukan");
+        }
+
+        // push sales order products
+        createSalesOrderProducts.push({
+          salesOrderId: createdData.id,
+          warehouseProductId: item.warehouseProductId,
+          price: item.price,
+          quantity: item.quantity,
+          subTotal: item.subTotal,
+        });
+      }
+
+      await Sales_Order_Detail.bulkCreate(createSalesOrderProducts, {
+        transaction,
+      });
+
+      await transaction.commit();
+      return createdData;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async approve({ code, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const exsistingData = await Sales_Order.findOne({
+        where: {
+          code: code,
+        },
+      });
+
+      // CHECKING STATUS
+      switch (exsistingData?.status) {
+        case "APPROVED":
+          throwValidation(400, "Data sudah di approve");
+        case "REJECTED":
+          throwValidation(400, "Data sudah di reject");
+        default:
+          if (!exsistingData) {
+            throwValidation(400, "Data tidak ditemukan");
+          }
+      }
+
+      // FIND PRODUCT SALES ORDER
+      const salesOrderProducts = await Sales_Order_Detail.findAll({
+        where: {
+          salesOrderId: exsistingData?.id,
+        },
+      });
+
+      for (const item of salesOrderProducts) {
+        const warehouseProduct = await Warehouse_Product.findOne({
+          where: {
+            id: item.warehouseProductId,
+          },
+          include: [
+            {
+              model: Master_Product,
+              attributes: ["name"],
+            },
+            {
+              model: Master_Unit,
+              attributes: ["name"],
+            },
+            {
+              model: Master_Warehouse,
+              attributes: ["name"],
+            },
+          ],
+        });
+
+        if (!warehouseProduct) {
+          throwValidation(
+            400,
+            `Produk dengan ID ${item.warehouseProductId} tidak ditemukann`
+          );
+        }
+
+        // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup
+        if (warehouseProduct.quantity < item.quantity) {
+          const productName = warehouseProduct.Master_Product?.name || "Produk";
+          const unitName = warehouseProduct.Master_Unit?.name || "unit";
+          throwValidation(
+            400,
+            `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${warehouseProduct.quantity}`
+          );
+        }
+        // Kurangi stok product di warehouse
+        await Warehouse_Product.update(
+          {
+            quantity: warehouseProduct.quantity - item.quantity,
+          },
+          {
+            where: {
+              id: item.warehouseProductId,
+            },
+            transaction,
+          }
+        );
+
+        // catat stock adjustment histories
+        await Stock_Adjustment_History.create(
+          {
+            productWarehouseId: item.warehouseProductId,
+            quantity: item.quantity,
+            adjustmentType: "MINUS",
+            warehouseId: warehouseProduct.warehouseId,
+            userId: user?.id,
+            info: "SALES ORDER",
+            salesOrderId: exsistingData.id,
+            lastQuantity: warehouseProduct.quantity - item.quantity, // stock product warehouse kurang product sales order
+          },
+          { transaction }
+        );
+      }
+
+      // CHANGE STATUS SALES ORDER
+      const approvedData = await Sales_Order.update(
+        {
+          status: "APPROVED",
+          approvedBy: user?.id,
+          approvedAt: new Date(),
+        },
+        {
+          where: {
+            code: code,
+          },
+          transaction,
+        }
+      );
+
+      await transaction.commit();
+      return approvedData;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async reject({ code, user }) {
+    try {
+      const exsistingData = await Sales_Order.findOne({
+        where: {
+          code: code,
+        },
+      });
+
+      switch (exsistingData?.status) {
+        case "APPROVED":
+          throwValidation(400, "Data sudah di approve");
+        case "REJECTED":
+          throwValidation(400, "Data sudah di reject");
+        default:
+          if (!exsistingData) {
+            throwValidation(400, "Data tidak ditemukan");
+          }
+      }
+
+      const rejectedData = await Sales_Order.update(
+        {
+          status: "REJECTED",
+          approvedBy: user?.id,
+          approvedAt: new Date(),
+        },
+        {
+          where: {
+            code: code,
+          },
+        }
+      );
+
+      return rejectedData;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailByCode(code) {
+    try {
+      const detail = await Sales_Order.findOne({
+        where: { code: code },
+        include: [
+          {
+            model: Master_Warehouse,
+            paranoid: false,
+            attributes: ["name"],
+          },
+          {
+            model: Master_Customer,
+            include: [
+              {
+                model: Master_Rank,
+                attributes: ["name", "level"],
+              },
+            ],
+          },
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: Master_User,
+            as: "approver",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!detail) {
+        throwValidation(400, "Data tidak ditemukan");
+      }
+
+      const salesOrderProducts = await Sales_Order_Detail.findAll({
+        where: { salesOrderId: detail.id },
+        include: [
+          {
+            model: Warehouse_Product,
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["id", "name"],
+                include: [
+                  {
+                    model: Master_Company,
+                    attributes: ["id", "name"],
+                  },
+                ],
+              },
+              { model: Master_Unit, attributes: ["id", "name"] },
+              { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+            ],
+          },
+        ],
+      });
+
+      const listProduct = salesOrderProducts.map((item) => {
+        return {
+          id: item.id,
+          price: item.price,
+          quantity: item.quantity,
+          subTotal: item.subtotal,
+          unitName: item?.Warehouse_Product?.Master_Unit?.name,
+          productName: item?.Warehouse_Product?.Master_Product?.name,
+          companyName:
+            item?.Warehouse_Product?.Master_Product?.Master_Company?.name,
+          rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
+        };
+      });
+
+      const sendData = {
+        id: detail.id,
+        status: detail?.status,
+        notes: detail?.notes,
+        code: detail.code,
+        customer: {
+          id: item?.customerId,
+          name: item?.Master_Customer?.name,
+          phoneNumber: item?.Master_Customer?.phoneNumber,
+          email: item?.Master_Customer?.email,
+          address: item?.Master_Customer?.address,
+          gender: item?.Master_Customer?.gender,
+          rankName: item?.Master_Customer?.Master_Rank?.name,
+          level: item?.Master_Customer?.Master_Rank?.level,
+        },
+        grandTotal: detail.grandTotal,
+        warehouseId: detail?.warehouseId,
+        warehouseName: detail?.Master_Warehouse?.name,
+        warehouseLocation: detail?.Master_Warehouse?.location,
+        createdBy: detail?.creator?.name,
+        approvedBy: detail?.approver?.name,
+        approvedAt: formatDate(detail?.approvedAt),
+        createdAt: formatDate(detail?.createdAt),
+        updatedAt: detail?.updatedAt,
+        listProduct: listProduct,
+        dueDate: detail?.dueDate,
+      };
+
+      return sendData;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updateSalesOrder({ data, code }) {
+    const transaction = await sq.transaction();
+    try {
+      const salesOrder = await Sales_Order.findOne({
+        where: { code: code },
+      });
+
+      switch (salesOrder?.status) {
+        case "APPROVED":
+          throwValidation(400, "Data sudah di approve");
+        case "REJECTED":
+          throwValidation(400, "Data sudah di reject");
+        default:
+          if (!salesOrder) {
+            throwValidation(400, "Data tidak ditemukan");
+          }
+      }
+      for (const item of data) {
+        const salesOrderDetail = await Sales_Order_Detail.findByPk(item.id, {
+          transaction,
+        });
+
+        if (!salesOrderDetail) {
+          throwValidation(
+            400,
+            `Sales Order detail id ${item.id} tidak ditemukann`
+          );
+        }
+
+        // Update quantity, price, and sub total in sales order detail
+        await salesOrderDetail.update(
+          {
+            quantity: item.quantity,
+            price: item.price,
+            subTotal: item.quantity * item.price,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+}
+
+module.exports = SalesOrderService;

@@ -23,6 +23,7 @@ const {
   Stock_Opname,
   Delivery_Order_Receipt_Outstanding,
   Delivery_Order_Receipt,
+  Sales_Order
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -282,6 +283,7 @@ class ProductWarehouseService {
           Stock_Opname,
           Delivery_Order_Receipt_Outstanding,
           Delivery_Order_Receipt,
+          Sales_Order
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -419,6 +421,12 @@ class ProductWarehouseService {
             // deliveryOrderCode: deliveryOrder?.code,
             deliveryOrderReceipt: `Penerimaan Surat Jalan: ${deliveryOrderReceipt?.code}`,
             deliveryOrderReceiptCode: deliveryOrderReceipt?.code,
+          }),
+          // SALES ORDER
+          ...(item?.info === "SALES ORDER" && {
+            salesOrder: `Order Penjualan: ${item?.Sales_Order?.code}`,
+            notes: item?.Sales_Order?.notes,
+            salesOrderCode: item?.Sales_Order?.code,
           }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,

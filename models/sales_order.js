@@ -39,6 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       createdBy: DataTypes.INTEGER,
       approvedBy: DataTypes.INTEGER,
       approvedAt: DataTypes.DATE,
+      dueDate: DataTypes.STRING,
     },
     {
       sequelize,

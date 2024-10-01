@@ -12,6 +12,7 @@ const routerAdjustmentGoods = require("./adjustmentGoods");
 const routerInternalTransfer = require("./internalTransfer");
 const MigrationController = require("../controllers/migration/MigrationController");
 const routerDashboard = require("./dashboard");
+const routerSalesOrder = require("./salesOrder");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -54,5 +55,8 @@ router.post("/api-migrations", MigrationController.apiMigration);
 
 // Internal Transfer
 router.use("/internal-transfer", routerInternalTransfer);
+
+// Sales Order
+router.use("/sales-order", routerSalesOrder);
 
 module.exports = router;
