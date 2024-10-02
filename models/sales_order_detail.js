@@ -22,9 +22,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       salesOrderId: DataTypes.INTEGER,
       warehouseProductId: DataTypes.INTEGER,
-      price: DataTypes.INTEGER,
+      price: DataTypes.BIGINT,
       quantity: DataTypes.INTEGER,
-      subTotal: DataTypes.INTEGER,
+      subTotal: DataTypes.BIGINT,
     },
     {
       sequelize,

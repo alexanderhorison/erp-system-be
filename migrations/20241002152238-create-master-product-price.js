@@ -2,41 +2,36 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Sales_Order_Details", {
+    await queryInterface.createTable("Master_Product_Prices", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      salesOrderId: {
+      productId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Sales_Orders", // Name of the target table
-          key: "id", // Key in the target table that this column references
+          model: "Master_Products",
+          key: "id",
         },
         onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
+        onDelete: "CASCADE",
       },
-      warehouseProductId: {
+      unitId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Warehouse_Products", // Name of the target table
-          key: "id", // Key in the target table that this column references
+          model: "Master_Units",
+          key: "id",
         },
         onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
+        onDelete: "CASCADE",
       },
-      price: {
+      basePrice: {
         type: Sequelize.BIGINT,
-      },
-      quantity: {
-        type: Sequelize.INTEGER,
-      },
-      subTotal: {
-        type: Sequelize.BIGINT,
+        defaultValue: 0,
       },
       createdAt: {
         allowNull: false,
@@ -47,9 +42,9 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
-    await queryInterface.addIndex("Sales_Order_Details", ["salesOrderId"]);
+    await queryInterface.addIndex("Master_Product_Prices", ["productId"]);
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Sales_Order_Details");
+    await queryInterface.dropTable("Master_Product_Prices");
   },
 };

@@ -1,12 +1,18 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-
   class Master_Unit extends Model {
     static associate(models) {
       // define association here
-      Master_Unit.hasMany(models.Master_Product_Transformation, { foreignKey: "unitFromId" });
-      Master_Unit.hasMany(models.Master_Product_Transformation, { foreignKey: "unitToId" });
+      Master_Unit.hasMany(models.Master_Product_Transformation, {
+        foreignKey: "unitFromId",
+      });
+      Master_Unit.hasMany(models.Master_Product_Transformation, {
+        foreignKey: "unitToId",
+      });
+      Master_Unit.hasMany(models.Master_Product_Price, {
+        foreignKey: "unitId",
+      });
     }
   }
 
@@ -23,5 +29,4 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   return Master_Unit;
-
 };

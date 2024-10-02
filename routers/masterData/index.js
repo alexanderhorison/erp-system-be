@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const routerMasterDataProduct = require("./masterDataProductRouter");
+const routerMasterDataProductPrice = require("./masterDataProductPriceRouter");
 const routerMasterDataCategory = require("./masterDataCategoryRouter");
 const routerMasterDataType = require("./masterDataTypeRouter");
 const routerMasterDataUnit = require("./masterDataUnitRouter");
@@ -18,5 +19,6 @@ router.use("/warehouse", routerMasterDataWarehouse);
 router.use("/company", routerMasterDataCompany);
 router.use("/rank", routerMasterDataRank)
 router.use("/customer", routerMasterDataCustomer)
+router.use("/master-product-price", routerMasterDataProductPrice)
 
 module.exports = router;

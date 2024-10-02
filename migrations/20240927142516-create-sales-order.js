@@ -35,7 +35,7 @@ module.exports = {
         onDelete: "RESTRICT",
       },
       grandTotal: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.BIGINT,
       },
       status: {
         type: Sequelize.STRING,

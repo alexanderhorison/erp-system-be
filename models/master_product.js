@@ -1,7 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-
   class Master_Product extends Model {
     static associate(models) {
       // define association here
@@ -12,7 +11,12 @@ module.exports = (sequelize, DataTypes) => {
       Master_Product.hasMany(models.Warehouse_Product, {
         foreignKey: "productId",
       });
-      Master_Product.belongsTo(models.Master_Company, { foreignKey: "companyId" })
+      Master_Product.belongsTo(models.Master_Company, {
+        foreignKey: "companyId",
+      });
+      Master_Product.hasMany(models.Master_Product_Price, {
+        foreignKey: "productId",
+      });
     }
   }
   Master_Product.init(
@@ -32,5 +36,4 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   return Master_Product;
-
 };
