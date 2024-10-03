@@ -159,7 +159,7 @@ class DeliveryOrderService {
         return {
           id: item.id,
           code: item.code,
-          createdAt: formatDate(item.createdAt),
+          createdAt: item.createdAt,
           receivedAt: formatDate(item.receivedAt),
           createdBy: {
             name: item.creatorBy.name,
@@ -168,7 +168,7 @@ class DeliveryOrderService {
           warehouseOrigin: item.warehouseOrigin.name,
           warehouseDestination: item.warehouseDestination.name,
           status: item.status,
-          dateCreated: item.createdAt,
+          dateCreated: formatDate(item.createdAt),
           dateReceived: item.receivedAt,
         };
       });

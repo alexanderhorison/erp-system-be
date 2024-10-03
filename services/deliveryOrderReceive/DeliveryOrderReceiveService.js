@@ -164,12 +164,12 @@ class DeliveryOrderReceiveService {
           id: item.id,
           codeReceipt: item.code,
           codeDeliveryOrder: item.Delivery_Order.code,
-          createdAt: formatDate(item.createdAt),
+          createdAt: item.createdAt,
           createdBy: {
             name: item.creator.name,
             roleName: item.creator.Master_Role.name,
           },
-          dateCreated: item.createdAt,
+          dateCreated: formatDate(item.createdAt),
         };
       });
 
