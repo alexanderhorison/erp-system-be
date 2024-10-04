@@ -15,20 +15,22 @@ const {
   Delivery_Order_Receipt,
   Delivery_Order_Receipt_Outstanding,
   Internal_Transfer,
+  Delivery_Order_Receipt_Outstanding_Product,
   sequelize: sq,
 } = require("../../models");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { formatDate, formatTime } = require("../../helpers/formatDate");
 
 class DashboardService {
-  static async minimumStock() {
+  // 1.⁠ ⁠Daftar barang habis -> DONE
+  static async minimumStock({ query }) {
     try {
-      // get product from all warehouse that close to minimum stock
       const getWarehouseProduct = await Warehouse_Product.findAll({
         where: {
           quantity: {
             [Op.lte]: sq.col("minimumStock"),
           },
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
         },
         attributes: ["id", "quantity", "minimumStock"],
         include: [
@@ -45,7 +47,8 @@ class DashboardService {
           { model: Master_Warehouse, attributes: ["name"] },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
-        limit: 10,
+        limit: 5,
+        order: [["quantity", "ASC"]],
       });
 
       let result = [];
@@ -71,22 +74,12 @@ class DashboardService {
       throwValidation(error.code, error.message);
     }
   }
+  // 2.⁠ ⁠TOP 5 barang tidak bergerak  (Tambahkan Config Get data Days) -> DONE
   static async slowStock({ query }) {
     try {
-      // get product from all warehouse that hasn't been update
-      let days = 1;
-
-      if (query.days) {
-        days = query.days;
-      }
-
-      const dateThreshold = moment().subtract(days, "days").toDate();
-
       const getWarehouseProduct = await Warehouse_Product.findAll({
         where: {
-          updatedAt: {
-            [Op.lt]: dateThreshold, // Find records where updatedAt is older than XX days
-          },
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
         },
         include: [
           {
@@ -103,7 +96,7 @@ class DashboardService {
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
         limit: 5,
-        order: [["updatedAt", "DESC"]],
+        order: [["updatedAt", "ASC"]],
       });
 
       let result = [];
@@ -130,24 +123,13 @@ class DashboardService {
       throwValidation(error.code, error.message);
     }
   }
-
+  // 3.⁠ ⁠Top 5 barang gerak cepat -> DONE
   static async fastStock({ query }) {
     try {
-      // get product from all warehouse that hasn't been update
-      // let hours = 10;
-
-      // if (query.hours) {
-      //   hours = query.hours;
-      // }
-
-      // const timeThresold = moment().subtract(hours, "hours").toDate();
-
       const getWarehouseProduct = await Warehouse_Product.findAll({
-        // where: {
-        //   updatedAt: {
-        //     [Op.gt]: timeThresold, // Find records updated within the last XX hours
-        //   },
-        // },
+        where: {
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+        },
         include: [
           {
             model: Master_Product,
@@ -171,11 +153,11 @@ class DashboardService {
         result = getWarehouseProduct.map((item) => {
           return {
             productWarehouseId: item.id,
-            productName: item.Master_Product.name,
-            categoryName: item.Master_Product.Master_Category.name,
-            typeName: item.Master_Product.Master_Type.name,
-            unitName: item.Master_Unit.name,
-            warehouseName: item.Master_Warehouse.name,
+            productName: item.Master_Product?.name,
+            categoryName: item.Master_Product.Master_Category?.name,
+            typeName: item.Master_Product.Master_Type?.name,
+            unitName: item.Master_Unit?.name,
+            warehouseName: item.Master_Warehouse?.name,
             rackName: item?.Master_Warehouse_Rack?.name,
             quantity: item.quantity,
             minimumStock: item.minimumStock,
@@ -191,24 +173,13 @@ class DashboardService {
       throwValidation(error.code, error.message);
     }
   }
-  static async maxQuantityByUnit() {
+  // 4.⁠ ⁠TOP 5 barang dengan quantity terbanyak (API berubah ngambil data dari suatu unit limit 5 data) Fetch semua Unit (total 25 data) -> DONE
+  static async maxQuantityByUnit({ query }) {
     try {
-      const maxQuantityPerUnit = await Warehouse_Product.findAll({
-        attributes: [
-          "unitId",
-          [sq.fn("MAX", sq.col("quantity")), "maxQuantity"], // Get the maximum quantity for each unit
-        ],
-        group: ["unitId"],
-        raw: true,
-      });
-
-      // Step 2: Retrieve the product details for the max quantity of each unit
-      const getWarehouseProduct = await Warehouse_Product.findAll({
+      const data = await Warehouse_Product.findAll({
         where: {
-          [Op.or]: maxQuantityPerUnit.map((item) => ({
-            unitId: item.unitId,
-            quantity: item.maxQuantity, // Find products with the max quantity
-          })),
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+          unitId: query.unitId,
         },
         include: [
           {
@@ -224,12 +195,20 @@ class DashboardService {
           { model: Master_Warehouse, attributes: ["name"] },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
+        order: [["unitId", "ASC"], ["quantity", "DESC"]],
+        subQuery: false,
       });
 
-      let result = [];
-      if (getWarehouseProduct.length > 0) {
-        result = getWarehouseProduct.map((item) => {
-          return {
+      const result = data.reduce((acc, item) => {
+        if (!acc[item.unitId]) {
+          acc[item.unitId] = {
+            unitId: item.unitId,
+            name: item.Master_Unit.name,
+            products: [],
+          };
+        }
+        if (acc[item.unitId].products.length < 5) {
+          acc[item.unitId].products.push({
             productWarehouseId: item.id,
             productName: item.Master_Product.name,
             categoryName: item.Master_Product.Master_Category.name,
@@ -240,173 +219,346 @@ class DashboardService {
             quantity: item.quantity,
             minimumStock: item.minimumStock,
             companyName: item?.Master_Product?.Master_Company?.name,
-          };
+          });
+        }
+        return acc;
+      }, {});
+
+      // Tambahkan logika untuk memeriksa apakah data kosong
+      if (data.length === 0) {
+        const unit = await Master_Unit.findOne({
+          where: { id: query.unitId },
         });
-      }
-
-      return result;
-    } catch (error) {
-      throwValidation(error.code, error.message);
-    }
-  }
-
-  static async totalProductInWarehouse() {
-    try {
-      // Total Product by SUM Quantity (Exclude the unit)
-      const totalQuantityByWarehouse = await Warehouse_Product.findAll({
-        attributes: [
-          "warehouseId", // Group by warehouseId
-          [sq.fn("SUM", sq.col("quantity")), "totalQuantity"], // Sum the quantity for each warehouse
-        ],
-        group: ["warehouseId", "Master_Warehouse.name"], // Group by warehouseId
-        include: [
-          {
-            model: Master_Warehouse, // Include warehouse details
-            attributes: ["name"], // Get warehouse name
-          },
-        ],
-        raw: true, // Use raw to simplify result
-        order: [["warehouseId", "ASC"]], // order by warehouseId
-      });
-
-      let result = [];
-      if (totalQuantityByWarehouse.length > 0) {
-        result = totalQuantityByWarehouse.map((item) => {
-          return {
-            warehouseId: item.warehouseId,
-            totalQuantity: item.totalQuantity,
-            warehouseName: item["Master_Warehouse.name"], // Rename the key to warehouseName
-          };
-        });
-      }
-
-      return result;
-    } catch (error) {
-      throwValidation(error.code, error.message);
-    }
-  }
-  static async totalQuantityByUnitInWarehouse() {
-    try {
-      // Query to get total product quantity by unit in each warehouse
-      const totalQuantityByUnitInWarehouse = await Warehouse_Product.findAll({
-        attributes: [
-          "warehouseId", // Group by warehouseId
-          "unitId", // Group by unitId
-          [sq.fn("SUM", sq.col("quantity")), "totalQuantity"], // Sum of quantity
-        ],
-        group: [
-          "warehouseId",
-          "unitId",
-          "Master_Warehouse.name",
-          "Master_Unit.name",
-        ], // Group by warehouseId and unitId
-        include: [
-          {
-            model: Master_Warehouse, // Include warehouse details
-            attributes: ["name"], // Get warehouse name
-          },
-          {
-            model: Master_Unit, // Include unit details
-            attributes: ["name"], // Get unit name
-          },
-        ],
-        order: [
-          ["warehouseId", "ASC"],
-          ["unitId", "ASC"],
-        ], // Order by warehouseId and unitId
-        raw: true, // Use raw to simplify result
-      });
-
-      const result = [];
-
-      // Map data based by warehouseId
-      if (totalQuantityByUnitInWarehouse.length > 0) {
-        totalQuantityByUnitInWarehouse.forEach((item) => {
-          const { warehouseId, totalQuantity, unitId } = item;
-          const warehouse = result.find((w) => w.warehouseId === warehouseId);
-
-          if (warehouse) {
-            // If warehouse already exists, push the product info
-            warehouse.products.push({
-              unitId: unitId,
-              totalQuantity: totalQuantity,
-              unitName: item["Master_Unit.name"], // Get unit name
-            });
-          } else {
-            // Create a new warehouse entry if it doesn't exist
-            result.push({
-              warehouseId: warehouseId,
-              warehouseName: item["Master_Warehouse.name"], // Get warehouse name
-              products: [
-                {
-                  unitId: unitId,
-                  totalQuantity: totalQuantity,
-                  unitName: item["Master_Unit.name"], // Get unit name
-                },
-              ],
-            });
+        if (!unit) {
+          throw {
+            code: 404,
+            message: "Unit tidak ditemukan",
           }
-        });
+        }
+        result[query.unitId] = {
+          unitId: query.unitId,
+          name: unit?.name,
+          products: [],
+        };
       }
 
-      return result;
+      return Object.values(result);
     } catch (error) {
       throwValidation(error.code, error.message);
     }
   }
-
-  static async totalSurat() {
+  // 5.⁠ ⁠Statistik total quantity per unit -> DONE
+  static async totalQuantityInWarehouse({ query }) {
     try {
-      // Get Surat Jalan
-      const totalDeliveryOrders = await Delivery_Order.count();
-      const totalGoodsIn = await Adjustment_Goods_In.count();
-      const totalGoodsOut = await Adjustment_Goods_Out.count();
-      const totalOrderReceipt = await Delivery_Order_Receipt.count();
-      const totalReceiptOutstanding =
-        await Delivery_Order_Receipt_Outstanding.count();
+      const result = await Warehouse_Product.findAll({
+        where: {
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+        },
+        attributes: [
+          "unitId",
+          [sq.fn("SUM", sq.col("quantity")), "totalQuantity"],
+        ],
+        group: ["unitId", "Master_Unit.id"],
+        include: [
+          {
+            model: Master_Unit,
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      const formattedResult = result.map((item) => {
+        return {
+          unitId: item.unitId,
+          unitName: item.Master_Unit.name,
+          totalQuantity: item.dataValues.totalQuantity,
+        };
+      });
+
+      return formattedResult;
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
+  // 6. Statistik jumlah surat terbuat (surat jalan , barang keluar, barang masuk, internal transfer, penerimaan, outstanding) -> DONE
+  static async totalSurat({ query }) {
+    try {
+      const totalDeliveryOrders = await Delivery_Order.count({
+        where: {
+          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+        }
+      });
+
+      const totalGoodsIn = await Adjustment_Goods_In.count({
+        where: {
+          ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+        },
+      });
+
+      const totalGoodsOut = await Adjustment_Goods_Out.count({
+        where: {
+          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+        },
+      });
+
+      const totalOrderReceipt = await Delivery_Order_Receipt.count({
+        include: [
+          {
+            model: Delivery_Order,
+            where: {
+              ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+            }
+          }
+        ]
+      })
+
+      const totalReceiptOutstanding = await Delivery_Order_Receipt_Outstanding.count({
+        include: [
+          {
+            model: Delivery_Order_Receipt,
+            required: true,
+            include: [
+              {
+                model: Delivery_Order,
+                where: {
+                  ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+                }
+              }
+            ]
+          }
+        ]
+      });
+
+      const totalInternalTransfer = await Internal_Transfer.count({
+        where: {
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+        },
+      })
 
       let result = {
         totalDeliveryOrders: totalDeliveryOrders || 0,
-        totalGoodsIn: totalGoodsIn || 0,
-        totalGoodsOut: totalGoodsOut || 0,
         totalOrderReceipt: totalOrderReceipt || 0,
         totalReceiptOutstanding: totalReceiptOutstanding || 0,
+        totalGoodsIn: totalGoodsIn || 0,
+        totalGoodsOut: totalGoodsOut || 0,
+        totalInternalTransfer: totalInternalTransfer || 0,
       };
 
-      return result;
+      const title = {
+        totalDeliveryOrders: "Surat Jalan",
+        totalOrderReceipt: "Surat Penerimaan",
+        totalReceiptOutstanding: "Surat Outstanding",
+        totalGoodsIn: "Surat Barang Masuk",
+        totalGoodsOut: "Surat Barang Keluar",
+        totalInternalTransfer: "Surat Internal Transfer",
+      }
+
+      const url = {
+        totalDeliveryOrders: "/delivery-order",
+        totalOrderReceipt: "/receive-order",
+        totalReceiptOutstanding: "/receipt-order-outstanding",
+        totalGoodsIn: "adjustment/goods-in",
+        totalGoodsOut: "adjustment/goods-out",
+        totalInternalTransfer: "/internal-transfer",
+      }
+
+      let arrayResult = Object.keys(result).map(key => ({
+        name: key,
+        value: result[key],
+        title: title[key],
+        url: url[key],
+      }));
+
+      return arrayResult;
     } catch (error) {
       throwValidation(error.code, error.message);
     }
   }
-  static async totalSuratPending() {
+  // 7. Statistik Jumlah surat yang pending (barang masuk & keluar, internal transfer, outstanding) diselesaikan - DONE
+  static async totalSuratPending({ query }) {
     try {
-      // Get Surat Jalan
-      const totalPendingDeliveryOrders = await Delivery_Order.count({
-        where: { status: "PENDING" },
+      const totalDeliveryOrders = await Delivery_Order.count({
+        where: {
+          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          status: "PENDING",
+        }
       });
-      const totalPendingReceiptOutstanding =
-        await Delivery_Order_Receipt_Outstanding.count({
-          where: { status: "PENDING" },
-        });
-      const totalPendingGoodsIn = await Adjustment_Goods_In.count({
-        where: { status: "PENDING" },
+
+      const totalGoodsIn = await Adjustment_Goods_In.count({
+        where: {
+          ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+          status: "PENDING",
+        },
       });
-      const totalPendingGoodsOut = await Adjustment_Goods_Out.count({
-        where: { status: "PENDING" },
+
+      const totalGoodsOut = await Adjustment_Goods_Out.count({
+        where: {
+          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          status: "PENDING",
+        },
       });
-      const totalPendingInternalTransfer = await Internal_Transfer.count({
-        where: { status: "PENDING" },
+
+      const totalReceiptOutstanding = await Delivery_Order_Receipt_Outstanding.count({
+        where: {
+          status: "PENDING",
+        },
+        include: [
+          {
+            model: Delivery_Order_Receipt,
+            required: true,
+            include: [
+              {
+                model: Delivery_Order,
+                where: {
+                  ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+                }
+              }
+            ]
+          }
+        ]
       });
+
+      const totalInternalTransfer = await Internal_Transfer.count({
+        where: {
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+          status: "PENDING",
+        },
+      })
 
       let result = {
-        deliveryOrders: totalPendingDeliveryOrders || 0,
-        receiptOutstanding: totalPendingReceiptOutstanding || 0,
-        goodsIn: totalPendingGoodsIn || 0,
-        goodsOut: totalPendingGoodsOut || 0,
-        internalTransfer: totalPendingInternalTransfer || 0,
+        totalDeliveryOrders: totalDeliveryOrders || 0,
+        totalReceiptOutstanding: totalReceiptOutstanding || 0,
+        totalGoodsIn: totalGoodsIn || 0,
+        totalGoodsOut: totalGoodsOut || 0,
+        totalInternalTransfer: totalInternalTransfer || 0,
       };
 
-      return result;
+      const title = {
+        "totalDeliveryOrders": "Surat Jalan",
+        "totalReceiptOutstanding": "Surat Outstanding",
+        "totalGoodsIn": "Surat Barang Masuk",
+        "totalGoodsOut": "Surat Barang Keluar",
+        "totalInternalTransfer": "Surat Internal Transfer",
+      }
+
+      const url = {
+        "totalDeliveryOrders": "/delivery-order",
+        "totalReceiptOutstanding": "/receipt-order-outstanding",
+        "totalGoodsIn": "/adjustment/goods-in",
+        "totalGoodsOut": "adjustment/goods-out",
+        "totalInternalTransfer": "/internal-transfer",
+      }
+
+      let arrayResult = Object.keys(result).map(key => ({
+        name: key,
+        value: result[key],
+        title: title[key],
+        url: url[key],
+      }));
+
+      return arrayResult;
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
+  // 8. List product paling banyak hilang dari OUTSTANDING
+  static async listMostLostProductAtOutstanding({ query }) {
+    try {
+      const data = await Warehouse_Product.findAll({
+        where: {
+          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+        },
+        attributes: ["id"],
+        include: [
+          {
+            model: Master_Product,
+            attributes: ["name"],
+          },
+          {
+            model: Master_Unit,
+            attributes: ["name"],
+          },
+          {
+            model: Delivery_Order_Receipt_Outstanding_Product,
+            as: "productOutstanding",
+            attributes: ["id"],
+            where: {
+              status: "outstanding",
+            },
+            include: [
+              {
+                model: Delivery_Order_Receipt_Outstanding,
+                attributes: ["id", "status"],
+                where: {
+                  status: "APPROVED",
+                }
+              }
+            ]
+          }
+        ],
+      })
+
+
+      let result = data.map(item => {
+        return {
+          product: item?.Master_Product?.name,
+          unit: item?.Master_Unit?.name,
+          totalSuratOutstanding: item?.productOutstanding?.length,
+        }
+      })
+
+      result.sort((a, b) => {
+        return b.totalSuratOutstanding - a.totalSuratOutstanding
+      })
+
+      result = result.slice(0, 5)
+
+      return result
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
+  // 9. List product paling banyak quantity hilang dari OUTSTANDING
+  static async listMostLostProductAtOutstandingByQuantity({ query }) {
+    try {
+      const data = await Warehouse_Product.findAll({
+        where: {
+          ...(query?.warehouseId != 0 && { warehouseId: query.warehouseId }),
+        },
+        attributes: ["id"],
+        include: [
+          {
+            model: Master_Product,
+            attributes: ["name"],
+          },
+          {
+            model: Master_Unit,
+            attributes: ["name"],
+          },
+          {
+            model: Delivery_Order_Receipt_Outstanding_Product,
+            attributes: ["outstandingQuantity"],
+            where: {
+              status: "outstanding",
+            },
+          }
+        ],
+      })
+
+      let result = data.map(item => {
+        const totalOutstandingQuantity = item.Delivery_Order_Receipt_Outstanding_Products.reduce((acc, item2) => acc + item2.outstandingQuantity, 0) || 0
+        return {
+          product: item?.Master_Product?.name,
+          unit: item?.Master_Unit?.name,
+          totalQuantityOutstanding: totalOutstandingQuantity
+        }
+      })
+
+      result.sort((a, b) => {
+        return b.totalQuantityOutstanding - a.totalQuantityOutstanding
+      })
+
+      return result.slice(0, 5)
     } catch (error) {
       throwValidation(error.code, error.message);
     }
