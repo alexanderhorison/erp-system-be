@@ -387,6 +387,8 @@ class SalesOrderService {
           companyName:
             item?.Warehouse_Product?.Master_Product?.Master_Company?.name,
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
+          warehouseProductId: item?.Warehouse_Product?.id,
+          qty: item?.Warehouse_Product?.quantity,
         };
       });
 
@@ -441,7 +443,7 @@ class SalesOrderService {
             throwValidation(400, "Data tidak ditemukan");
           }
       }
-      for (const item of data) {
+      for (const item of data?.listProduct) {
         const salesOrderDetail = await Sales_Order_Detail.findByPk(item.id, {
           transaction,
         });
@@ -458,11 +460,26 @@ class SalesOrderService {
           {
             quantity: item.quantity,
             price: item.price,
-            subTotal: item.quantity * item.price,
+            subTotal: item.subTotal,
           },
           { transaction }
         );
       }
+
+      // Update sales order due date / note / grandTotal
+      await Sales_Order.update(
+        {
+          dueDate: data?.dueDate,
+          notes: data?.notes,
+          grandTotal: data?.grandTotal,
+        },
+        {
+          where: {
+            code: code,
+          },
+          transaction: transaction,
+        }
+      );
 
       await transaction.commit();
       return;

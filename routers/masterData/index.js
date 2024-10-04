@@ -19,6 +19,6 @@ router.use("/warehouse", routerMasterDataWarehouse);
 router.use("/company", routerMasterDataCompany);
 router.use("/rank", routerMasterDataRank)
 router.use("/customer", routerMasterDataCustomer)
-router.use("/master-product-price", routerMasterDataProductPrice)
+router.use("/product-price", routerMasterDataProductPrice)
 
 module.exports = router;

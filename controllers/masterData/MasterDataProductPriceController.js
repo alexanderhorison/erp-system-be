@@ -7,22 +7,18 @@ class MasterDataProductPriceController {
   static async createOrUpdate(req, res) {
     try {
       const schema = yup.object({
-        name: yup.string().required("Nama satuan harus diisi"),
-        description: yup.string().optional(),
+        productId: yup.number().required("productId harus diisi"),
+        unitId: yup.number().required("productId harus diisi"),
+        basePrice: yup.number().required("base price harus diisi"),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
 
-      const user = req.userData;
-
-      const newType = await MasterDataProductPriceService.createOrUpdate(
-        body,
-        user
-      );
+      await MasterDataProductPriceService.createOrUpdate(body);
 
       res
-        .status(201)
-        .json(responses(true, "Tipe berhasil ditambahkan", newType));
+        .status(200)
+        .json(responses(true, "Product Price berhasil ditambahkan"));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -32,13 +28,33 @@ class MasterDataProductPriceController {
 
   static async getAll(req, res) {
     try {
-      const schema = yup.object({
-        productId: yup.string().required("Product Id harus diisi"),
-      });
+      const schemaParams = yup.number().required("Product id harus diisi");
 
-      const body = await yupSchemaValidation(req.body, schema);
+      const id = await yupSchemaValidation(req.params.productId, schemaParams);
+
       const productPrice = await MasterDataProductPriceService.findAll({
+        productId: id,
+      });
+      res
+        .status(200)
+        .json(responses(true, "Success get Product Price", productPrice));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+  static async getOne(req, res) {
+    try {
+      const schemaParams = yup.object({
+        productId: yup.number().required("Product id harus diisi"),
+        unitId: yup.number().required("Unit id harus diisi"),
+      });
+      const body = await yupSchemaValidation(req.params, schemaParams);
+
+      const productPrice = await MasterDataProductPriceService.findOne({
         productId: body.productId,
+        unitId: body.unitId,
       });
       res
         .status(200)

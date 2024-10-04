@@ -194,10 +194,6 @@ class DeliveryOrderService {
           {
             model: Master_Product,
             paranoid: false,
-          },
-          {
-            model: Master_Product,
-            paranoid: false,
             include: [
               {
                 model: Master_Category,
@@ -219,6 +215,7 @@ class DeliveryOrderService {
           categoryName: item.Master_Product.Master_Category.name,
           quantity: item.quantity,
           masterProductId: item.Master_Product.id,
+          masterUnitId: item.Master_Unit.id,
           rackName: item.Master_Warehouse_Rack.name,
         };
       });
