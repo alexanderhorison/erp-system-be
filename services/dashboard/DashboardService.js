@@ -44,7 +44,7 @@ class DashboardService {
             ],
           },
           { model: Master_Unit, attributes: ["name"] },
-          { model: Master_Warehouse, attributes: ["name"] },
+          { model: Master_Warehouse, attributes: ["name"], required: true },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
         limit: 5,
@@ -192,7 +192,7 @@ class DashboardService {
             ],
           },
           { model: Master_Unit, attributes: ["name"] },
-          { model: Master_Warehouse, attributes: ["name"] },
+          { model: Master_Warehouse, attributes: ["name"], required: true },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
         order: [["unitId", "ASC"], ["quantity", "DESC"]],
@@ -250,9 +250,18 @@ class DashboardService {
   // 5.⁠ ⁠Statistik total quantity per unit -> DONE
   static async totalQuantityInWarehouse({ query }) {
     try {
+      let queryWarehouse = query.warehouseId
+
+      if (query.warehouseId == 0) {
+        let warehouse = await Master_Warehouse.findAll({
+          attributes: ["id"],
+        })
+        queryWarehouse = warehouse.map((item) => item.id);
+      }
+
       const result = await Warehouse_Product.findAll({
         where: {
-          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+          warehouseId: queryWarehouse,
         },
         attributes: [
           "unitId",
@@ -285,19 +294,19 @@ class DashboardService {
     try {
       const totalDeliveryOrders = await Delivery_Order.count({
         where: {
-          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
         }
       });
 
       const totalGoodsIn = await Adjustment_Goods_In.count({
         where: {
-          ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
         },
       });
 
       const totalGoodsOut = await Adjustment_Goods_Out.count({
         where: {
-          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
         },
       });
 
@@ -306,7 +315,7 @@ class DashboardService {
           {
             model: Delivery_Order,
             where: {
-              ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+              ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
             }
           }
         ]
@@ -321,7 +330,7 @@ class DashboardService {
               {
                 model: Delivery_Order,
                 where: {
-                  ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+                  ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
                 }
               }
             ]
@@ -379,21 +388,21 @@ class DashboardService {
     try {
       const totalDeliveryOrders = await Delivery_Order.count({
         where: {
-          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
           status: "PENDING",
         }
       });
 
       const totalGoodsIn = await Adjustment_Goods_In.count({
         where: {
-          ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
           status: "PENDING",
         },
       });
 
       const totalGoodsOut = await Adjustment_Goods_Out.count({
         where: {
-          ...(query.warehouseOriginId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
           status: "PENDING",
         },
       });
@@ -410,7 +419,7 @@ class DashboardService {
               {
                 model: Delivery_Order,
                 where: {
-                  ...(query.warehouseDestinationId != 0 && { warehouseDestinationId: query.warehouseId }),
+                  ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
                 }
               }
             ]
@@ -479,6 +488,11 @@ class DashboardService {
             attributes: ["name"],
           },
           {
+            model: Master_Warehouse,
+            attributes: ["name"],
+            required: true,
+          },
+          {
             model: Delivery_Order_Receipt_Outstanding_Product,
             as: "productOutstanding",
             attributes: ["id"],
@@ -501,9 +515,11 @@ class DashboardService {
 
       let result = data.map(item => {
         return {
-          product: item?.Master_Product?.name,
-          unit: item?.Master_Unit?.name,
+          productId: item?.id,
+          productName: item?.Master_Product?.name,
+          unitName: item?.Master_Unit?.name,
           totalSuratOutstanding: item?.productOutstanding?.length,
+          warehouseName: item?.Master_Warehouse?.name
         }
       })
 
@@ -536,6 +552,11 @@ class DashboardService {
             attributes: ["name"],
           },
           {
+            model: Master_Warehouse,
+            attributes: ["name"],
+            required: true,
+          },
+          {
             model: Delivery_Order_Receipt_Outstanding_Product,
             attributes: ["outstandingQuantity"],
             where: {
@@ -548,9 +569,10 @@ class DashboardService {
       let result = data.map(item => {
         const totalOutstandingQuantity = item.Delivery_Order_Receipt_Outstanding_Products.reduce((acc, item2) => acc + item2.outstandingQuantity, 0) || 0
         return {
-          product: item?.Master_Product?.name,
-          unit: item?.Master_Unit?.name,
-          totalQuantityOutstanding: totalOutstandingQuantity
+          productName: item?.Master_Product?.name,
+          unitName: item?.Master_Unit?.name,
+          totalQuantityOutstanding: totalOutstandingQuantity,
+          warehouseName: item?.Master_Warehouse?.name
         }
       })
 
