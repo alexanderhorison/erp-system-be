@@ -32,6 +32,8 @@ function formatDateWithTime(dateString) {
     year: "numeric", // Tahun dalam angka, misalnya: 2024
     hour: "numeric",
     minute: "numeric",
+    timeZone: "Asia/Jakarta", // Explicitly setting the time zone to Asia/Jakarta
+    hour12: false,
   };
 
   const dateFormatter = new Intl.DateTimeFormat("id-ID", options);
