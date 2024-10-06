@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const SalesOrderController = require("../../controllers/salesOrder/salesOrderController");
+const SalesOrderController = require("../../controllers/salesOrder/SalesOrderController");
 
 router.get("/", SalesOrderController.getAllSalesOrder);
 router.post("/create", SalesOrderController.createSalesOrder);
