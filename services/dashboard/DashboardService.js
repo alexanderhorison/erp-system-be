@@ -113,7 +113,7 @@ class DashboardService {
             quantity: item.quantity,
             minimumStock: item.minimumStock,
             companyName: item?.Master_Product?.Master_Company?.name,
-            dateUpdate: formatDate(item.updatedAt),
+            dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
           };
         });
       }
@@ -162,8 +162,7 @@ class DashboardService {
             quantity: item.quantity,
             minimumStock: item.minimumStock,
             companyName: item?.Master_Product?.Master_Company?.name,
-            dateUpdate: formatDate(item.updatedAt),
-            timeUpdate: formatTime(item.updatedAt),
+            dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
           };
         });
       }
@@ -386,12 +385,12 @@ class DashboardService {
   // 7. Statistik Jumlah surat yang pending (barang masuk & keluar, internal transfer, outstanding) diselesaikan - DONE
   static async totalSuratPending({ query }) {
     try {
-      const totalDeliveryOrders = await Delivery_Order.count({
-        where: {
-          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
-          status: "PENDING",
-        }
-      });
+      // const totalDeliveryOrders = await Delivery_Order.count({
+      //   where: {
+      //     ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
+      //     status: "PENDING",
+      //   }
+      // });
 
       const totalGoodsIn = await Adjustment_Goods_In.count({
         where: {
@@ -435,7 +434,7 @@ class DashboardService {
       })
 
       let result = {
-        totalDeliveryOrders: totalDeliveryOrders || 0,
+        // totalDeliveryOrders: totalDeliveryOrders || 0,
         totalReceiptOutstanding: totalReceiptOutstanding || 0,
         totalGoodsIn: totalGoodsIn || 0,
         totalGoodsOut: totalGoodsOut || 0,
