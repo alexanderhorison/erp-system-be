@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       gender: DataTypes.STRING,
       notes: DataTypes.TEXT,
       rankId: DataTypes.INTEGER,
+      deletedAt: DataTypes.DATE,
     },
     {
       sequelize,

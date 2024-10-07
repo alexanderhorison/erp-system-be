@@ -8,6 +8,7 @@ const routerMasterDataWarehouse = require("./masterDataWarehouseRouter");
 const routerMasterDataCompany = require("./masterDataCompanyRouter");
 const routerMasterDataRank = require("./masterDataRankRouter");
 const routerMasterDataCustomer = require("./masterDataCustomerRouter");
+const routerMasterDataVendor = require("./masterDataVendorRouter");
 const Auth = require("../../helpers/auth");
 
 // router.use(Auth.KepalaGudang);
@@ -20,5 +21,6 @@ router.use("/company", routerMasterDataCompany);
 router.use("/rank", routerMasterDataRank)
 router.use("/customer", routerMasterDataCustomer)
 router.use("/product-price", routerMasterDataProductPrice)
+router.use("/vendor", routerMasterDataVendor)
 
 module.exports = router;
