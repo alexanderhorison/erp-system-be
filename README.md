@@ -65,10 +65,11 @@ ID MENU : NAMA
 21  Customer
 22  Rank
 23  Sales Order
+24  Master Vendor
 ```
 
-
 ### API Migration (15 Agustus 2024)
+
 Penambahan untuk api migration
 
 ```
