@@ -16,6 +16,7 @@ const {
   Delivery_Order_Receipt_Outstanding,
   Internal_Transfer,
   Delivery_Order_Receipt_Outstanding_Product,
+  Sales_Order,
   sequelize: sq,
 } = require("../../models");
 const { Op, where } = require("sequelize");
@@ -580,6 +581,71 @@ class DashboardService {
       })
 
       return result.slice(0, 5)
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
+  // 10. List summary customer
+  static async customerSummary({ customerId }) {
+    try {
+      /**
+       * 1. Get total sales order by customer id
+       * 2. Get total amount all sales order
+       * 3. Get total amount payment of sales order
+       * 4. Get total amount debt of sales order
+       */
+
+      const result = [];
+
+      // Get Total Sales Order by Customer id
+      const totalSalesOrder = await Sales_Order.count({
+        where: {
+          customerId,
+          status: "APPROVED"
+        }
+      })
+
+      result.push({
+        name: "totalSalesOrder",
+        value: totalSalesOrder || 0,
+        title: "Total Pesanan"
+      });
+
+      // Get total amount all sales order
+      let totalAmountSalesOrder = await Sales_Order.findAll({
+        where: {
+          customerId,
+          status: "APPROVED"
+        },
+        attributes: ["grandTotal"]
+      });
+
+      const totalGrandTotal = totalAmountSalesOrder
+          .map(order => order.grandTotal)  // Extract grandTotal from each order
+          .reduce((acc, value) => acc + parseFloat(value), 0); 
+
+      result.push({
+        name: "totalAmountSalesOrder",
+        value: totalGrandTotal || 0,
+        title: "Total Nilai Pesanan"
+      });
+
+      // total amount payment of sales order
+      // ini belum ada payment di sales order
+      result.push({
+        name: "totalAmountPaymentSalesOrder",
+        value: 0,
+        title: "Total Pembayaran"
+      })
+
+      // total amount debt of sales order
+      result.push({
+        name: "totalAmountDebtSalesOrder",
+        value: 0,
+        title: "Total Hutang"
+      })
+
+      return result
     } catch (error) {
       throwValidation(error.code, error.message);
     }

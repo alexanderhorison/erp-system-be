@@ -19,7 +19,14 @@ router.get("/total-surat-pending", DashboardController.totalSuratPending);
 router.get('/most-lost-product-outstanding', DashboardController.listMostLostProductAtOutstanding)
 // 9. DashboardProductQuantityBanyakHilang.js
 router.get('/most-lost-quantity-product-outstanding', DashboardController.listMostLostProductAtOutstandingByQuantity)
-
+// 10. CustomerSummary.js
+/**
+ * total sales order
+ * total amount all sales order
+ * total amount payment of sales order
+ * total amount debt of sales order
+ */
+router.get('/summary-customer/:id', DashboardController.customerSummary)
 
 module.exports = router;
 
@@ -33,3 +40,4 @@ module.exports = router;
 // 7. DashboardJumlahSuratPending.js
 // 8. DashboardProductBanyakHilang.js
 // 9. DashboardProductQuantityBanyakHilang.js
+// 10. CustomerSummary.js

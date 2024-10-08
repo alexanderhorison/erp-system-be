@@ -132,6 +132,28 @@ class DashboardController {
         .json(responses(false, error.message || error));
     }
   }
+  // 10. List summary customer
+  static async customerSummary(req, res) {
+    try {
+      const params = req.params;
+      const schemaParams = yup
+        .string()
+        .required("Customer Id harus diisi");
+
+      const customerId = await yupSchemaValidation(params.id, schemaParams);
+
+      const customerSummary = await DashboardService.customerSummary({
+        customerId,
+      });
+      res
+        .status(200)
+        .json(responses(true, "Berhasil", customerSummary));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = DashboardController;
