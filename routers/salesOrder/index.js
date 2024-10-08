@@ -8,6 +8,9 @@ router.post("/create", SalesOrderController.createSalesOrder);
 router.post("/approve/:code", SalesOrderController.approveSalesOrder);
 router.post("/reject/:code", SalesOrderController.rejectSalesOrder);
 
+// GET SALES ORDER BY CUSTOMERID
+router.get("/customer/:id", SalesOrderController.getSalesOrderByCustomerId);
+
 router.get("/:code", SalesOrderController.getDetailSalesOrder);
 
 // FOR UPDATE QUANTITY

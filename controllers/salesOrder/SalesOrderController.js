@@ -115,7 +115,7 @@ class SalesOrderController {
         .json(
           responses(
             true,
-            "Berhasil reject sales oreder",
+            "Berhasil reject sales order",
             rejectSalesOrder
           )
         );
@@ -176,13 +176,34 @@ class SalesOrderController {
       const code = await yupSchemaValidation(req.params.code, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-
       await SalesOrderService.updateSalesOrder({
         data: body,
         code: code,
       });
 
       res.status(200).json(responses(true, "Berhasil update sales order"));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getSalesOrderByCustomerId(req, res) {
+    try {
+      const params = req.params;
+
+      const schemaParams = yup
+        .string()
+        .required("Customer Id harus diisi");
+
+      const customerId = await yupSchemaValidation(params.id, schemaParams);
+
+      const getAllSalesOrder = await SalesOrderService.getSalesOrderByCustomerId({
+        customerId,
+      });
+
+      res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
     } catch (error) {
       res
         .status(error.code || 500)

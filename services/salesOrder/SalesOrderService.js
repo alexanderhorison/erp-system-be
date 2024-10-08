@@ -488,6 +488,74 @@ class SalesOrderService {
       throw error;
     }
   }
+  static async getSalesOrderByCustomerId({ customerId }) {
+    try {
+      const allData = await Sales_Order.findAll({
+        where: {
+          customerId: customerId,
+        },
+        include: [
+          {
+            model: Master_Warehouse,
+            paranoid: false,
+            attributes: ["name"],
+          },
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: Master_User,
+            as: "approver",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      const sendData = allData.map((item) => {
+        return {
+          id: item.id,
+          code: item.code,
+          warehouseId: item?.warehouseId,
+          warehouseName: item?.Master_Warehouse?.name,
+          grandTotal: item?.grandTotal,
+          notes: item?.notes,
+          status: item?.status,
+          createdBy: {
+            name: item?.creator?.name,
+            roleName: item?.creator?.Master_Role?.name,
+          },
+          createdAt: item?.createdAt,
+          dateCreated: formatDate(item?.createdAt),
+          approverBy: {
+            name: item?.approver?.name,
+            roleName: item?.approver?.Master_Role?.name,
+          },
+          approvedAt: item?.approvedAt,
+          dateApproved: formatDate(item?.approvedAt),
+          dueDate: item?.dueDate,
+        };
+      });
+
+      return sendData;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = SalesOrderService;
