@@ -26,6 +26,9 @@ module.exports = (sequelize, DataTypes) => {
       Sales_Order.hasMany(models.Sales_Order_Detail, {
         foreignKey: "salesOrderId",
       });
+      Sales_Order.hasMany(models.Sales_Order_Payment, {
+        foreignKey: "salesOrderId",
+      });
     }
   }
   Sales_Order.init(
@@ -40,6 +43,8 @@ module.exports = (sequelize, DataTypes) => {
       approvedBy: DataTypes.INTEGER,
       approvedAt: DataTypes.DATE,
       dueDate: DataTypes.STRING,
+      amountPaid: DataTypes.BIGINT,
+      amountDebt: DataTypes.BIGINT,
     },
     {
       sequelize,

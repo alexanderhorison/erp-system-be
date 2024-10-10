@@ -250,6 +250,9 @@ class SalesOrderService {
           status: "APPROVED",
           approvedBy: user?.id,
           approvedAt: new Date(),
+          // update value amount paid to 0 and debt to grandTotal
+          amountPaid: 0,
+          amountDebt: exsistingData?.grandTotal,
         },
         {
           where: {
@@ -418,6 +421,8 @@ class SalesOrderService {
         updatedAt: detail?.updatedAt,
         listProducts: listProduct,
         dueDate: detail?.dueDate,
+        amountPaid: detail?.amountPaid,
+        amountDebt: detail?.amountDebt
       };
 
       return sendData;

@@ -1,8 +1,12 @@
 const router = require("express").Router();
 const SalesOrderController = require("../../controllers/salesOrder/SalesOrderController");
+const routerPayment = require("./paymentRouter")
 
 router.get("/", SalesOrderController.getAllSalesOrder);
 router.post("/create", SalesOrderController.createSalesOrder);
+
+// FOR SALES ORDER PAYMENT
+router.use("/payment", routerPayment)
 
 // FOR APPROVE/REJECT SALES ORDER
 router.post("/approve/:code", SalesOrderController.approveSalesOrder);

@@ -19,7 +19,7 @@ const {
   Sales_Order,
   sequelize: sq,
 } = require("../../models");
-const { Op, where } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
 const { formatDate, formatTime } = require("../../helpers/formatDate");
 
 class DashboardService {
@@ -617,31 +617,59 @@ class DashboardService {
           customerId,
           status: "APPROVED"
         },
-        attributes: ["grandTotal"]
+        attributes: [[fn('SUM', col('grandTotal')), 'totalGrandTotal']],
+        raw: true
       });
 
-      const totalGrandTotal = totalAmountSalesOrder
-          .map(order => order.grandTotal)  // Extract grandTotal from each order
-          .reduce((acc, value) => acc + parseFloat(value), 0); 
-
+      let salesOrderAmount = totalAmountSalesOrder[0]?.totalGrandTotal ? +totalAmountSalesOrder[0]?.totalGrandTotal : 0;
+      
       result.push({
         name: "totalAmountSalesOrder",
-        value: totalGrandTotal || 0,
+        value: salesOrderAmount,
         title: "Total Nilai Pesanan"
       });
 
       // total amount payment of sales order
+      let totalPayment = await Sales_Order.findAll({
+        where: {
+          customerId,
+          status: "APPROVED",
+          amountPaid: {
+            [Op.gt]: 0,  // Only include records where amountPaid is greater than 0
+          }
+        },
+        attributes: [[fn('SUM', col('amountPaid')), 'totalAmountPaid']],
+        raw: true
+      });
+      
+      let salesOrderAmountPaid = totalPayment[0]?.totalAmountPaid ? +totalPayment[0]?.totalAmountPaid : 0;
+      
       // ini belum ada payment di sales order
       result.push({
         name: "totalAmountPaymentSalesOrder",
-        value: 0,
+        value: salesOrderAmountPaid,
         title: "Total Pembayaran"
       })
 
       // total amount debt of sales order
+      let totalDebt = await Sales_Order.findAll({
+        where: {
+          customerId,
+          status: "APPROVED",
+          amountDebt: {
+            [Op.gt]: 0,  // Only include records where amountPaid is greater than 0
+          }
+        },
+        attributes: [[fn('SUM', col('amountDebt')), 'totalAmountDebt']],
+        raw: true
+      });
+
+      let salesOrderAmountDebt = totalDebt[0]?.totalAmountDebt ? +totalDebt[0]?.totalAmountDebt : 0;
+
+
       result.push({
         name: "totalAmountDebtSalesOrder",
-        value: 0,
+        value: salesOrderAmountDebt,
         title: "Total Hutang"
       })
 
