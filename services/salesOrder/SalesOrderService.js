@@ -16,6 +16,7 @@ const {
   Master_Customer,
   Stock_Adjustment_History,
   Master_Rank,
+  Dashboard_Summary_Customer,
 } = require("../../models");
 
 class SalesOrderService {
@@ -261,6 +262,46 @@ class SalesOrderService {
           transaction,
         }
       );
+      // ADD DASHBOARD CUSTOMER SUMMARY
+      const findCustomerSummary = await Dashboard_Summary_Customer.findOne({
+        where: {
+          customerId: exsistingData?.customerId,
+        },
+      });
+
+      if (findCustomerSummary) {
+        // update dashboard customer summary
+        /**
+         * 1. sum total sales order
+         * 2. sum total amount sales order customer made
+         * 3. add new total amount debt from latest sales order
+         */
+        await Dashboard_Summary_Customer.update(
+          {
+            totalSalesOrder: Number(findCustomerSummary.totalSalesOrder) + 1,
+            totalAmountSalesOrder: Number(findCustomerSummary.totalAmountSalesOrder) + Number(exsistingData?.grandTotal),
+            totalAmountDebt: Number(findCustomerSummary.totalAmountDebt) + Number(exsistingData?.grandTotal),
+          },
+          {
+            where: {
+              id: findCustomerSummary?.id,
+            },
+            transaction,
+          }
+        );
+      } else {
+        // create new customer dashboard summary
+        await Dashboard_Summary_Customer.create(
+          {
+            customerId: exsistingData?.customerId,
+            totalSalesOrder: 1,
+            totalAmountSalesOrder: Number(exsistingData?.grandTotal),
+            totalAmountDebtSalesOrder: Number(exsistingData?.grandTotal),
+            totalAmountPaidSalesOrder: 0
+          },
+          { transaction }
+        );
+      }
 
       await transaction.commit();
       return approvedData;
@@ -422,7 +463,7 @@ class SalesOrderService {
         listProducts: listProduct,
         dueDate: detail?.dueDate,
         amountPaid: detail?.amountPaid,
-        amountDebt: detail?.amountDebt
+        amountDebt: detail?.amountDebt,
       };
 
       return sendData;
