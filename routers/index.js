@@ -13,6 +13,7 @@ const routerInternalTransfer = require("./internalTransfer");
 const MigrationController = require("../controllers/migration/MigrationController");
 const routerDashboard = require("./dashboard");
 const routerSalesOrder = require("./salesOrder");
+const EmailController = require('../controllers/email/EmailController');
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -58,5 +59,7 @@ router.use("/internal-transfer", routerInternalTransfer);
 
 // Sales Order
 router.use("/sales-order", routerSalesOrder);
+
+router.post("/send-email", EmailController.sendEmail)
 
 module.exports = router;

@@ -18,6 +18,7 @@ const {
   Delivery_Order_Receipt_Outstanding_Product,
   Sales_Order,
   Stock_Adjustment_History,
+  Dashboard_Summary_Customer,
   sequelize: sq,
 } = require("../../models");
 const { Op, fn, col } = require("sequelize");
@@ -265,7 +266,10 @@ class DashboardService {
           { model: Master_Warehouse, attributes: ["name"], required: true },
           { model: Master_Warehouse_Rack, attributes: ["name"] },
         ],
-        order: [["unitId", "ASC"], ["quantity", "DESC"]],
+        order: [
+          ["unitId", "ASC"],
+          ["quantity", "DESC"],
+        ],
         subQuery: false,
       });
 
@@ -303,7 +307,7 @@ class DashboardService {
           throw {
             code: 404,
             message: "Unit tidak ditemukan",
-          }
+          };
         }
         result[query.unitId] = {
           unitId: query.unitId,
@@ -320,12 +324,12 @@ class DashboardService {
   // 5.⁠ ⁠Statistik total quantity per unit -> DONE
   static async totalQuantityInWarehouse({ query }) {
     try {
-      let queryWarehouse = query.warehouseId
+      let queryWarehouse = query.warehouseId;
 
       if (query.warehouseId == 0) {
         let warehouse = await Master_Warehouse.findAll({
           attributes: ["id"],
-        })
+        });
         queryWarehouse = warehouse.map((item) => item.id);
       }
 
@@ -364,19 +368,25 @@ class DashboardService {
     try {
       const totalDeliveryOrders = await Delivery_Order.count({
         where: {
-          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
-        }
+          ...(query.warehouseId != 0 && {
+            warehouseOriginId: query.warehouseId,
+          }),
+        },
       });
 
       const totalGoodsIn = await Adjustment_Goods_In.count({
         where: {
-          ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
+          ...(query.warehouseId != 0 && {
+            warehouseDestinationId: query.warehouseId,
+          }),
         },
       });
 
       const totalGoodsOut = await Adjustment_Goods_Out.count({
         where: {
-          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && {
+            warehouseOriginId: query.warehouseId,
+          }),
         },
       });
 
@@ -385,34 +395,39 @@ class DashboardService {
           {
             model: Delivery_Order,
             where: {
-              ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
-            }
-          }
-        ]
-      })
-
-      const totalReceiptOutstanding = await Delivery_Order_Receipt_Outstanding.count({
-        include: [
-          {
-            model: Delivery_Order_Receipt,
-            required: true,
-            include: [
-              {
-                model: Delivery_Order,
-                where: {
-                  ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
-                }
-              }
-            ]
-          }
-        ]
+              ...(query.warehouseId != 0 && {
+                warehouseDestinationId: query.warehouseId,
+              }),
+            },
+          },
+        ],
       });
+
+      const totalReceiptOutstanding =
+        await Delivery_Order_Receipt_Outstanding.count({
+          include: [
+            {
+              model: Delivery_Order_Receipt,
+              required: true,
+              include: [
+                {
+                  model: Delivery_Order,
+                  where: {
+                    ...(query.warehouseId != 0 && {
+                      warehouseDestinationId: query.warehouseId,
+                    }),
+                  },
+                },
+              ],
+            },
+          ],
+        });
 
       const totalInternalTransfer = await Internal_Transfer.count({
         where: {
           ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
         },
-      })
+      });
 
       let result = {
         totalDeliveryOrders: totalDeliveryOrders || 0,
@@ -430,7 +445,7 @@ class DashboardService {
         totalGoodsIn: "Surat Barang Masuk",
         totalGoodsOut: "Surat Barang Keluar",
         totalInternalTransfer: "Surat Internal Transfer",
-      }
+      };
 
       const url = {
         totalDeliveryOrders: "/delivery-order",
@@ -439,9 +454,9 @@ class DashboardService {
         totalGoodsIn: "adjustment/goods-in",
         totalGoodsOut: "adjustment/goods-out",
         totalInternalTransfer: "/internal-transfer",
-      }
+      };
 
-      let arrayResult = Object.keys(result).map(key => ({
+      let arrayResult = Object.keys(result).map((key) => ({
         name: key,
         value: result[key],
         title: title[key],
@@ -465,44 +480,51 @@ class DashboardService {
 
       const totalGoodsIn = await Adjustment_Goods_In.count({
         where: {
-          ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
+          ...(query.warehouseId != 0 && {
+            warehouseDestinationId: query.warehouseId,
+          }),
           status: "PENDING",
         },
       });
 
       const totalGoodsOut = await Adjustment_Goods_Out.count({
         where: {
-          ...(query.warehouseId != 0 && { warehouseOriginId: query.warehouseId }),
+          ...(query.warehouseId != 0 && {
+            warehouseOriginId: query.warehouseId,
+          }),
           status: "PENDING",
         },
       });
 
-      const totalReceiptOutstanding = await Delivery_Order_Receipt_Outstanding.count({
-        where: {
-          status: "PENDING",
-        },
-        include: [
-          {
-            model: Delivery_Order_Receipt,
-            required: true,
-            include: [
-              {
-                model: Delivery_Order,
-                where: {
-                  ...(query.warehouseId != 0 && { warehouseDestinationId: query.warehouseId }),
-                }
-              }
-            ]
-          }
-        ]
-      });
+      const totalReceiptOutstanding =
+        await Delivery_Order_Receipt_Outstanding.count({
+          where: {
+            status: "PENDING",
+          },
+          include: [
+            {
+              model: Delivery_Order_Receipt,
+              required: true,
+              include: [
+                {
+                  model: Delivery_Order,
+                  where: {
+                    ...(query.warehouseId != 0 && {
+                      warehouseDestinationId: query.warehouseId,
+                    }),
+                  },
+                },
+              ],
+            },
+          ],
+        });
 
       const totalInternalTransfer = await Internal_Transfer.count({
         where: {
           ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
           status: "PENDING",
         },
-      })
+      });
 
       let result = {
         // totalDeliveryOrders: totalDeliveryOrders || 0,
@@ -513,22 +535,22 @@ class DashboardService {
       };
 
       const title = {
-        "totalDeliveryOrders": "Surat Jalan",
-        "totalReceiptOutstanding": "Surat Outstanding",
-        "totalGoodsIn": "Surat Barang Masuk",
-        "totalGoodsOut": "Surat Barang Keluar",
-        "totalInternalTransfer": "Surat Internal Transfer",
-      }
+        totalDeliveryOrders: "Surat Jalan",
+        totalReceiptOutstanding: "Surat Outstanding",
+        totalGoodsIn: "Surat Barang Masuk",
+        totalGoodsOut: "Surat Barang Keluar",
+        totalInternalTransfer: "Surat Internal Transfer",
+      };
 
       const url = {
-        "totalDeliveryOrders": "/delivery-order",
-        "totalReceiptOutstanding": "/receipt-order-outstanding",
-        "totalGoodsIn": "/adjustment/goods-in",
-        "totalGoodsOut": "adjustment/goods-out",
-        "totalInternalTransfer": "/internal-transfer",
-      }
+        totalDeliveryOrders: "/delivery-order",
+        totalReceiptOutstanding: "/receipt-order-outstanding",
+        totalGoodsIn: "/adjustment/goods-in",
+        totalGoodsOut: "adjustment/goods-out",
+        totalInternalTransfer: "/internal-transfer",
+      };
 
-      let arrayResult = Object.keys(result).map(key => ({
+      let arrayResult = Object.keys(result).map((key) => ({
         name: key,
         value: result[key],
         title: title[key],
@@ -575,31 +597,30 @@ class DashboardService {
                 attributes: ["id", "status"],
                 where: {
                   status: "APPROVED",
-                }
-              }
-            ]
-          }
+                },
+              },
+            ],
+          },
         ],
-      })
+      });
 
-
-      let result = data.map(item => {
+      let result = data.map((item) => {
         return {
           productId: item?.id,
           productName: item?.Master_Product?.name,
           unitName: item?.Master_Unit?.name,
           totalSuratOutstanding: item?.productOutstanding?.length,
-          warehouseName: item?.Master_Warehouse?.name
-        }
-      })
+          warehouseName: item?.Master_Warehouse?.name,
+        };
+      });
 
       result.sort((a, b) => {
-        return b.totalSuratOutstanding - a.totalSuratOutstanding
-      })
+        return b.totalSuratOutstanding - a.totalSuratOutstanding;
+      });
 
-      result = result.slice(0, 5)
+      result = result.slice(0, 5);
 
-      return result
+      return result;
     } catch (error) {
       throwValidation(error.code, error.message);
     }
@@ -632,25 +653,29 @@ class DashboardService {
             where: {
               status: "outstanding",
             },
-          }
+          },
         ],
-      })
+      });
 
-      let result = data.map(item => {
-        const totalOutstandingQuantity = item.Delivery_Order_Receipt_Outstanding_Products.reduce((acc, item2) => acc + item2.outstandingQuantity, 0) || 0
+      let result = data.map((item) => {
+        const totalOutstandingQuantity =
+          item.Delivery_Order_Receipt_Outstanding_Products.reduce(
+            (acc, item2) => acc + item2.outstandingQuantity,
+            0
+          ) || 0;
         return {
           productName: item?.Master_Product?.name,
           unitName: item?.Master_Unit?.name,
           totalQuantityOutstanding: totalOutstandingQuantity,
-          warehouseName: item?.Master_Warehouse?.name
-        }
-      })
+          warehouseName: item?.Master_Warehouse?.name,
+        };
+      });
 
       result.sort((a, b) => {
-        return b.totalQuantityOutstanding - a.totalQuantityOutstanding
-      })
+        return b.totalQuantityOutstanding - a.totalQuantityOutstanding;
+      });
 
-      return result.slice(0, 5)
+      return result.slice(0, 5);
     } catch (error) {
       throwValidation(error.code, error.message);
     }
@@ -667,83 +692,37 @@ class DashboardService {
 
       const result = [];
 
-      // Get Total Sales Order by Customer id
-      const totalSalesOrder = await Sales_Order.count({
+      // Get All data dashboard summary customer
+      const customerSummary = await Dashboard_Summary_Customer.findOne({
         where: {
           customerId,
-          status: "APPROVED"
+        },
+      });
+
+      result.push(
+        {
+          name: "totalSalesOrder",
+          value: customerSummary?.totalSalesOrder || 0,
+          title: "Total Pesanan",
+        },
+        {
+          name: "totalAmountSalesOrder",
+          value: customerSummary?.totalAmountSalesOrder || 0,
+          title: "Total Nilai Pesanan",
+        },
+        {
+          name: "totalAmountPaymentSalesOrder",
+          value: customerSummary?.totalAmountPaidSalesOrder || 0,
+          title: "Total Pembayaran",
+        },
+        {
+          name: "totalAmountDebtSalesOrder",
+          value: customerSummary?.totalAmountDebtSalesOrder || 0,
+          title: "Total Hutang",
         }
-      })
+      );
 
-      result.push({
-        name: "totalSalesOrder",
-        value: totalSalesOrder || 0,
-        title: "Total Pesanan"
-      });
-
-      // Get total amount all sales order
-      let totalAmountSalesOrder = await Sales_Order.findAll({
-        where: {
-          customerId,
-          status: "APPROVED"
-        },
-        attributes: [[fn('SUM', col('grandTotal')), 'totalGrandTotal']],
-        raw: true
-      });
-
-      let salesOrderAmount = totalAmountSalesOrder[0]?.totalGrandTotal ? +totalAmountSalesOrder[0]?.totalGrandTotal : 0;
-
-      result.push({
-        name: "totalAmountSalesOrder",
-        value: salesOrderAmount,
-        title: "Total Nilai Pesanan"
-      });
-
-      // total amount payment of sales order
-      let totalPayment = await Sales_Order.findAll({
-        where: {
-          customerId,
-          status: "APPROVED",
-          amountPaid: {
-            [Op.gt]: 0,  // Only include records where amountPaid is greater than 0
-          }
-        },
-        attributes: [[fn('SUM', col('amountPaid')), 'totalAmountPaid']],
-        raw: true
-      });
-
-      let salesOrderAmountPaid = totalPayment[0]?.totalAmountPaid ? +totalPayment[0]?.totalAmountPaid : 0;
-
-      // ini belum ada payment di sales order
-      result.push({
-        name: "totalAmountPaymentSalesOrder",
-        value: salesOrderAmountPaid,
-        title: "Total Pembayaran"
-      })
-
-      // total amount debt of sales order
-      let totalDebt = await Sales_Order.findAll({
-        where: {
-          customerId,
-          status: "APPROVED",
-          amountDebt: {
-            [Op.gt]: 0,  // Only include records where amountPaid is greater than 0
-          }
-        },
-        attributes: [[fn('SUM', col('amountDebt')), 'totalAmountDebt']],
-        raw: true
-      });
-
-      let salesOrderAmountDebt = totalDebt[0]?.totalAmountDebt ? +totalDebt[0]?.totalAmountDebt : 0;
-
-
-      result.push({
-        name: "totalAmountDebtSalesOrder",
-        value: salesOrderAmountDebt,
-        title: "Total Hutang"
-      })
-
-      return result
+      return result;
     } catch (error) {
       throwValidation(error.code, error.message);
     }

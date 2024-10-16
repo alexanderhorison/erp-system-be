@@ -5,6 +5,7 @@ const {
   Master_User,
   Sales_Order,
   Sales_Order_Payment,
+  Dashboard_Summary_Customer,
 } = require("../../models");
 
 class SalesOrderPaymentService {
@@ -92,8 +93,8 @@ class SalesOrderPaymentService {
         { transaction }
       );
 
-      let amountPaid = BigInt(salesOrder.amountPaid) + BigInt(data.amount);
-      let amountDebt = BigInt(salesOrder.amountDebt) - BigInt(data.amount);
+      let amountPaid = Number(salesOrder.amountPaid) + Number(data.amount);
+      let amountDebt = Number(salesOrder.amountDebt) - Number(data.amount);
 
       await Sales_Order.update(
         {
@@ -103,6 +104,34 @@ class SalesOrderPaymentService {
         {
           where: {
             id: salesOrder.id,
+          },
+          transaction,
+        }
+      );
+
+      // UPDATE DASHBOARD CUSTOMER SUMMARY
+      const findCustomerSummary = await Dashboard_Summary_Customer.findOne({
+        where: {
+          customerId: salesOrder?.customerId,
+        },
+      });
+
+      if (!findCustomerSummary) {
+        throwValidation(404, `Customer Summary tidak ditemukan`);
+      }
+
+      /**
+       * 1. reduce total amount debt from payment
+       * 2. sum total amount paid from payment
+       */
+      await Dashboard_Summary_Customer.update(
+        {
+          totalAmountDebtSalesOrder: Number(findCustomerSummary.totalAmountDebtSalesOrder) - Number(data.amount),
+          totalAmountPaidSalesOrder: Number(findCustomerSummary.totalAmountPaidSalesOrder) + Number(data.amount)
+        },
+        {
+          where: {
+            id: findCustomerSummary?.id,
           },
           transaction,
         }
