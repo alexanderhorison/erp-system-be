@@ -1,28 +1,35 @@
 const transporter = require("../../helpers/emailConfig");
-const { responses, throwValidation } = require("../../helpers/responses");
+const { responses } = require("../../helpers/responses");
+const yup = require("yup");
+const { yupSchemaValidation } = require('../../helpers/yupSchemaValidation');
 
 class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
     try {
       const schema = yup.object({
-        receiver: yup.string().email().required("Email penerima harus diisi"),
+        email: yup.string().email().required("Email penerima harus diisi"),
       });
       const body = await yupSchemaValidation(req.body, schema);
+      const { filename, email } = body; // Get filename from body
+      const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
       const transporterConnection = await transporter();
+
       const msg = {
-        from: "noreply@example.com", // sender address
-        to: body?.receiver, // list of receivers
+        from: process.env.EMAIL_IS, // sender address
+        to: email, // list of receivers
         subject: "Sales Order", // Subject line
-        text: "Hello, this is a test email.", // plain text body
+        text: "Berikut hasil print sales order anda", // plain text body
+        attachments: [
+          {
+            filename: filename || "sales-order.pdf", // Use the filename from the request or a default
+            content: pdfBuffer, // Attach the PDF buffer
+          },
+        ],
       };
-      transporterConnection.sendMail(msg, async (err) => {
-        if (err) {
-          throwValidation(400, "Failed to send email");
-        }
-        res.status(200).json(responses(true, "Email berhasil dikirim"));
-      });
+      await transporterConnection.sendMail(msg);
+      res.status(200).json(responses(true, "Email berhasil dikirim"));
     } catch (error) {
       res
         .status(error.code || 500)
