@@ -29,6 +29,12 @@ module.exports = (sequelize, DataTypes) => {
       );
       // FOR DASHBOARD
       Warehouse_Product.hasMany(
+        models.Stock_Adjustment_History,
+        {
+          foreignKey: "productWarehouseId",
+        }
+      );
+      Warehouse_Product.hasMany(
         models.Delivery_Order_Receipt_Outstanding_Product,
         {
           foreignKey: "productWarehouseId",

@@ -16,6 +16,8 @@ const {
   Delivery_Order_Receipt_Outstanding,
   Internal_Transfer,
   Delivery_Order_Receipt_Outstanding_Product,
+  Sales_Order,
+  Stock_Adjustment_History,
   Dashboard_Summary_Customer,
   sequelize: sq,
 } = require("../../models");
@@ -92,12 +94,39 @@ class DashboardService {
               { model: Master_Company, attributes: ["name"] },
             ],
           },
-          { model: Master_Unit, attributes: ["name"] },
-          { model: Master_Warehouse, attributes: ["name"] },
-          { model: Master_Warehouse_Rack, attributes: ["name"] },
+          { model: Master_Unit, attributes: ["name"], required: true },
+          { model: Master_Warehouse, attributes: ["name"], required: true },
+          { model: Master_Warehouse_Rack, attributes: ["name"], required: true },
+          {
+            model: Stock_Adjustment_History, attributes: ["createdAt", "info", "adjustmentType"],
+            where: {
+              [Op.or]: [
+                {
+                  info: {
+                    [Op.or]: [
+                      "DELIVERY ORDER CREATE",
+                      "GOODS OUT",
+                      "STOCK OPNAME",
+                      "SALES ORDER",
+                    ]
+                  }
+                },
+                {
+                  adjustmentType: {
+                    [Op.or]: [
+                      "INITIATE",
+                      "MINUS",
+                    ]
+                  }
+                }
+              ]
+            },
+            separate: true,
+            order: [["createdAt", "DESC"]],
+            required: false,
+            limit: 1,
+          }
         ],
-        limit: 5,
-        order: [["updatedAt", "ASC"]],
       });
 
       let result = [];
@@ -109,20 +138,25 @@ class DashboardService {
             categoryName: item.Master_Product.Master_Category.name,
             typeName: item.Master_Product.Master_Type.name,
             unitName: item.Master_Unit.name,
-            warehouseName: item.Master_Warehouse.name,
+            warehouseName: item?.Master_Warehouse?.name,
             rackName: item?.Master_Warehouse_Rack?.name,
             quantity: item.quantity,
             minimumStock: item.minimumStock,
             companyName: item?.Master_Product?.Master_Company?.name,
-            dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(
-              item.updatedAt
-            )}`,
+            createdAt: item?.createdAt,
+            updatedAt: item?.updatedAt,
+            // dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
+            dateUpdate: `${formatDate(item.Stock_Adjustment_Histories[0]?.createdAt)} Jam ${formatTime(item.Stock_Adjustment_Histories[0]?.createdAt)}`,
+            lastUpdate: item.Stock_Adjustment_Histories[0],
+            // lastUpdateinfo: item.Stock_Adjustment_Histories // FOR DEV
           };
         });
       }
-
-      return result;
+      result.sort((a, b) => a.lastUpdate.createdAt - b.lastUpdate.createdAt)
+      const finalResult = result.slice(0, 5);
+      return finalResult;
     } catch (error) {
+      console.log(error);
       throwValidation(error.code, error.message);
     }
   }
@@ -138,42 +172,75 @@ class DashboardService {
             model: Master_Product,
             attributes: ["name"],
             include: [
-              { model: Master_Category, attributes: ["name"] },
+              { model: Master_Category, attributes: ["name"], },
               { model: Master_Type, attributes: ["name"] },
               { model: Master_Company, attributes: ["name"] },
             ],
           },
-          { model: Master_Unit, attributes: ["name"] },
-          { model: Master_Warehouse, attributes: ["name"] },
-          { model: Master_Warehouse_Rack, attributes: ["name"] },
+          { model: Master_Unit, attributes: ["name"], required: true },
+          { model: Master_Warehouse, attributes: ["name"], required: true },
+          { model: Master_Warehouse_Rack, attributes: ["name"], required: true },
+          {
+            model: Stock_Adjustment_History, attributes: ["createdAt", "info", "adjustmentType"],
+            where: {
+              [Op.or]: [
+                {
+                  info: {
+                    [Op.or]: [
+                      "DELIVERY ORDER CREATE",
+                      "GOODS OUT",
+                      "STOCK OPNAME",
+                      "SALES ORDER",
+                    ]
+                  }
+                },
+                {
+                  adjustmentType: {
+                    [Op.or]: [
+                      "MINUS",
+                    ]
+                  }
+                }
+              ]
+            },
+            separate: true,
+            order: [["createdAt", "DESC"]],
+            required: true,
+            limit: 1,
+          }
         ],
-        limit: 5,
-        order: [["updatedAt", "DESC"]],
       });
 
       let result = [];
       if (getWarehouseProduct.length > 0) {
-        result = getWarehouseProduct.map((item) => {
-          return {
-            productWarehouseId: item.id,
-            productName: item.Master_Product?.name,
-            categoryName: item.Master_Product.Master_Category?.name,
-            typeName: item.Master_Product.Master_Type?.name,
-            unitName: item.Master_Unit?.name,
-            warehouseName: item.Master_Warehouse?.name,
-            rackName: item?.Master_Warehouse_Rack?.name,
-            quantity: item.quantity,
-            minimumStock: item.minimumStock,
-            companyName: item?.Master_Product?.Master_Company?.name,
-            dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(
-              item.updatedAt
-            )}`,
-          };
+        getWarehouseProduct.forEach((item) => {
+          if (item.Stock_Adjustment_Histories.length !== 0) {
+            result.push({
+              productWarehouseId: item.id,
+              productName: item.Master_Product?.name,
+              categoryName: item.Master_Product.Master_Category?.name,
+              typeName: item.Master_Product.Master_Type?.name,
+              unitName: item.Master_Unit?.name,
+              warehouseName: item.Master_Warehouse?.name,
+              rackName: item?.Master_Warehouse_Rack?.name,
+              quantity: item.quantity,
+              minimumStock: item.minimumStock,
+              companyName: item?.Master_Product?.Master_Company?.name,
+              // dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
+              updatedAt: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
+              dateUpdate: `${formatDate(item.Stock_Adjustment_Histories[0]?.createdAt)} Jam ${formatTime(item.Stock_Adjustment_Histories[0]?.createdAt)}`,
+              lastUpdate: item.Stock_Adjustment_Histories[0],
+              // lastUpdateinfo: item.Stock_Adjustment_Histories // FOR DEV
+            })
+          }
         });
       }
 
-      return result;
+      result.sort((a, b) => b.lastUpdate?.createdAt - a.lastUpdate?.createdAt);
+      const finalResult = result.slice(0, 5);
+      return finalResult;
     } catch (error) {
+      console.log(error);
       throwValidation(error.code, error.message);
     }
   }
