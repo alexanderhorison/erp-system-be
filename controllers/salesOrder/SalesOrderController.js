@@ -26,6 +26,8 @@ class SalesOrderController {
         warehouseId: yup.number().required("Gudang asal harus diisi"),
         customerId: yup.number().required("Customer harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
+        grandTotalCustomer: yup.number().required("Total Sales order harus ada"),
+        grandTotalBarter: yup.number().required("Total Barter harus ada"),
         dueDate: yup.string().required("Tanggal jatuh tempo harus ada"),
         notes: yup.string().optional(),
         listProduct: yup
@@ -41,6 +43,33 @@ class SalesOrderController {
             })
           )
           .required("List sales order produk harus ada"),
+        listBarterProduct: yup.lazy((value) => {
+          // If there are items in the barterProduct array, require all fields within the objects
+          if (value && value.length > 0) {
+            return yup.array().of(
+              yup.object({
+                warehouseProductId: yup
+                  .number()
+                  .required("Id product warehouse harus diisi"),
+                price: yup.number().required("Harga barter harus diisi"),
+                quantity: yup.number().required("Kuantiti barter harus diisi"),
+                subTotal: yup.number().required("Sub Total barter harus diisi"),
+              })
+            );
+          }
+          // If no barter products, make it optional
+          return yup
+            .array()
+            .of(
+              yup.object({
+                warehouseProductId: yup.number(),
+                price: yup.number(),
+                quantity: yup.number(),
+                subTotal: yup.number(),
+              })
+            )
+            .optional();
+        }),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -112,13 +141,7 @@ class SalesOrderController {
 
       res
         .status(200)
-        .json(
-          responses(
-            true,
-            "Berhasil reject sales order",
-            rejectSalesOrder
-          )
-        );
+        .json(responses(true, "Berhasil reject sales order", rejectSalesOrder));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -155,8 +178,10 @@ class SalesOrderController {
         warehouseId: yup.number().required("Gudang asal harus diisi"),
         customerId: yup.number().required("Customer harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
-        notes: yup.string().optional(),
+        grandTotalCustomer: yup.number().required("Total Sales order harus ada"),
+        grandTotalBarter: yup.number().required("Total Barter harus ada"),
         dueDate: yup.string().required("Tanggal jatuh tempo harus ada"),
+        notes: yup.string().optional(),
         listProduct: yup
           .array()
           .of(
@@ -171,6 +196,35 @@ class SalesOrderController {
             })
           )
           .required("List sales order produk harus ada"),
+        listBarterProduct: yup.lazy((value) => {
+          // If there are items in the barterProduct array, require all fields within the objects
+          if (value && value.length > 0) {
+            return yup.array().of(
+              yup.object({
+                id: yup.number().required("sales order barter detail id harus diisi"),
+                warehouseProductId: yup
+                  .number()
+                  .required("Id product warehouse harus diisi"),
+                price: yup.number().required("Harga barter harus diisi"),
+                quantity: yup.number().required("Kuantiti barter harus diisi"),
+                subTotal: yup.number().required("Sub Total barter harus diisi"),
+              })
+            );
+          }
+          // If no barter products, make it optional
+          return yup
+            .array()
+            .of(
+              yup.object({
+                id: yup.number(),
+                warehouseProductId: yup.number(),
+                price: yup.number(),
+                quantity: yup.number(),
+                subTotal: yup.number(),
+              })
+            )
+            .optional();
+        }),
       });
 
       const code = await yupSchemaValidation(req.params.code, schemaParams);
@@ -193,15 +247,14 @@ class SalesOrderController {
     try {
       const params = req.params;
 
-      const schemaParams = yup
-        .string()
-        .required("Customer Id harus diisi");
+      const schemaParams = yup.string().required("Customer Id harus diisi");
 
       const customerId = await yupSchemaValidation(params.id, schemaParams);
 
-      const getAllSalesOrder = await SalesOrderService.getSalesOrderByCustomerId({
-        customerId,
-      });
+      const getAllSalesOrder =
+        await SalesOrderService.getSalesOrderByCustomerId({
+          customerId,
+        });
 
       res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
     } catch (error) {

@@ -425,6 +425,7 @@ class ProductWarehouseService {
           // SALES ORDER
           ...(item?.info === "SALES ORDER" && {
             salesOrder: `Sales Order: ${item?.Sales_Order?.code}`,
+            description: item?.description,
             notes: item?.Sales_Order?.notes,
             salesOrderCode: item?.Sales_Order?.code,
           }),

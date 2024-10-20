@@ -7,18 +7,14 @@ class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
     try {
-      const schema = yup.object({
-        email: yup.string().email().required("Email penerima harus diisi"),
-      });
-      const body = await yupSchemaValidation(req.body, schema);
-      const { filename, email } = body; // Get filename from body
+      const { filename } = req.body; // Get filename from body
       const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
       const transporterConnection = await transporter();
 
       const msg = {
         from: process.env.EMAIL_IS, // sender address
-        to: email, // list of receivers
+        to: process.env.EMAIL_RECEIVER, // list of receivers
         subject: "Sales Order", // Subject line
         text: "Berikut hasil print sales order anda", // plain text body
         attachments: [

@@ -17,6 +17,7 @@ const {
   Stock_Adjustment_History,
   Master_Rank,
   Dashboard_Summary_Customer,
+  Sales_Order_Barter_Details,
 } = require("../../models");
 
 class SalesOrderService {
@@ -109,6 +110,8 @@ class SalesOrderService {
           warehouseId: data.warehouseId,
           customerId: data.customerId,
           grandTotal: data.grandTotal,
+          grandTotalCustomer: data.grandTotalCustomer,
+          grandTotalBarter: data.grandTotalBarter,
           notes: data?.notes || "",
           status: "PENDING",
           createdBy: user?.id,
@@ -118,8 +121,11 @@ class SalesOrderService {
       );
 
       const createSalesOrderProducts = [];
+      const createSalesOrderBarterProducts = [];
       const listProduct = data?.listProduct;
+      const listBarterProduct = data?.listBarterProduct;
 
+      // ADD List Sales Order Products
       for (const item of listProduct) {
         const findWarehouseProduct = await Warehouse_Product.findByPk(
           item.warehouseProductId
@@ -139,9 +145,43 @@ class SalesOrderService {
         });
       }
 
+      // ADD SALES ORDER BARTER PRODUCT
+      if (listBarterProduct?.length > 0) {
+        for (const item of listBarterProduct) {
+          const findWarehouseProduct = await Warehouse_Product.findByPk(
+            item.warehouseProductId
+          );
+
+          if (!findWarehouseProduct) {
+            throwValidation(
+              400,
+              "Salah satu product warehouse tidak ditemukan"
+            );
+          }
+
+          // push sales order products
+          createSalesOrderBarterProducts.push({
+            salesOrderId: createdData.id,
+            warehouseProductId: item.warehouseProductId,
+            price: item.price,
+            quantity: item.quantity,
+            subTotal: item.subTotal,
+          });
+        }
+      }
+
       await Sales_Order_Detail.bulkCreate(createSalesOrderProducts, {
         transaction,
       });
+
+      if (createSalesOrderBarterProducts.length > 0) {
+        await Sales_Order_Barter_Details.bulkCreate(
+          createSalesOrderBarterProducts,
+          {
+            transaction,
+          }
+        );
+      }
 
       await transaction.commit();
       return createdData;
@@ -198,6 +238,7 @@ class SalesOrderService {
               attributes: ["name"],
             },
           ],
+          transaction,
         });
 
         if (!warehouseProduct) {
@@ -216,10 +257,14 @@ class SalesOrderService {
             `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${warehouseProduct.quantity}`
           );
         }
+
+        const newWarehouseQuantity =
+          warehouseProduct?.quantity - item?.quantity;
+
         // Kurangi stok product di warehouse
         await Warehouse_Product.update(
           {
-            quantity: warehouseProduct?.quantity - item?.quantity,
+            quantity: newWarehouseQuantity,
           },
           {
             where: {
@@ -239,11 +284,97 @@ class SalesOrderService {
             userId: user?.id,
             info: "SALES ORDER",
             salesOrderId: exsistingData?.id,
-            lastQuantity: warehouseProduct?.quantity - item?.quantity, // stock product warehouse kurang product sales order
+            lastQuantity: newWarehouseQuantity, // stock product warehouse kurang product sales order
           },
           { transaction }
         );
       }
+
+      // FIND PRODUCT SALES ORDER BARTER
+      const salesOrderBarterProducts = await Sales_Order_Barter_Details.findAll(
+        {
+          where: {
+            salesOrderId: exsistingData?.id,
+          },
+        }
+      );
+
+      // PENAMBAHAN PRODUCT HASIL BARTER KE PRODUCT WAREHOUSE
+      if (salesOrderBarterProducts?.length > 0) {
+        for (const item of salesOrderBarterProducts) {
+          const warehouseProduct = await Warehouse_Product.findOne({
+            where: {
+              id: item.warehouseProductId,
+            },
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["name"],
+              },
+              {
+                model: Master_Unit,
+                attributes: ["name"],
+              },
+              {
+                model: Master_Warehouse,
+                attributes: ["name"],
+              },
+            ],
+            transaction,
+          });
+
+          if (!warehouseProduct) {
+            throwValidation(
+              400,
+              `Produk dengan ID ${item.warehouseProductId} tidak ditemukann`
+            );
+          }
+
+          const newBarterWarehouseQuantity =
+            warehouseProduct?.quantity + item?.quantity;
+
+          // tambah stock product di warehouse
+          await Warehouse_Product.update(
+            {
+              quantity: newBarterWarehouseQuantity,
+            },
+            {
+              where: {
+                id: item?.warehouseProductId,
+              },
+              transaction,
+            }
+          );
+
+          // catat stock adjustment histories penambahan
+          await Stock_Adjustment_History.create(
+            {
+              productWarehouseId: item?.warehouseProductId,
+              quantity: item?.quantity,
+              adjustmentType: "PLUS",
+              description: "penambahan barang masuk dari barang barter",
+              warehouseId: warehouseProduct?.warehouseId,
+              userId: user?.id,
+              info: "SALES ORDER",
+              salesOrderId: exsistingData?.id,
+              lastQuantity: newBarterWarehouseQuantity, // stock product warehouse kurang product sales order
+            },
+            { transaction }
+          );
+        }
+      }
+
+      /**
+       * Jika grandtotal minus atau owner harus bayar maka amountDebt customer 0
+       * Jika grandTotal positif maka lakukan pengurangan totalCustomer - totalBarter
+       */
+      const amountDebt =
+        exsistingData?.grandTotal < 0
+          ? 0
+          : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
+          ? Number(exsistingData?.grandTotalCustomer) -
+            Number(exsistingData?.grandTotalBarter)
+          : exsistingData?.grandTotal;
 
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
@@ -253,7 +384,7 @@ class SalesOrderService {
           approvedAt: new Date(),
           // update value amount paid to 0 and debt to grandTotal
           amountPaid: 0,
-          amountDebt: exsistingData?.grandTotal,
+          amountDebt: amountDebt,
         },
         {
           where: {
@@ -279,8 +410,11 @@ class SalesOrderService {
         await Dashboard_Summary_Customer.update(
           {
             totalSalesOrder: Number(findCustomerSummary.totalSalesOrder) + 1,
-            totalAmountSalesOrder: Number(findCustomerSummary.totalAmountSalesOrder) + Number(exsistingData?.grandTotal),
-            totalAmountDebt: Number(findCustomerSummary.totalAmountDebt) + Number(exsistingData?.grandTotal),
+            totalAmountSalesOrder:
+              Number(findCustomerSummary.totalAmountSalesOrder) +
+              Number(exsistingData?.grandTotalCustomer),
+            totalAmountDebt:
+              Number(findCustomerSummary.totalAmountDebt) + Number(amountDebt),
           },
           {
             where: {
@@ -295,9 +429,9 @@ class SalesOrderService {
           {
             customerId: exsistingData?.customerId,
             totalSalesOrder: 1,
-            totalAmountSalesOrder: Number(exsistingData?.grandTotal),
-            totalAmountDebtSalesOrder: Number(exsistingData?.grandTotal),
-            totalAmountPaidSalesOrder: 0
+            totalAmountSalesOrder: Number(exsistingData?.grandTotalCustomer),
+            totalAmountDebtSalesOrder: Number(amountDebt),
+            totalAmountPaidSalesOrder: 0,
           },
           { transaction }
         );
@@ -420,6 +554,31 @@ class SalesOrderService {
         ],
       });
 
+      const salesOrderBarterProducts = await Sales_Order_Barter_Details.findAll(
+        {
+          where: { salesOrderId: detail.id },
+          include: [
+            {
+              model: Warehouse_Product,
+              include: [
+                {
+                  model: Master_Product,
+                  attributes: ["id", "name"],
+                  include: [
+                    {
+                      model: Master_Company,
+                      attributes: ["id", "name"],
+                    },
+                  ],
+                },
+                { model: Master_Unit, attributes: ["id", "name"] },
+                { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+              ],
+            },
+          ],
+        }
+      );
+
       const listProduct = salesOrderProducts.map((item) => {
         return {
           id: item?.id,
@@ -435,6 +594,26 @@ class SalesOrderService {
           qty: item?.Warehouse_Product?.quantity,
         };
       });
+
+      let listBarterProduct = [];
+
+      if (salesOrderBarterProducts.length > 0) {
+        listBarterProduct = salesOrderBarterProducts.map((item) => {
+          return {
+            id: item?.id,
+            price: item?.price,
+            quantity: item?.quantity,
+            subTotal: item?.subTotal,
+            unitName: item?.Warehouse_Product?.Master_Unit?.name,
+            productName: item?.Warehouse_Product?.Master_Product?.name,
+            companyName:
+              item?.Warehouse_Product?.Master_Product?.Master_Company?.name,
+            rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
+            warehouseProductId: item?.Warehouse_Product?.id,
+            qty: item?.Warehouse_Product?.quantity,
+          };
+        });
+      }
 
       const sendData = {
         id: detail.id,
@@ -452,6 +631,8 @@ class SalesOrderService {
           level: detail?.Master_Customer?.Master_Rank?.level,
         },
         grandTotal: detail.grandTotal,
+        grandTotalCustomer: detail.grandTotalCustomer,
+        grandTotalBarter: detail.grandTotalBarter,
         warehouseId: detail?.warehouseId,
         warehouseName: detail?.Master_Warehouse?.name,
         warehouseLocation: detail?.Master_Warehouse?.location,
@@ -461,6 +642,7 @@ class SalesOrderService {
         createdAt: detail?.createdAt,
         updatedAt: detail?.updatedAt,
         listProducts: listProduct,
+        listBarterProducts: listBarterProduct,
         dueDate: detail?.dueDate,
         amountPaid: detail?.amountPaid,
         amountDebt: detail?.amountDebt,
@@ -512,12 +694,39 @@ class SalesOrderService {
         );
       }
 
+      if (data?.listBarterProduct.length > 0) {
+        for (const item of data?.listBarterProduct) {
+          const salesOrderBarterDetail = await Sales_Order_Barter_Details.findByPk(item.id, {
+            transaction,
+          });
+
+          if (!salesOrderBarterDetail) {
+            throwValidation(
+              400,
+              `Sales Order Barter detail id ${item.id} tidak ditemukann`
+            );
+          }
+
+          // Update quantity, price, and sub total in sales order detail
+          await salesOrderBarterDetail.update(
+            {
+              quantity: item.quantity,
+              price: item.price,
+              subTotal: item.subTotal,
+            },
+            { transaction }
+          );
+        }
+      }
+
       // Update sales order due date / note / grandTotal
       await Sales_Order.update(
         {
           dueDate: data?.dueDate,
           notes: data?.notes,
           grandTotal: data?.grandTotal,
+          grandTotalBarter: data?.grandTotalBarter,
+          grandTotalCustomer: data?.grandTotalCustomer
         },
         {
           where: {
