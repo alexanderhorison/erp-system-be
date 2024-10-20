@@ -66,6 +66,7 @@ ID MENU : NAMA
 22  Rank
 23  Sales Order
 24  Master Vendor
+25  Purchase Order
 ```
 
 ### API Migration (15 Agustus 2024)
