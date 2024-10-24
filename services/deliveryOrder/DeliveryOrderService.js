@@ -217,6 +217,7 @@ class DeliveryOrderService {
           masterProductId: item.Master_Product.id,
           masterUnitId: item.Master_Unit.id,
           rackName: item.Master_Warehouse_Rack.name,
+          unitName: item.Master_Unit.name,
         };
       });
 

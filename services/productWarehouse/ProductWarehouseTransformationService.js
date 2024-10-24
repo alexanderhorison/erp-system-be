@@ -8,6 +8,7 @@ const {
   Master_Warehouse,
   Master_Product_Transformation,
   Stock_Adjustment_History,
+  Master_Warehouse_Rack,
 } = require("../../models");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
@@ -71,8 +72,20 @@ class ProductWarehouseTransformationService {
           productId: originProduct.productId,
           unitId: transformationData.unitToId,
           warehouseId: originProduct.warehouseId,
-        }
+        },
+        include: [
+          {
+            model: Master_Warehouse_Rack,
+            attributes: ["name"],
+          },
+          {
+            model: Master_Unit,
+            attributes: ["name"],
+          }
+        ]
       })
+
+      let result = {}
 
       // KURANGI PRODUCT AWAL
       originProduct.quantity -= data.qtyTransformation
@@ -89,6 +102,15 @@ class ProductWarehouseTransformationService {
       });
 
       if (destinationProduct) {
+        // FOR SALES ORDER
+        result = {
+          warehouseProductId: destinationProduct.id,
+          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          qty: destinationProduct.quantity + (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          masterProductId: originProduct.productId,
+          rackName: destinationProduct.Master_Warehouse_Rack.name,
+          unitName: destinationProduct.Master_Unit.name
+        }
         // PRODUCT SUDAH ADA
         // TAMBAHKAN PRODUCT TUJUAN
         destinationProduct.quantity += (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo
@@ -116,6 +138,32 @@ class ProductWarehouseTransformationService {
           warehouseRackId: data.warehouseRackId,
         }, { transaction })
 
+        const product = await Warehouse_Product.findOne({
+          where: {
+            id: newDestinationProduct.warehouseRackId
+          },
+          include: [
+            {
+              model: Master_Warehouse_Rack,
+              attributes: ["name"],
+            },
+            {
+              model: Master_Unit,
+              attributes: ["name"],
+            }
+          ],
+          transaction
+        })
+
+        result = {
+          warehouseProductId: newDestinationProduct.id,
+          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          qty: newDestinationProduct.quantity,
+          masterProductId: originProduct.productId,
+          rackName: product.Master_Warehouse_Rack.name,
+          unitName: product.Master_Unit.name
+        }
+
         await StockAdjustmentHistoryService.createOne({
           data: newDestinationProduct,
           user,
@@ -128,7 +176,7 @@ class ProductWarehouseTransformationService {
         });
       }
       await transaction.commit();
-      return data
+      return result
     } catch (error) {
       await transaction.rollback();
       throw error

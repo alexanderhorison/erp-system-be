@@ -42,12 +42,12 @@ class ProductWarehouseTransformation {
 
       const user = req.userData;
 
-      await ProductWarehouseTransformationService.transformProduct({ id: id, data: body, user })
+      const data = await ProductWarehouseTransformationService.transformProduct({ id: id, data: body, user })
 
       res
         .status(200)
         .json(
-          responses(true, "Produk berhasil ditransformasi", [])
+          responses(true, "Produk berhasil ditransformasi", data)
         );
 
     } catch (error) {
