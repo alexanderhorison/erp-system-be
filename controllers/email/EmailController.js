@@ -1,25 +1,27 @@
 const transporter = require("../../helpers/emailConfig");
 const { responses } = require("../../helpers/responses");
-const yup = require("yup");
-const { yupSchemaValidation } = require('../../helpers/yupSchemaValidation');
 
 class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
     try {
-      const { filename } = req.body; // Get filename from body
+      const { filename, module } = req.body; // Get filename from body
       const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
       const transporterConnection = await transporter();
 
+      /**
+       * Module is type (Sales Order / Purchase Order / Barter) example
+       * file name is code SO-312312 / GOD-3123123
+       */
       const msg = {
         from: process.env.EMAIL_IS, // sender address
         to: process.env.EMAIL_RECEIVER, // list of receivers
-        subject: "Sales Order", // Subject line
-        text: "Berikut hasil print sales order anda", // plain text body
+        subject: `${module} ${filename}`, // Subject line
+        text: `Berikut Hasil Print ${module} anda`, // plain text body
         attachments: [
           {
-            filename: filename || "sales-order.pdf", // Use the filename from the request or a default
+            filename: `${filename}.pdf` || "sales-order.pdf", // Use the filename from the request or a default
             content: pdfBuffer, // Attach the PDF buffer
           },
         ],
