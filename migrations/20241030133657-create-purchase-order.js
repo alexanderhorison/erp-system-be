@@ -77,7 +77,6 @@ module.exports = {
       },
       approvedBy: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         references: {
           model: "Master_Users", // Name of the target table
           key: "id", // Key in the target table that this column references

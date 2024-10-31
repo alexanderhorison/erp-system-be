@@ -7,6 +7,7 @@ const {
   Delivery_Order_Receipt,
   Delivery_Order_Receipt_Outstanding,
   Sales_Order,
+  Purchase_Order
 } = require("../models");
 
 async function codeGenerator(digits = 8, prefix = "TBA") {
@@ -58,6 +59,11 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       }
       if (prefix === "SO") {
         exsisting = await Sales_Order.findOne({
+          where: { code: generatedCode },
+        });
+      }
+      if (prefix === "PO") {
+        exsisting = await Purchase_Order.findOne({
           where: { code: generatedCode },
         });
       }

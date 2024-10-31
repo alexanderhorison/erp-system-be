@@ -13,6 +13,7 @@ const routerInternalTransfer = require("./internalTransfer");
 const MigrationController = require("../controllers/migration/MigrationController");
 const routerDashboard = require("./dashboard");
 const routerSalesOrder = require("./salesOrder");
+const routerPurchaseOrder = require("./purchaseOrder");
 const EmailController = require('../controllers/email/EmailController');
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
@@ -61,6 +62,9 @@ router.use("/internal-transfer", routerInternalTransfer);
 
 // Sales Order
 router.use("/sales-order", routerSalesOrder);
+
+// Purchase Order
+router.use("/purchase-order", routerPurchaseOrder);
 
 router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
 
