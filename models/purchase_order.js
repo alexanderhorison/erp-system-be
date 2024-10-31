@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       Purchase_Order.hasMany(models.Purchase_Order_Payment, {
         foreignKey: "purchaseOrderId",
       });
-      Purchase_Order.hasMany(models.Purchase_Order_Barter_Details, {
+      Purchase_Order.hasMany(models.Purchase_Order_Barter_Detail, {
         foreignKey: "purchaseOrderId",
       });
     }
