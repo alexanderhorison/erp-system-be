@@ -11,8 +11,6 @@ const {
   Master_Role,
   Warehouse_Product,
   Master_Warehouse_Rack,
-  Sales_Order,
-  Sales_Order_Detail,
   Master_Vendor,
   Stock_Adjustment_History,
   Master_Rank,
@@ -804,11 +802,11 @@ class PurchaseOrderService {
       throw error;
     }
   }
-  static async getPurchaseOrderByVendorId({ customerId }) {
+  static async getPurchaseOrderByVendorId({ vendorId }) {
     try {
-      const allData = await Sales_Order.findAll({
+      const allData = await Purchase_Order.findAll({
         where: {
-          customerId: customerId,
+          vendorId: vendorId,
         },
         include: [
           {

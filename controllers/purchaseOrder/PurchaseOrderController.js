@@ -258,26 +258,26 @@ class PurchaseOrderController {
     }
   }
 
-  // static async getPurchaseOrderByVendorId(req, res) {
-  //   try {
-  //     const params = req.params;
+  static async getPurchaseOrderByVendorId(req, res) {
+    try {
+      const params = req.params;
 
-  //     const schemaParams = yup.string().required("Customer Id harus diisi");
+      const schemaParams = yup.string().required("Vendor Id harus diisi");
 
-  //     const customerId = await yupSchemaValidation(params.id, schemaParams);
+      const vendorId = await yupSchemaValidation(params.id, schemaParams);
 
-  //     const getAllSalesOrder =
-  //       await SalesOrderService.getSalesOrderByCustomerId({
-  //         customerId,
-  //       });
+      const getAllPurchaseOrder =
+        await PurchaseOrderService.getPurchaseOrderByVendorId({
+          vendorId,
+        });
 
-  //     res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
-  //   } catch (error) {
-  //     res
-  //       .status(error.code || 500)
-  //       .json(responses(false, error.message || error));
-  //   }
-  // }
+      res.status(200).json(responses(true, "Berhasil", getAllPurchaseOrder));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = PurchaseOrderController;

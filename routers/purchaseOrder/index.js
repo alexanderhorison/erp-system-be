@@ -1,12 +1,12 @@
 const router = require("express").Router();
 const PurchaseOrderController = require('../../controllers/purchaseOrder/PurchaseOrderController');
-// const routerPayment = require("./paymentRouter")
+const routerPayment = require("./paymentRouter")
 
 router.get("/", PurchaseOrderController.getAllPurchaseOrder);
 router.post("/create", PurchaseOrderController.createPurchaseOrder);
 
 // FOR PURCHASE ORDER PAYMENT
-// router.use("/payment", routerPayment)
+router.use("/payment", routerPayment)
 
 // TERMS OF PAYMENT
 // router.use("/terms-of-payment")
@@ -16,7 +16,7 @@ router.post("/approve/:code", PurchaseOrderController.approvePurchaseOrder);
 router.post("/reject/:code", PurchaseOrderController.rejectPurchaseOrder);
 
 // GET PURCHASE ORDER BY VENDOR
-// router.get("/vendor/:id", PurchaseOrderController.getPurchaseOrderByVendorId);
+router.get("/vendor/:id", PurchaseOrderController.getPurchaseOrderByVendorId);
 
 router.get("/:code", PurchaseOrderController.getDetailPurchaseOrder);
 
