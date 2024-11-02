@@ -36,6 +36,9 @@ const titleInfo = (item) => {
     case "SALES ORDER":
       result = "Sales Order"
       break;
+    case "PURCHASE ORDER":
+      result = "Purchase Order"
+      break;
     default:
       result = "Penyesuaian Stock Product"
   }
