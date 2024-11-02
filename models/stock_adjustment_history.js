@@ -45,6 +45,9 @@ module.exports = (sequelize, DataTypes) => {
       Stock_Adjustment_History.belongsTo(models.Sales_Order, {
         foreignKey: "salesOrderId",
       });
+      Stock_Adjustment_History.belongsTo(models.Purchase_Order, {
+        foreignKey: "purchaseOrderId",
+      });
     }
   }
 
@@ -65,6 +68,7 @@ module.exports = (sequelize, DataTypes) => {
       deliveryOrderReceiptId: DataTypes.INTEGER,
       deliveryOrderReceiptOutstandingId: DataTypes.INTEGER,
       salesOrderId: DataTypes.INTEGER,
+      purchaseOrderId: DataTypes.INTEGER,
     },
     {
       sequelize,
