@@ -14,7 +14,6 @@ const {
   Master_Vendor,
   Stock_Adjustment_History,
   Master_Rank,
-  Sales_Order_Barter_Details,
   Purchase_Order,
   Purchase_Order_Detail,
   Purchase_Order_Barter_Detail,
@@ -335,7 +334,7 @@ class PurchaseOrderService {
       }
 
       // FIND PRODUCT SALES ORDER BARTER
-      const salesOrderBarterProducts = await Sales_Order_Barter_Details.findAll(
+      const purchaseOrderBarterProducts = await Purchase_Order_Barter_Detail.findAll(
         {
           where: {
             purchaseOrderId: exsistingData?.id,
@@ -344,8 +343,8 @@ class PurchaseOrderService {
       );
 
       // PENGURANGAN PRODUCT HASIL BARTER DARI PRODUCT WAREHOUSE
-      if (salesOrderBarterProducts?.length > 0) {
-        for (const item of salesOrderBarterProducts) {
+      if (purchaseOrderBarterProducts?.length > 0) {
+        for (const item of purchaseOrderBarterProducts) {
           const warehouseProduct = await Warehouse_Product.findOne({
             where: {
               id: item.warehouseProductId,
