@@ -23,7 +23,8 @@ const {
   Stock_Opname,
   Delivery_Order_Receipt_Outstanding,
   Delivery_Order_Receipt,
-  Sales_Order
+  Sales_Order,
+  Purchase_Order
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -283,7 +284,8 @@ class ProductWarehouseService {
           Stock_Opname,
           Delivery_Order_Receipt_Outstanding,
           Delivery_Order_Receipt,
-          Sales_Order
+          Sales_Order,
+          Purchase_Order,
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -395,19 +397,19 @@ class ProductWarehouseService {
           // ini untuk case yang delivery order receive yang lama
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderId && {
-            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
-            notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.code,
-          }),
+              deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
+              notes: item?.Delivery_Order?.notes,
+              deliveryOrderCode: item?.Delivery_Order?.code,
+            }),
           // ini untuk case yang delivery order receive terbaru
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderReceiptId && {
-            deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
-            deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
-            deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
-            notes: item?.Delivery_Order_Receipt?.notes,
-            deliveryOrderCode: deliveryOrder.code,
-          }),
+              deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
+              deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
+              deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
+              notes: item?.Delivery_Order_Receipt?.notes,
+              deliveryOrderCode: deliveryOrder.code,
+            }),
           ...(item?.info === "STOCK OPNAME" && {
             stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
             notes: item?.Stock_Opname?.notes,
@@ -428,6 +430,13 @@ class ProductWarehouseService {
             description: item?.description,
             notes: item?.Sales_Order?.notes,
             salesOrderCode: item?.Sales_Order?.code,
+          }),
+          // PURCHASE ORDER
+          ...(item?.info === "PURCHASE ORDER" && {
+            purchaseOrder: `Purchase Order: ${item?.Purchase_Order?.code}`,
+            description: item?.description,
+            notes: item?.Purchase_Order?.notes,
+            purchaseOrderCode: item?.Purchase_Order?.code,
           }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,
