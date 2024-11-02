@@ -43,7 +43,7 @@ class PurchaseOrderController {
               subTotal: yup.number().required("Sub Total Product harus diisi"),
             })
           )
-          .required("List sales order produk harus ada"),
+          .required("List purchase order produk harus ada"),
         listBarterProduct: yup.lazy((value) => {
           // If there are items in the barterProduct array, require all fields within the objects
           if (value && value.length > 0) {

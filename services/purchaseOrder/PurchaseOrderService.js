@@ -190,7 +190,7 @@ class PurchaseOrderService {
         }
       }
 
-      // ADD SALES ORDER BARTER PRODUCT
+      // ADD PURCHASE ORDER BARTER PRODUCT
       if (listBarterProduct?.length > 0) {
         for (const item of listBarterProduct) {
           const findWarehouseProduct = await Warehouse_Product.findByPk(
@@ -204,7 +204,7 @@ class PurchaseOrderService {
             );
           }
 
-          // push sales order products
+          // push PURCHASE order products
           createPurchaseOrderBarterProducts.push({
             purchaseOrderId: createdData.id,
             warehouseProductId: item.warehouseProductId,
@@ -333,7 +333,7 @@ class PurchaseOrderService {
         );
       }
 
-      // FIND PRODUCT SALES ORDER BARTER
+      // FIND PRODUCT PURCHASE ORDER BARTER
       const purchaseOrderBarterProducts = await Purchase_Order_Barter_Detail.findAll(
         {
           where: {
@@ -410,7 +410,7 @@ class PurchaseOrderService {
               warehouseId: warehouseProduct?.warehouseId,
               userId: user?.id,
               info: "PURCHASE ORDER",
-              salesOrderId: exsistingData?.id,
+              purchaseOrderId: exsistingData?.id,
               lastQuantity: newBarterWarehouseQuantity, // stock product warehouse kurang product purchase order barter
             },
             { transaction }
@@ -761,7 +761,7 @@ class PurchaseOrderService {
           if (!purchaseOrderBarterDetail) {
             throwValidation(
               400,
-              `Sales Order Barter detail id ${item.id} tidak ditemukann`
+              `Purchase Order Barter detail id ${item.id} tidak ditemukann`
             );
           }
 
