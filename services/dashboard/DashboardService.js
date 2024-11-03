@@ -16,9 +16,9 @@ const {
   Delivery_Order_Receipt_Outstanding,
   Internal_Transfer,
   Delivery_Order_Receipt_Outstanding_Product,
-  Sales_Order,
   Stock_Adjustment_History,
   Dashboard_Summary_Customer,
+  Dashboard_Summary_Vendor,
   sequelize: sq,
 } = require("../../models");
 const { Op, fn, col } = require("sequelize");
@@ -718,6 +718,53 @@ class DashboardService {
         {
           name: "totalAmountDebtSalesOrder",
           value: customerSummary?.totalAmountDebtSalesOrder || 0,
+          title: "Total Hutang",
+        }
+      );
+
+      return result;
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
+  // 10. List summary vendor
+  static async vendorSummary({ vendorId }) {
+    try {
+      /**
+       * 1. Get total purchase order by vendor id
+       * 2. Get total amount all purchase order
+       * 3. Get total amount payment of purchase order
+       * 4. Get total amount debt of purchase order
+       */
+
+      const result = [];
+
+      // Get All data dashboard summary vendor
+      const vendorSummary = await Dashboard_Summary_Vendor.findOne({
+        where: {
+          vendorId,
+        },
+      });
+
+      result.push(
+        {
+          name: "totalPurchaseOrder",
+          value: vendorSummary?.totalPurchaseOrder || 0,
+          title: "Total Pesanan",
+        },
+        {
+          name: "totalAmountPurchaseOrder",
+          value: vendorSummary?.totalAmountPurchaseOrder || 0,
+          title: "Total Nilai Pesanan",
+        },
+        {
+          name: "totalAmountPaymentPurchaseOrder",
+          value: vendorSummary?.totalAmountPaidPurchaseOrder || 0,
+          title: "Total Pembayaran",
+        },
+        {
+          name: "totalAmountDebtPurchaseOrder",
+          value: vendorSummary?.totalAmountDebtPurchaseOrder || 0,
           title: "Total Hutang",
         }
       );

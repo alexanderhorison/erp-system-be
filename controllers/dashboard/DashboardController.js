@@ -154,6 +154,28 @@ class DashboardController {
         .json(responses(false, error.message || error));
     }
   }
+  // 11. List summary vendor
+  static async vendorSummary(req, res) {
+    try {
+      const params = req.params;
+      const schemaParams = yup
+        .string()
+        .required("Vendor Id harus diisi");
+
+      const vendorId = await yupSchemaValidation(params.id, schemaParams);
+
+      const vendorSummary = await DashboardService.vendorSummary({
+        vendorId,
+      });
+      res
+        .status(200)
+        .json(responses(true, "Berhasil", vendorSummary));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = DashboardController;

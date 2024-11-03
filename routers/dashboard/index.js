@@ -27,6 +27,7 @@ router.get('/most-lost-quantity-product-outstanding', DashboardController.listMo
  * total amount debt of sales order
  */
 router.get('/summary-customer/:id', DashboardController.customerSummary)
+router.get('/summary-vendor/:id', DashboardController.vendorSummary)
 
 module.exports = router;
 
