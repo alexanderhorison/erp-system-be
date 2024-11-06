@@ -406,6 +406,7 @@ class SalesOrderService {
          * 1. sum total sales order
          * 2. sum total amount sales order customer made
          * 3. add new total amount debt from latest sales order
+         * 4. add new total amount barter if exist
          */
         await Dashboard_Summary_Customer.update(
           {
@@ -413,8 +414,12 @@ class SalesOrderService {
             totalAmountSalesOrder:
               Number(findCustomerSummary.totalAmountSalesOrder) +
               Number(exsistingData?.grandTotalCustomer),
-            totalAmountDebt:
-              Number(findCustomerSummary.totalAmountDebt) + Number(amountDebt),
+            totalAmountDebtSalesOrder:
+              Number(findCustomerSummary.totalAmountDebtSalesOrder) +
+              Number(amountDebt),
+            totalAmountBarterSalesOrder:
+              Number(findCustomerSummary.totalAmountBarterSalesOrder) +
+              Number(exsistingData?.grandTotalBarter),
           },
           {
             where: {
@@ -432,6 +437,9 @@ class SalesOrderService {
             totalAmountSalesOrder: Number(exsistingData?.grandTotalCustomer),
             totalAmountDebtSalesOrder: Number(amountDebt),
             totalAmountPaidSalesOrder: 0,
+            totalAmountBarterSalesOrder: Number(
+              exsistingData?.grandTotalBarter
+            ),
           },
           { transaction }
         );
@@ -696,9 +704,10 @@ class SalesOrderService {
 
       if (data?.listBarterProduct.length > 0) {
         for (const item of data?.listBarterProduct) {
-          const salesOrderBarterDetail = await Sales_Order_Barter_Details.findByPk(item.id, {
-            transaction,
-          });
+          const salesOrderBarterDetail =
+            await Sales_Order_Barter_Details.findByPk(item.id, {
+              transaction,
+            });
 
           if (!salesOrderBarterDetail) {
             throwValidation(
@@ -726,7 +735,7 @@ class SalesOrderService {
           notes: data?.notes,
           grandTotal: data?.grandTotal,
           grandTotalBarter: data?.grandTotalBarter,
-          grandTotalCustomer: data?.grandTotalCustomer
+          grandTotalCustomer: data?.grandTotalCustomer,
         },
         {
           where: {

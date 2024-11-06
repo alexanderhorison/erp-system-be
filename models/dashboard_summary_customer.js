@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       totalAmountSalesOrder: DataTypes.BIGINT,
       totalAmountPaidSalesOrder: DataTypes.BIGINT,
       totalAmountDebtSalesOrder: DataTypes.BIGINT,
+      totalAmountBarterSalesOrder: DataTypes.BIGINT,
     },
     {
       sequelize,

@@ -334,13 +334,12 @@ class PurchaseOrderService {
       }
 
       // FIND PRODUCT PURCHASE ORDER BARTER
-      const purchaseOrderBarterProducts = await Purchase_Order_Barter_Detail.findAll(
-        {
+      const purchaseOrderBarterProducts =
+        await Purchase_Order_Barter_Detail.findAll({
           where: {
             purchaseOrderId: exsistingData?.id,
           },
-        }
-      );
+        });
 
       // PENGURANGAN PRODUCT HASIL BARTER DARI PRODUCT WAREHOUSE
       if (purchaseOrderBarterProducts?.length > 0) {
@@ -471,6 +470,9 @@ class PurchaseOrderService {
             totalAmountDebtPurchaseOrder:
               Number(findVendorSummary.totalAmountDebtPurchaseOrder) +
               Number(amountDebt),
+            totalAmountBarterPurchaseOrder:
+              Number(findVendorSummary.totalAmountBarterPurchaseOrder) +
+              Number(exsistingData?.grandTotalBarter),
           },
           {
             where: {
@@ -488,6 +490,9 @@ class PurchaseOrderService {
             totalAmountPurchaseOrder: Number(exsistingData?.grandTotalVendor),
             totalAmountDebtPurchaseOrder: Number(amountDebt),
             totalAmountPaidPurchaseOrder: 0,
+            totalAmountBarterPurchaseOrder: Number(
+              exsistingData?.grandTotalBarter
+            ),
           },
           { transaction }
         );
@@ -557,7 +562,7 @@ class PurchaseOrderService {
                 attributes: ["name", "level"],
               },
             ],
-            paranoid: true
+            paranoid: true,
           },
           {
             model: Master_User,
@@ -611,8 +616,8 @@ class PurchaseOrderService {
         ],
       });
 
-      const purchaseOrderBarterProducts = await Purchase_Order_Barter_Detail.findAll(
-        {
+      const purchaseOrderBarterProducts =
+        await Purchase_Order_Barter_Detail.findAll({
           where: { purchaseOrderId: detail.id },
           include: [
             {
@@ -633,8 +638,7 @@ class PurchaseOrderService {
               ],
             },
           ],
-        }
-      );
+        });
 
       const listProduct = purchaseOrderProducts.map((item) => {
         return {
@@ -729,9 +733,12 @@ class PurchaseOrderService {
           }
       }
       for (const item of data?.listProduct) {
-        const purchaseOrderDetail = await Purchase_Order_Detail.findByPk(item.id, {
-          transaction,
-        });
+        const purchaseOrderDetail = await Purchase_Order_Detail.findByPk(
+          item.id,
+          {
+            transaction,
+          }
+        );
 
         if (!purchaseOrderDetail) {
           throwValidation(

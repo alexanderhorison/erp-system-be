@@ -688,6 +688,7 @@ class DashboardService {
        * 2. Get total amount all sales order
        * 3. Get total amount payment of sales order
        * 4. Get total amount debt of sales order
+       * 5. Get total amount barter of sales order
        */
 
       const result = [];
@@ -719,6 +720,11 @@ class DashboardService {
           name: "totalAmountDebtSalesOrder",
           value: customerSummary?.totalAmountDebtSalesOrder || 0,
           title: "Total Hutang",
+        },
+        {
+          name: "totalAmountBarterSalesOrder",
+          value: customerSummary?.totalAmountBarterSalesOrder || 0,
+          title: "Total Barter",
         }
       );
 
@@ -735,6 +741,7 @@ class DashboardService {
        * 2. Get total amount all purchase order
        * 3. Get total amount payment of purchase order
        * 4. Get total amount debt of purchase order
+       * 5. Get total amount barter of purchase order
        */
 
       const result = [];
@@ -766,6 +773,11 @@ class DashboardService {
           name: "totalAmountDebtPurchaseOrder",
           value: vendorSummary?.totalAmountDebtPurchaseOrder || 0,
           title: "Total Hutang",
+        },
+        {
+          name: "totalAmountBarterPurchaseOrder",
+          value: vendorSummary?.totalAmountBarterPurchaseOrder || 0,
+          title: "Total Barter",
         }
       );
 
