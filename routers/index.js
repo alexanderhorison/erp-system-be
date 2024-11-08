@@ -16,7 +16,7 @@ const routerSalesOrder = require("./salesOrder");
 const routerPurchaseOrder = require("./purchaseOrder");
 const EmailController = require('../controllers/email/EmailController');
 const multer = require('multer');
-const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
