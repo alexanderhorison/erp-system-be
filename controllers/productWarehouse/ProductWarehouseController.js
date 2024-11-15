@@ -153,6 +153,27 @@ class ProductWarehouseController {
         .json(responses(false, error.message || error));
     }
   }
+  // Soft delete product warehouse
+  static async deleteProductWarehouse(req, res) {
+    try {
+      const schemaParams = yup
+        .number()
+        .required("Id produk warehouse tidak boleh kosong");
+
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const data = await ProductWarehouseService.delete({
+        id: id,
+        user: req.userData,
+      });
+
+      res.status(200).json(responses(true, "Success delete product", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 
   static async getListProduct(req, res) {
     try {
