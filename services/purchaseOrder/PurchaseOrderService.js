@@ -425,9 +425,9 @@ class PurchaseOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalVendor > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalVendor) -
+            ? Number(exsistingData?.grandTotalVendor) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // CHANGE STATUS PURCHASE ORDER
       const approvedData = await Purchase_Order.update(
@@ -598,6 +598,7 @@ class PurchaseOrderService {
         include: [
           {
             model: Warehouse_Product,
+            paranoid: false,
             include: [
               {
                 model: Master_Product,
@@ -622,6 +623,7 @@ class PurchaseOrderService {
           include: [
             {
               model: Warehouse_Product,
+              paranoid: false,
               include: [
                 {
                   model: Master_Product,

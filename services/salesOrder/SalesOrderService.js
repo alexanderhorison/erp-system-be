@@ -363,9 +363,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalCustomer) -
+            ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
@@ -530,6 +530,7 @@ class SalesOrderService {
         include: [
           {
             model: Warehouse_Product,
+            paranoid: false,
             include: [
               {
                 model: Master_Product,
@@ -555,6 +556,7 @@ class SalesOrderService {
           include: [
             {
               model: Warehouse_Product,
+              paranoid: false,
               include: [
                 {
                   model: Master_Product,

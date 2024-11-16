@@ -16,5 +16,6 @@ router.get("/warehouse/:id/list-product-internal-transfer", ProductWarehouseCont
 router.get("/history/:id", ProductWarehouseController.getHistoryProductWarehouse);
 router.get("/:id", ProductWarehouseController.getProductWarehouse);
 router.put("/:id", ProductWarehouseController.adjustProduct);
+router.delete("/:id", ProductWarehouseController.deleteProductWarehouse);
 
 module.exports = router;

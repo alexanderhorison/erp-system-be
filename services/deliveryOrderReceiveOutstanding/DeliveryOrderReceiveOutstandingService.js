@@ -145,6 +145,7 @@ class DeliveryOrderReceiveOutstandingService {
                 include: [
                   {
                     model: Warehouse_Product,
+                    paranoid: false,
                     include: [
                       {
                         model: Master_Product,

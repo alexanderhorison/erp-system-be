@@ -297,7 +297,13 @@ class ProductWarehouseService {
           Master_Unit,
           Master_Warehouse,
           Master_Warehouse_Rack,
+          {
+            model: Master_User,
+            attributes: ["id", "name"],
+            as: "deleter"
+          },
         ],
+        paranoid: false,
       });
 
       const mappingHistory = [];
@@ -367,6 +373,19 @@ class ProductWarehouseService {
           });
           deliveryOrder = data?.Delivery_Order;
         }
+
+        if (dataProduct?.deletedAt) {
+          mappingHistory.push({
+            title: "Produk dihapus",
+            infoType: "Produk sudah di hapus",
+            deleted: true,
+            lastQuantity: dataProduct?.quantity,
+            date: formatDateWithTime(dataProduct?.deletedAt).split("-")[0],
+            time: formatDateWithTime(dataProduct?.deletedAt).split("-")[1],
+            createdBy: dataProduct?.deleter?.name,
+          })
+        }
+
         mappingHistory.push({
           title: infoType(item),
           titleInfo: titleInfo(item),
@@ -397,19 +416,19 @@ class ProductWarehouseService {
           // ini untuk case yang delivery order receive yang lama
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderId && {
-              deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
-              notes: item?.Delivery_Order?.notes,
-              deliveryOrderCode: item?.Delivery_Order?.code,
-            }),
+            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
+            notes: item?.Delivery_Order?.notes,
+            deliveryOrderCode: item?.Delivery_Order?.code,
+          }),
           // ini untuk case yang delivery order receive terbaru
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderReceiptId && {
-              deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
-              deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
-              deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
-              notes: item?.Delivery_Order_Receipt?.notes,
-              deliveryOrderCode: deliveryOrder.code,
-            }),
+            deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
+            deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
+            deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
+            notes: item?.Delivery_Order_Receipt?.notes,
+            deliveryOrderCode: deliveryOrder.code,
+          }),
           ...(item?.info === "STOCK OPNAME" && {
             stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
             notes: item?.Stock_Opname?.notes,
@@ -508,6 +527,41 @@ class ProductWarehouseService {
 
       return result;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async delete({ id, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const exsisting = await Warehouse_Product.findOne({ where: { id: id } });
+
+      if (!exsisting) {
+        throw {
+          code: 404,
+          message: "Produk tidak ditemukan",
+        };
+      }
+
+      await Warehouse_Product.update({
+        deletedBy: user?.id || 3,
+        info: "DELETED",
+      },
+        { where: { id } },
+        { transaction }
+      )
+
+      const data = await Warehouse_Product.destroy({
+        where: {
+          id: id,
+        },
+        transaction,
+      });
+
+      await transaction.commit();
+      return data;
+    } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }

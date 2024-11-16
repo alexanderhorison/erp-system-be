@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
           as: "productOutstanding",
         }
       );
+      Warehouse_Product.belongsTo(models.Master_User, { foreignKey: "deletedBy", as: "deleter" });
     }
   }
   Warehouse_Product.init(
@@ -53,10 +54,13 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.STRING,
       info: DataTypes.TEXT,
       warehouseRackId: DataTypes.INTEGER,
+      deletedAt: DataTypes.DATE,
+      deletedBy: DataTypes.INTEGER
     },
     {
       sequelize,
       modelName: "Warehouse_Product",
+      paranoid: true,
     }
   );
   return Warehouse_Product;
