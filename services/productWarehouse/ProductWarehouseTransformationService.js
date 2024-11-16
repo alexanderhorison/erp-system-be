@@ -76,12 +76,22 @@ class ProductWarehouseTransformationService {
         include: [
           {
             model: Master_Warehouse_Rack,
-            attributes: ["name"],
+            attributes: ["id", "name"],
           },
           {
             model: Master_Unit,
-            attributes: ["name"],
-          }
+            attributes: ["id", "name"],
+          },
+          {
+            model: Master_Product,
+            paranoid: false,
+            include: [
+              {
+                model: Master_Category,
+                paranoid: false,
+              },
+            ],
+          },
         ]
       })
 
@@ -109,7 +119,11 @@ class ProductWarehouseTransformationService {
           qty: destinationProduct.quantity + (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
           masterProductId: originProduct.productId,
           rackName: destinationProduct.Master_Warehouse_Rack.name,
-          unitName: destinationProduct.Master_Unit.name
+          unitName: destinationProduct.Master_Unit.name,
+          masterUnitId: destinationProduct.Master_Unit.id,
+          productName: `${destinationProduct.Master_Product.name} - ${destinationProduct.Master_Unit.name}`,
+          categoryName: destinationProduct.Master_Product.Master_Category.name,
+          productWarehouseId: destinationProduct.id
         }
         // PRODUCT SUDAH ADA
         // TAMBAHKAN PRODUCT TUJUAN
@@ -140,17 +154,27 @@ class ProductWarehouseTransformationService {
 
         const product = await Warehouse_Product.findOne({
           where: {
-            id: newDestinationProduct.warehouseRackId
+            id: newDestinationProduct.id
           },
           include: [
             {
               model: Master_Warehouse_Rack,
-              attributes: ["name"],
+              attributes: ["id", "name"],
             },
             {
               model: Master_Unit,
-              attributes: ["name"],
-            }
+              attributes: ["id", "name"],
+            },
+            {
+              model: Master_Product,
+              paranoid: false,
+              include: [
+                {
+                  model: Master_Category,
+                  paranoid: false,
+                },
+              ],
+            },
           ],
           transaction
         })
@@ -161,7 +185,11 @@ class ProductWarehouseTransformationService {
           qty: newDestinationProduct.quantity,
           masterProductId: originProduct.productId,
           rackName: product.Master_Warehouse_Rack.name,
-          unitName: product.Master_Unit.name
+          unitName: product.Master_Unit.name,
+          masterUnitId: product.Master_Unit.id,
+          productName: `${product.Master_Product.name} - ${product.Master_Unit.name}`,
+          categoryName: product.Master_Product.Master_Category.name,
+          productWarehouseId: newDestinationProduct.id
         }
 
         await StockAdjustmentHistoryService.createOne({

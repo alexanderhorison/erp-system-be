@@ -23,10 +23,11 @@ class SalesOrderController {
   static async createSalesOrder(req, res) {
     try {
       const schema = yup.object({
-        warehouseId: yup.number().required("Gudang asal harus diisi"),
         customerId: yup.number().required("Customer harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
-        grandTotalCustomer: yup.number().required("Total Sales order harus ada"),
+        grandTotalCustomer: yup
+          .number()
+          .required("Total Sales order harus ada"),
         grandTotalBarter: yup.number().required("Total Barter harus ada"),
         dueDate: yup.string().required("Tanggal jatuh tempo harus ada"),
         notes: yup.string().optional(),
@@ -40,6 +41,9 @@ class SalesOrderController {
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
+              warehouseId: yup
+                .number()
+                .required("Gudang asal sales order harus diisi"),
             })
           )
           .required("List sales order produk harus ada"),
@@ -54,6 +58,9 @@ class SalesOrderController {
                 price: yup.number().required("Harga barter harus diisi"),
                 quantity: yup.number().required("Kuantiti barter harus diisi"),
                 subTotal: yup.number().required("Sub Total barter harus diisi"),
+                warehouseId: yup
+                  .number()
+                  .required("Gudang asal barter harus diisi"),
               })
             );
           }
@@ -66,6 +73,7 @@ class SalesOrderController {
                 price: yup.number(),
                 quantity: yup.number(),
                 subTotal: yup.number(),
+                warehouseId: yup.number(),
               })
             )
             .optional();
@@ -175,10 +183,11 @@ class SalesOrderController {
         .required("Code sales order harus diisi");
 
       const schemaBody = yup.object({
-        warehouseId: yup.number().required("Gudang asal harus diisi"),
         customerId: yup.number().required("Customer harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
-        grandTotalCustomer: yup.number().required("Total Sales order harus ada"),
+        grandTotalCustomer: yup
+          .number()
+          .required("Total Sales order harus ada"),
         grandTotalBarter: yup.number().required("Total Barter harus ada"),
         dueDate: yup.string().required("Tanggal jatuh tempo harus ada"),
         notes: yup.string().optional(),
@@ -193,6 +202,9 @@ class SalesOrderController {
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
+              warehouseId: yup
+                .number()
+                .required("Gudang asal sales order harus diisi"),
             })
           )
           .required("List sales order produk harus ada"),
@@ -201,13 +213,18 @@ class SalesOrderController {
           if (value && value.length > 0) {
             return yup.array().of(
               yup.object({
-                id: yup.number().required("sales order barter detail id harus diisi"),
+                id: yup
+                  .number()
+                  .required("sales order barter detail id harus diisi"),
                 warehouseProductId: yup
                   .number()
                   .required("Id product warehouse harus diisi"),
                 price: yup.number().required("Harga barter harus diisi"),
                 quantity: yup.number().required("Kuantiti barter harus diisi"),
                 subTotal: yup.number().required("Sub Total barter harus diisi"),
+                warehouseId: yup
+                  .number()
+                  .required("Gudang asal barter harus diisi"),
               })
             );
           }
@@ -221,6 +238,7 @@ class SalesOrderController {
                 price: yup.number(),
                 quantity: yup.number(),
                 subTotal: yup.number(),
+                warehouseId: yup.number(),
               })
             )
             .optional();

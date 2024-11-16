@@ -24,23 +24,14 @@ class SalesOrderService {
   static async getAll({ user }) {
     try {
       const allData = await Sales_Order.findAll({
-        where: {
-          ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
-        },
+        // where: {
+        //   ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
+        // },
         include: [
-          {
-            model: Master_Warehouse,
-            paranoid: false,
-            attributes: ["name"],
-          },
           // {
-          //   model: Master_Customer,
-          //   include: [
-          //     {
-          //       model: Master_Rank,
-          //       attributes: ["name", "level"],
-          //     },
-          //   ],
+          //   model: Master_Warehouse,
+          //   paranoid: false,
+          //   attributes: ["name"],
           // },
           {
             model: Master_User,
@@ -72,8 +63,8 @@ class SalesOrderService {
         return {
           id: item.id,
           code: item.code,
-          warehouseId: item?.warehouseId,
-          warehouseName: item?.Master_Warehouse?.name,
+          // warehouseId: item?.warehouseId,
+          // warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
           notes: item?.notes,
           status: item?.status,
@@ -107,7 +98,7 @@ class SalesOrderService {
       const createdData = await Sales_Order.create(
         {
           code: generateCode,
-          warehouseId: data.warehouseId,
+          warehouseId: null,
           customerId: data.customerId,
           grandTotal: data.grandTotal,
           grandTotalCustomer: data.grandTotalCustomer,
@@ -244,7 +235,7 @@ class SalesOrderService {
         if (!warehouseProduct) {
           throwValidation(
             400,
-            `Produk dengan ID ${item.warehouseProductId} tidak ditemukann`
+            `Produk dengan ID ${item.warehouseProductId} tidak ditemukan`
           );
         }
 
@@ -497,11 +488,6 @@ class SalesOrderService {
         where: { code: code },
         include: [
           {
-            model: Master_Warehouse,
-            paranoid: false,
-            attributes: ["name", "location"],
-          },
-          {
             model: Master_Customer,
             include: [
               {
@@ -557,6 +543,7 @@ class SalesOrderService {
               },
               { model: Master_Unit, attributes: ["id", "name"] },
               { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+              { model: Master_Warehouse, attributes: ["id", "name"] },
             ],
           },
         ],
@@ -581,6 +568,7 @@ class SalesOrderService {
                 },
                 { model: Master_Unit, attributes: ["id", "name"] },
                 { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+                { model: Master_Warehouse, attributes: ["id", "name"] },
               ],
             },
           ],
@@ -600,6 +588,8 @@ class SalesOrderService {
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
           warehouseProductId: item?.Warehouse_Product?.id,
           qty: item?.Warehouse_Product?.quantity,
+          warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name || "",
+          warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
         };
       });
 
@@ -619,6 +609,9 @@ class SalesOrderService {
             rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
             warehouseProductId: item?.Warehouse_Product?.id,
             qty: item?.Warehouse_Product?.quantity,
+            warehouseName:
+              item?.Warehouse_Product?.Master_Warehouse?.name || "",
+            warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
           };
         });
       }
@@ -641,9 +634,6 @@ class SalesOrderService {
         grandTotal: detail.grandTotal,
         grandTotalCustomer: detail.grandTotalCustomer,
         grandTotalBarter: detail.grandTotalBarter,
-        warehouseId: detail?.warehouseId,
-        warehouseName: detail?.Master_Warehouse?.name,
-        warehouseLocation: detail?.Master_Warehouse?.location,
         createdBy: detail?.creator?.name,
         approvedBy: detail?.approver?.name,
         approvedAt: detail?.approvedAt,
