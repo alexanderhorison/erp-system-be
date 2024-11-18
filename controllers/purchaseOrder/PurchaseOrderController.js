@@ -23,7 +23,6 @@ class PurchaseOrderController {
   static async createPurchaseOrder(req, res) {
     try {
       const schema = yup.object({
-        warehouseId: yup.number().required("Gudang tujuan harus diisi"),
         vendorId: yup.number().required("Vendor harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
         grandTotalVendor: yup
@@ -36,6 +35,9 @@ class PurchaseOrderController {
           .array()
           .of(
             yup.object({
+              warehouseId: yup
+                .number()
+                .required("Gudang tujuan purchase order harus diisi"),
               masterProductId: yup.number().required("Product id harus diisi"),
               price: yup.number().required("Price product harus diisi"),
               unitId: yup.number().required("Satuan product harus diisi"),
@@ -49,6 +51,9 @@ class PurchaseOrderController {
           if (value && value.length > 0) {
             return yup.array().of(
               yup.object({
+                warehouseId: yup
+                  .number()
+                  .required("Gudang tujuan asal barter harus diisi"),
                 warehouseProductId: yup
                   .number()
                   .required("Id product warehouse harus diisi"),
@@ -67,6 +72,7 @@ class PurchaseOrderController {
                 price: yup.number(),
                 quantity: yup.number(),
                 subTotal: yup.number(),
+                warehouseId: yup.number(),
               })
             )
             .optional();
@@ -186,7 +192,6 @@ class PurchaseOrderController {
         .required("Code purchase order harus diisi");
 
       const schemaBody = yup.object({
-        warehouseId: yup.number().required("Gudang tujuan harus diisi"),
         vendorId: yup.number().required("Vendor harus diisi"),
         grandTotal: yup.number().required("Grand Total harus ada"),
         grandTotalVendor: yup
@@ -200,6 +205,9 @@ class PurchaseOrderController {
           .of(
             yup.object({
               id: yup.number().required("purchase order detail id harus diisi"),
+              warehouseId: yup
+                .number()
+                .required("Gudang tujuan purchase order harus diisi"),
               warehouseProductId: yup
                 .number()
                 .required("Id product warehouse harus diisi"),
@@ -217,6 +225,9 @@ class PurchaseOrderController {
                 id: yup
                   .number()
                   .required("purchase order barter detail id harus diisi"),
+                warehouseId: yup
+                  .number()
+                  .required("Gudang tujuan asal barter harus diisi"),
                 warehouseProductId: yup
                   .number()
                   .required("Id product warehouse harus diisi"),
@@ -236,6 +247,7 @@ class PurchaseOrderController {
                 price: yup.number(),
                 quantity: yup.number(),
                 subTotal: yup.number(),
+                warehouseId: yup.number(),
               })
             )
             .optional();

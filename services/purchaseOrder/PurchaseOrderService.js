@@ -25,15 +25,15 @@ class PurchaseOrderService {
   static async getAll({ user }) {
     try {
       const allData = await Purchase_Order.findAll({
-        where: {
-          ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
-        },
+        // where: {
+        //   ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
+        // },
         include: [
-          {
-            model: Master_Warehouse,
-            paranoid: false,
-            attributes: ["name"],
-          },
+          // {
+          //   model: Master_Warehouse,
+          //   paranoid: false,
+          //   attributes: ["name"],
+          // },
           {
             model: Master_User,
             as: "creator",
@@ -64,8 +64,8 @@ class PurchaseOrderService {
         return {
           id: item.id,
           code: item.code,
-          warehouseId: item?.warehouseId,
-          warehouseName: item?.Master_Warehouse?.name,
+          // warehouseId: item?.warehouseId,
+          // warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
           notes: item?.notes,
           status: item?.status,
@@ -99,7 +99,7 @@ class PurchaseOrderService {
       const createdData = await Purchase_Order.create(
         {
           code: generateCode,
-          warehouseId: data.warehouseId,
+          warehouseId: null,
           vendorId: data.vendorId,
           grandTotal: data.grandTotal,
           grandTotalVendor: data.grandTotalVendor,
@@ -111,14 +111,6 @@ class PurchaseOrderService {
         },
         { transaction }
       );
-
-      const defaultRackId = await Master_Warehouse_Rack.findOne({
-        where: {
-          warehouseId: data.warehouseId,
-          name: "default",
-        },
-        attributes: ["id"],
-      });
 
       const createPurchaseOrderProducts = [];
       const createPurchaseOrderBarterProducts = [];
@@ -138,18 +130,27 @@ class PurchaseOrderService {
           where: {
             productId: item.masterProductId,
             unitId: item.unitId,
-            warehouseId: data.warehouseId,
+            warehouseId: item.warehouseId,
           },
           attributes: ["id"],
         });
 
         // IF NOT FOUND, CREATE
         if (!warehouseProduct) {
+          // find default rack
+          const defaultRackId = await Master_Warehouse_Rack.findOne({
+            where: {
+              warehouseId: item.warehouseId,
+              name: "default",
+            },
+            attributes: ["id"],
+          });
+
           const createdId = await Warehouse_Product.create(
             {
               productId: item.masterProductId,
               unitId: item.unitId,
-              warehouseId: data.warehouseId,
+              warehouseId: item.warehouseId,
               quantity: 0,
               minimumStock: 1,
               warehouseRackId: defaultRackId?.id,
@@ -162,7 +163,7 @@ class PurchaseOrderService {
             productWarehouseId: createdId.id,
             quantity: 0,
             adjustmentType: "INITIATE",
-            warehouseId: data.warehouseId,
+            warehouseId: item.warehouseId,
             description: "initiate product saat create purchase order",
             userId: user.id,
             info: "PURCHASE ORDER",
@@ -425,9 +426,9 @@ class PurchaseOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalVendor > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalVendor) -
+          ? Number(exsistingData?.grandTotalVendor) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // CHANGE STATUS PURCHASE ORDER
       const approvedData = await Purchase_Order.update(
@@ -550,11 +551,6 @@ class PurchaseOrderService {
         where: { code: code },
         include: [
           {
-            model: Master_Warehouse,
-            paranoid: false,
-            attributes: ["name", "location"],
-          },
-          {
             model: Master_Vendor,
             include: [
               {
@@ -612,6 +608,7 @@ class PurchaseOrderService {
               },
               { model: Master_Unit, attributes: ["id", "name"] },
               { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+              { model: Master_Warehouse, attributes: ["id", "name"] },
             ],
           },
         ],
@@ -637,6 +634,7 @@ class PurchaseOrderService {
                 },
                 { model: Master_Unit, attributes: ["id", "name"] },
                 { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+                { model: Master_Warehouse, attributes: ["id", "name"] },
               ],
             },
           ],
@@ -655,6 +653,8 @@ class PurchaseOrderService {
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
           warehouseProductId: item?.Warehouse_Product?.id,
           qty: item?.Warehouse_Product?.quantity,
+          warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name || "",
+          warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
         };
       });
 
@@ -674,6 +674,9 @@ class PurchaseOrderService {
             rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
             warehouseProductId: item?.Warehouse_Product?.id,
             qty: item?.Warehouse_Product?.quantity,
+            warehouseName:
+              item?.Warehouse_Product?.Master_Warehouse?.name || "",
+            warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
           };
         });
       }
@@ -696,8 +699,6 @@ class PurchaseOrderService {
         grandTotal: detail.grandTotal,
         grandTotalVendor: detail.grandTotalVendor,
         grandTotalBarter: detail.grandTotalBarter,
-        warehouseId: detail?.warehouseId,
-        warehouseName: detail?.Master_Warehouse?.name,
         warehouseLocation: detail?.Master_Warehouse?.location,
         createdBy: detail?.creator?.name,
         approvedBy: detail?.approver?.name,
