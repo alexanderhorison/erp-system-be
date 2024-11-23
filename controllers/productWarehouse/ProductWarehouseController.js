@@ -229,6 +229,34 @@ class ProductWarehouseController {
         .json(responses(false, error.message || error));
     }
   }
+
+  // GET DELETED PRODUCT
+  static async getDeletedProduct(req, res) {
+    try {
+      const query = req?.query;
+
+      const data = await ProductWarehouseService.getDeletedProduct({ query });
+
+      res.status(200).json(responses(true, "Success get deleted product", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // RESTORE DELETED PRODUCT
+  static async restoreProduct(req, res) {
+    try {
+      const id = req.params.id;
+
+      const data = await ProductWarehouseService.restoreProduct({ id });
+
+      res.status(200).json(responses(true, "Success restore product", data));
+    } catch (error) {
+      res.status(error.code || 500).json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ProductWarehouseController;

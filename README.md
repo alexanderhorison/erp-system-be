@@ -67,6 +67,7 @@ ID MENU : NAMA
 23  Sales Order
 24  Master Vendor
 25  Purchase Order
+26  View Deleted Product
 ```
 
 ### API Migration (15 Agustus 2024)

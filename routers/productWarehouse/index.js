@@ -7,6 +7,8 @@ const ProductWarehouseController = require("../../controllers/productWarehouse/P
 router.get("/", ProductWarehouseController.getAllWarehouse);
 router.use("/transformation", routerTransformation)
 router.get("/list", ProductWarehouseController.getListProduct)
+router.get("/deleted", ProductWarehouseController.getDeletedProduct)
+router.post("/restore/:id", ProductWarehouseController.restoreProduct)
 router.get("/warehouse/:id", ProductWarehouseController.getProductByWarehouse);
 router.post("/create/:warehouseId", ProductWarehouseController.create);
 

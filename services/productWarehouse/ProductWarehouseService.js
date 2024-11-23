@@ -565,6 +565,146 @@ class ProductWarehouseService {
       throw error;
     }
   }
+
+  static async getDeletedProduct({ query }) {
+    try {
+      let queryFilter = {};
+      if (query != {}) {
+        const filters = [
+          {
+            column: "categoryId",
+            operator: "=",
+            value: query.categoryId,
+            model: "Master_Product",
+          },
+          {
+            column: "typeId",
+            operator: "=",
+            value: query.typeId,
+            model: "Master_Product",
+          },
+          {
+            column: "companyId",
+            operator: "=",
+            value: query.companyId,
+            model: "Master_Product",
+          },
+          {
+            column: "unitId",
+            operator: "=",
+            value: query.unitId,
+            model: "Warehouse_Product",
+          },
+          {
+            column: "warehouseRackId",
+            operator: "=",
+            value: query.warehouseRackId,
+            model: "Warehouse_Product",
+          },
+          {
+            column: "warehouseId",
+            operator: "=",
+            value: query.warehouseId,
+            model: "Warehouse_Product",
+          }
+        ];
+        queryFilter = generateFilter(filters);
+      }
+
+      const data = await Warehouse_Product.findAll({
+        where: {
+          ...queryFilter.Warehouse_Product,
+          info: "DELETED",
+        },
+        paranoid: false,
+        include: [
+          {
+            model: Master_Product,
+            include: [
+              {
+                model: Master_Category,
+              },
+              {
+                model: Master_Type,
+              },
+              {
+                model: Master_Company,
+              },
+            ],
+          },
+          {
+            model: Master_Unit,
+          },
+          {
+            model: Master_Warehouse_Rack,
+          },
+          {
+            model: Master_Warehouse,
+          },
+          {
+            model: Master_User,
+            as: "deleter",
+          },
+        ],
+      });
+
+      const result = data.map((item) => {
+        return {
+          productWarehouseId: item.id,
+          productName: item.Master_Product.name,
+          categoryName: item.Master_Product.Master_Category.name,
+          typeName: item.Master_Product.Master_Type.name,
+          unitName: item.Master_Unit.name,
+          warehouseName: item.Master_Warehouse.name,
+          warehouseId: item?.Master_Warehouse?.id,
+          rackName: item?.Master_Warehouse_Rack?.name,
+          quantity: item.quantity,
+          minimumStock: item.minimumStock,
+          companyName: item?.Master_Product?.Master_Company?.name,
+          typeName: item?.Master_Product?.Master_Type?.name,
+          status: item?.info === "DELETED" ? "Deleted" : "Active",
+        };
+      });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async restoreProduct({ id }) {
+    try {
+      const existingData = await Warehouse_Product.findOne({ where: { id: id }, paranoid: false });
+
+      const checkProduct = await Warehouse_Product.findOne({
+        where: {
+          productId: existingData.productId,
+          warehouseId: existingData.warehouseId,
+          unitId: existingData.unitId,
+        }
+      })
+
+      if (checkProduct) {
+        throw {
+          code: 400,
+          message: "Produk sudah ada dalam database",
+        };
+      }
+
+      await Warehouse_Product.update({
+        info: null,
+        deletedBy: null,
+        deletedAt: null,
+      }, {
+        where: {
+          id: id
+        }
+      })
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductWarehouseService;
