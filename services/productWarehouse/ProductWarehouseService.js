@@ -543,20 +543,17 @@ class ProductWarehouseService {
         };
       }
 
-      await Warehouse_Product.update({
+      const data = await Warehouse_Product.update({
         deletedBy: user?.id || 3,
         info: "DELETED",
+        deletedAt: new Date(),
+        restoredBy: null,
+        restoredAt: null,
       },
         { where: { id } },
         { transaction }
       )
 
-      const data = await Warehouse_Product.destroy({
-        where: {
-          id: id,
-        },
-        transaction,
-      });
 
       await transaction.commit();
       return data;
@@ -671,7 +668,7 @@ class ProductWarehouseService {
     }
   }
 
-  static async restoreProduct({ id }) {
+  static async restoreProduct({ id, user }) {
     try {
       const existingData = await Warehouse_Product.findOne({ where: { id: id }, paranoid: false });
 
@@ -690,14 +687,17 @@ class ProductWarehouseService {
         };
       }
 
-      await Warehouse_Product.update({
-        info: null,
+      const data = await Warehouse_Product.update({
+        info: "RESTORED",
         deletedBy: null,
         deletedAt: null,
+        restoredBy: user?.id || 3,
+        restoredAt: new Date(),
       }, {
         where: {
           id: id
-        }
+        },
+        paranoid: false
       })
 
       return data;

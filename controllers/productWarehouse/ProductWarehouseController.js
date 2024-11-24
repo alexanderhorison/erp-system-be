@@ -250,7 +250,7 @@ class ProductWarehouseController {
     try {
       const id = req.params.id;
 
-      const data = await ProductWarehouseService.restoreProduct({ id });
+      const data = await ProductWarehouseService.restoreProduct({ id, user: req.userData });
 
       res.status(200).json(responses(true, "Success restore product", data));
     } catch (error) {
