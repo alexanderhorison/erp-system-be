@@ -5,7 +5,7 @@ class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
     try {
-      const { filename, module } = req.body; // Get filename from body
+      const { filename, module, additionSubjectText } = req.body; // Get filename from body
       const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
       const transporterConnection = await transporter();
@@ -13,11 +13,16 @@ class EmailController {
       /**
        * Module is type (Sales Order / Purchase Order / Barter) example
        * file name is code SO-312312 / GOD-3123123
+       * Additional Subject Text is for Sales Order / Purchase Order (Vendor A / Customer A)
        */
+      let subjectText = `${module} ${filename} `;
+      if (["Sales Order", "Purchase Order"].includes(module)) {
+        subjectText += additionSubjectText;
+      }
       const msg = {
         from: process.env.EMAIL_IS, // sender address
         to: process.env.EMAIL_RECEIVER, // list of receivers
-        subject: `${module} ${filename}`, // Subject line
+        subject: subjectText, // Subject line
         text: `Berikut Hasil Print ${module} anda`, // plain text body
         attachments: [
           {
