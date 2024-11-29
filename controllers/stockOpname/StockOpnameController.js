@@ -152,8 +152,6 @@ class StockOpnameController {
       const data = await StockOpnameService.confirm({ code: params.code, data: body, user });
       res.status(200).json(responses(true, "Success confirm detail stock opname", data));
     } catch (error) {
-      console.log(error);
-
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
