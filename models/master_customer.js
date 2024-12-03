@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
       Master_Customer.belongsTo(models.Master_Rank, {
         foreignKey: "rankId",
       });
+
+      Master_Customer.hasMany(models.Sales_Order, {
+        foreignKey: "customerId",
+      });
     }
   }
   Master_Customer.init(
