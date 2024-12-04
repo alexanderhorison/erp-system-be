@@ -60,6 +60,7 @@ module.exports = (sequelize, DataTypes) => {
       deletedBy: DataTypes.INTEGER,
       restoredAt: DataTypes.DATE,
       restoredBy: DataTypes.INTEGER,
+      isFavorite: DataTypes.BOOLEAN,
     },
     {
       sequelize,

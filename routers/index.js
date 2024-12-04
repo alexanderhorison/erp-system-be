@@ -14,6 +14,7 @@ const MigrationController = require("../controllers/migration/MigrationControlle
 const routerDashboard = require("./dashboard");
 const routerSalesOrder = require("./salesOrder");
 const routerPurchaseOrder = require("./purchaseOrder");
+const routerPointOfSale = require("./pointOfSale");
 const EmailController = require('../controllers/email/EmailController');
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
@@ -65,6 +66,8 @@ router.use("/sales-order", routerSalesOrder);
 
 // Purchase Order
 router.use("/purchase-order", routerPurchaseOrder);
+
+router.use("/point-of-sale", routerPointOfSale);
 
 router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
 
