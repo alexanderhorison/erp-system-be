@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
       Master_Vendor.belongsTo(models.Master_Rank, {
         foreignKey: "rankId",
       });
+
+      Master_Vendor.hasMany(models.Purchase_Order, {
+        foreignKey: "vendorId",
+      });
     }
   }
   Master_Vendor.init(
