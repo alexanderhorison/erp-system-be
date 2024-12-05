@@ -166,8 +166,9 @@ class DashboardPurchaseOrderService {
             ],
           }
         ],
-        limit: defaultQuery.limit,
-        offset: defaultQuery.offset,
+        //! Disable karena datenya masih string
+        // limit: defaultQuery.limit,
+        // offset: defaultQuery.offset,
         order: [["dueDate", "ASC"]]
       });
 
