@@ -27,6 +27,28 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+  static async getProductByWarehouseId(req, res) {
+    try {
+      const schemaParams = yup.object({
+        id: yup
+          .number()
+          .required("Id gudang tidak boleh kosong")
+          .typeError("Id gudang harus berupa angka"), // Additional type validation
+      });
+
+      const query = await yupSchemaValidation(req.query, schemaParams);
+
+      const data = await PointOfSaleService.getPointOfSaleProductByWarehouse({
+        warehouseId: query.id,
+      });
+
+      res.status(200).json(responses(true, `Success get product`, data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = PointOfSaleController;
