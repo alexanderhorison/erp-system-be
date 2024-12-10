@@ -49,6 +49,24 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+  static async getAllProductByProductId(req, res) {
+    try {
+      const schemaParams = yup.object({
+        warehouseId: yup.number().required("Id gudang tidak boleh kosong"),
+        productId: yup.number().required("Id produk tidak boleh kosong"),
+      });
+
+      const query = await yupSchemaValidation(req.query, schemaParams);
+
+      const data = await PointOfSaleService.getAllProductByProductId(query);
+
+      res.status(200).json(responses(true, `Success get product detail`, data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = PointOfSaleController;
