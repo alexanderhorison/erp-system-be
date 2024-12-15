@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       price: DataTypes.BIGINT,
       quantity: DataTypes.INTEGER,
       subTotal: DataTypes.BIGINT,
+      notes: DataTypes.TEXT,
     },
     {
       sequelize,

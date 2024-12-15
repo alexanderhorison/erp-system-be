@@ -1,3 +1,4 @@
+const { codeGenerator } = require("../../helpers/codeGenerator");
 const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
@@ -7,6 +8,8 @@ const {
   Master_Unit,
   Master_Product_Price,
   Master_Warehouse_Rack,
+  Pos_Transaction_Detail,
+  Master_Warehouse
 } = require("../../models");
 const { Op } = require("sequelize");
 
@@ -176,6 +179,126 @@ class PointOfSaleService {
 
       return formatData;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async createPointOfSale({ data, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const generateCode = await codeGenerator(8, "POS");
+
+      // create point of sale
+      const createdPointOfSale = await Point_Of_Sale.create({
+        customerId: data.customerId,
+        code: generateCode,
+        subTotal: data.subTotal,
+        totalDiscount: data.totalDiscount,
+        grandTotal: data.grandTotal,
+        totalPayment: data.totalPayment,
+        notes: data.notes,
+        createdBy: user.id,
+        updatedBy: user.id,
+        // Saat ini statusnya langsung paid
+        status: "PAID",
+      });
+
+      const createPosProducts = [];
+      const listProduct = data?.listProduct;
+
+      for (const item of listProduct) {
+        // Jika produk memiliki warehouseProductId
+        if (item.warehouseProductId) {
+          const warehouseProduct = await Warehouse_Product.findOne({
+            where: {
+              id: item.warehouseProductId,
+            },
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["name"],
+              },
+              {
+                model: Master_Unit,
+                attributes: ["name"],
+              },
+              {
+                model: Master_Warehouse,
+                attributes: ["name"],
+              },
+            ],
+            transaction,
+          });
+
+          if (!warehouseProduct) {
+            throwValidation(
+              400,
+              "Salah satu product warehouse tidak ditemukan"
+            );
+          }
+
+          // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup
+          if (warehouseProduct.quantity < item.quantity) {
+            const productName =
+              warehouseProduct.Master_Product?.name || "Produk";
+            const unitName = warehouseProduct.Master_Unit?.name || "unit";
+            throwValidation(
+              400,
+              `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${warehouseProduct.quantity}`
+            );
+          }
+
+          const newWarehouseQuantity =
+            warehouseProduct?.quantity - item?.quantity;
+
+          // Kurangi stok product di warehouse
+          await Warehouse_Product.update(
+            {
+              quantity: newWarehouseQuantity,
+            },
+            {
+              where: {
+                id: item?.warehouseProductId,
+              },
+              transaction,
+            }
+          );
+          // catat stock adjustment histories
+          await Stock_Adjustment_History.create(
+            {
+              productWarehouseId: item?.warehouseProductId,
+              quantity: item?.quantity,
+              adjustmentType: "MINUS",
+              warehouseId: warehouseProduct?.warehouseId,
+              userId: user?.id,
+              info: "POINT OF SALE",
+              posTransactionId: createdPointOfSale?.id,
+              lastQuantity: newWarehouseQuantity,
+            },
+            { transaction }
+          );
+        }
+
+        // push pos products
+        createPosProducts.push({
+          title: item.title || "",
+          posTransactionId: createdPointOfSale.id,
+          warehouseProductId: item.warehouseProductId ?? null,
+          price: item.price,
+          quantity: item.quantity,
+          subTotal: item.subTotal,
+          notes: data?.notes || "",
+        });
+      }
+
+      await Pos_Transaction_Detail.bulkCreate(createPosProducts, {
+        transaction,
+      });
+
+      await transaction.commit();
+      return true;
+    } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }

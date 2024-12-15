@@ -24,7 +24,8 @@ const {
   Delivery_Order_Receipt_Outstanding,
   Delivery_Order_Receipt,
   Sales_Order,
-  Purchase_Order
+  Purchase_Order,
+  Pos_Transaction
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -286,6 +287,7 @@ class ProductWarehouseService {
           Delivery_Order_Receipt,
           Sales_Order,
           Purchase_Order,
+          Pos_Transaction,
         ],
       });
       const dataProduct = await Warehouse_Product.findOne({
@@ -456,6 +458,13 @@ class ProductWarehouseService {
             description: item?.description,
             notes: item?.Purchase_Order?.notes,
             purchaseOrderCode: item?.Purchase_Order?.code,
+          }),
+          // POINT OF SALE
+          ...(item?.info === "POINT OF SALE" && {
+            pointOfSale: `Point of sale: ${item?.Pos_Transaction?.code}`,
+            description: item?.description,
+            notes: item?.Pos_Transaction?.notes,
+            pointOfSaleCode: item?.Pos_Transaction?.code,
           }),
           createdBy: item?.Master_User?.name,
           lastQuantity: item?.lastQuantity,

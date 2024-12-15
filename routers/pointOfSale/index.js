@@ -4,5 +4,6 @@ const PointOfSaleController = require("../../controllers/pointOfSale/PointOfSale
 router.get("/find-product-by-warehouseid", PointOfSaleController.getProductByWarehouseId);
 router.get("/get-all-product-by-productid", PointOfSaleController.getAllProductByProductId);
 router.post("/add-favorite", PointOfSaleController.addOrRemoveFavorite);
+router.post("/create-point-of-sale", PointOfSaleController.createPointOfSale);
 
 module.exports = router;
