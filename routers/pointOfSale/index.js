@@ -5,5 +5,6 @@ router.get("/find-product-by-warehouseid", PointOfSaleController.getProductByWar
 router.get("/get-all-product-by-productid", PointOfSaleController.getAllProductByProductId);
 router.post("/add-favorite", PointOfSaleController.addOrRemoveFavorite);
 router.post("/create-point-of-sale", PointOfSaleController.createPointOfSale);
+router.get("/payment-type", PointOfSaleController.getPaymentType)
 
 module.exports = router;

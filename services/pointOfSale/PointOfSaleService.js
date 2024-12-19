@@ -9,7 +9,8 @@ const {
   Master_Product_Price,
   Master_Warehouse_Rack,
   Pos_Transaction_Detail,
-  Master_Warehouse
+  Master_Warehouse,
+  Pos_Payment_Type,
 } = require("../../models");
 const { Op } = require("sequelize");
 
@@ -299,6 +300,18 @@ class PointOfSaleService {
       return true;
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async getPaymentType() {
+    try {
+      const paymentTypes = await Pos_Payment_Type.findAll({
+        attributes: ["id", "label", "code"],
+      });
+
+      return paymentTypes;
+    } catch (error) {
       throw error;
     }
   }

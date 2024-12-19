@@ -120,6 +120,18 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async getPaymentType(req, res) {
+    try {
+      const data = await PointOfSaleService.getPaymentType();
+
+      res.status(200).json(responses(true, `Berhasil`, data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = PointOfSaleController;
