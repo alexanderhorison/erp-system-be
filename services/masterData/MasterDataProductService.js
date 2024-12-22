@@ -150,9 +150,24 @@ class MasterDataProductService {
 
       if (req.query != {}) {
         const filters = [
-          { column: "categoryId", operator: "=", value: categoryId, model: "Master_Product" },
-          { column: "typeId", operator: "=", value: typeId,  model: "Master_Product" },
-          { column: "companyId", operator: "=", value: companyId,  model: "Master_Product" },
+          {
+            column: "categoryId",
+            operator: "=",
+            value: categoryId,
+            model: "Master_Product",
+          },
+          {
+            column: "typeId",
+            operator: "=",
+            value: typeId,
+            model: "Master_Product",
+          },
+          {
+            column: "companyId",
+            operator: "=",
+            value: companyId,
+            model: "Master_Product",
+          },
         ];
         queryFilter = generateFilter(filters);
       }
@@ -473,6 +488,32 @@ class MasterDataProductService {
       });
 
       return deleteTransformation;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Get Transformation by productId and UnitId
+  static async getListTransformation({ data }) {
+    try {
+      const listData = await Master_Product_Transformation.findAll({
+        where: {
+          masterProductId: data.productId,
+          unitFromId: data.unitId,
+        },
+        include: [
+          {
+            model: Master_Unit,
+            as: "unitFrom",
+          },
+          {
+            model: Master_Unit,
+            as: "unitTo",
+          },
+        ],
+      });
+
+      return listData || [];
     } catch (error) {
       throw error;
     }

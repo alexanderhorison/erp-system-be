@@ -108,9 +108,13 @@ class MasterDataProductController {
       const schema = yup.object({
         masterProductId: yup.number().required("Master Produk harus ada"),
         unitFromId: yup.number().required("Asal satuan produk harus ada"),
-        amountFrom: yup.number().required("Jumlah asal konversi produk harus ada"),
+        amountFrom: yup
+          .number()
+          .required("Jumlah asal konversi produk harus ada"),
         unitToId: yup.number().required("Tujuan satuan produk harus ada"),
-        amountTo: yup.number().required("Jumlah tujuan konversi produk harus ada"),
+        amountTo: yup
+          .number()
+          .required("Jumlah tujuan konversi produk harus ada"),
         info1: yup.string().optional(),
         info2: yup.string().optional(),
       });
@@ -164,9 +168,7 @@ class MasterDataProductController {
         amountTo: yup
           .number()
           .required("Jumlah tujuan konversi produk harus ada"),
-        code: yup
-          .string()
-          .required("code harus ada"),
+        code: yup.string().required("code harus ada"),
         info1: yup.string().optional(),
         info2: yup.string().optional(),
       });
@@ -191,16 +193,11 @@ class MasterDataProductController {
       const schemaParams = yup.number().required("Id transformasi kosong");
       const id = await yupSchemaValidation(req.params.id, schemaParams);
 
-      await MasterDataProductService.deleteProductTransformasi(id)
+      await MasterDataProductService.deleteProductTransformasi(id);
 
       res
         .status(200)
-        .json(
-          responses(
-            true,
-            `Berhasil menghapus rumus transformasi`,
-          )
-        );
+        .json(responses(true, `Berhasil menghapus rumus transformasi`));
     } catch (error) {
       return res
         .status(error.code || 500)
@@ -218,6 +215,29 @@ class MasterDataProductController {
       return res
         .status(200)
         .json(responses(true, "Success get detail produk transformasi", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // Get list transformation by productId and unitId
+  static async getListTransformations(req, res) {
+    try {
+      const schemaParams = yup.object().shape({
+        productId: yup.number().required("Product Id harus ada"),
+        unitId: yup.number().required("Unit Id harus ada"),
+      });
+      const body = await yupSchemaValidation(req.query, schemaParams);
+
+      const data = await MasterDataProductService.getListTransformation({
+        data: body,
+      });
+
+      return res
+        .status(200)
+        .json(responses(true, "Success get detail transformasi", data));
     } catch (error) {
       res
         .status(error.code || 500)

@@ -3,6 +3,7 @@ const MasterDataProductController = require('../../controllers/masterData/Master
 
 
 router.post("/create", MasterDataProductController.createProductTransformation);
+router.get("/all", MasterDataProductController.getListTransformations);
 router.get("/detail/:id", MasterDataProductController.getDetailProductTransformation);
 
 router.get("/:productId", MasterDataProductController.getAllProductTransformation);
