@@ -76,6 +76,7 @@ class PointOfSaleController {
         totalDiscount: yup.number().required("Total Discount harus ada"),
         grandTotal: yup.number().required("Grand Total harus ada"),
         totalPayment: yup.number().required("Total Payment harus ada"),
+        paymentTypeId: yup.number().required("Tipe Payment harus ada"),
         notes: yup.string().optional(),
         listProduct: yup
           .array()
@@ -83,22 +84,23 @@ class PointOfSaleController {
             yup.object({
               warehouseProductId: yup
                 .number()
-                .nullable() // Allows null
-                .transform((value, originalValue) =>
-                  originalValue === "" ? null : value
-                ) // Treats empty string as null
+                // .nullable() // Allows null
+                // .transform((value, originalValue) =>
+                //   originalValue === "" ? null : value
+                // ) // Treats empty string as null
                 .required("Id product warehouse harus diisi"),
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
               notes: yup.string().optional(),
-              title: yup.string().when("warehouseProductId", {
-                is: (value) => !value, // Checks if warehouseProductId is null or undefined
-                then: yup
-                  .string()
-                  .required("Title harus diisi jika warehouseProductId kosong"),
-                otherwise: yup.string().optional(),
-              }),
+              // title: yup.string().when("warehouseProductId", {
+              //   is: (value) => value === null, // Checks if warehouseProductId is null or undefined
+              //   then: yup
+              //     .string()
+              //     .required("Title harus diisi jika warehouseProductId kosong"),
+              //   otherwise: yup.string().nullable(),
+              // }),
+              title: yup.string().optional(),
             })
           )
           .required("List point of sale produk harus ada"),

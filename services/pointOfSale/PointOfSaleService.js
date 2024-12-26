@@ -11,6 +11,9 @@ const {
   Pos_Transaction_Detail,
   Master_Warehouse,
   Pos_Payment_Type,
+  Pos_Transaction_Payment_History,
+  Pos_Transaction,
+  Stock_Adjustment_History,
 } = require("../../models");
 const { Op } = require("sequelize");
 
@@ -190,19 +193,22 @@ class PointOfSaleService {
       const generateCode = await codeGenerator(8, "POS");
 
       // create point of sale
-      const createdPointOfSale = await Point_Of_Sale.create({
-        customerId: data.customerId,
-        code: generateCode,
-        subTotal: data.subTotal,
-        totalDiscount: data.totalDiscount,
-        grandTotal: data.grandTotal,
-        totalPayment: data.totalPayment,
-        notes: data.notes,
-        createdBy: user.id,
-        updatedBy: user.id,
-        // Saat ini statusnya langsung paid
-        status: "PAID",
-      });
+      const createdPointOfSale = await Pos_Transaction.create(
+        {
+          customerId: data.customerId,
+          code: generateCode,
+          subTotal: data.subTotal,
+          totalDiscount: data.totalDiscount,
+          grandTotal: data.grandTotal,
+          totalPayment: data.totalPayment,
+          notes: data.notes,
+          createdBy: user.id,
+          updatedBy: user.id,
+          // Saat ini statusnya langsung paid
+          status: "PAID",
+        },
+        { transaction }
+      );
 
       const createPosProducts = [];
       const listProduct = data?.listProduct;
@@ -295,6 +301,18 @@ class PointOfSaleService {
       await Pos_Transaction_Detail.bulkCreate(createPosProducts, {
         transaction,
       });
+
+      // Create Pos Payment
+      await Pos_Transaction_Payment_History.create(
+        {
+          posTransactionId: createdPointOfSale.id,
+          total: data.totalPayment,
+          posPaymentTypeId: data.paymentTypeId,
+          createdBy: user.id,
+          updatedBy: user.id,
+        },
+        { transaction }
+      );
 
       await transaction.commit();
       return true;
