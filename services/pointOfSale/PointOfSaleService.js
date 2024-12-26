@@ -294,7 +294,7 @@ class PointOfSaleService {
           price: item.price,
           quantity: item.quantity,
           subTotal: item.subTotal,
-          notes: data?.notes || "",
+          notes: item.notes || "",
         });
       }
 
