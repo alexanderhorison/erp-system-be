@@ -16,11 +16,11 @@ class PointOfSaleController {
 
       await PointOfSaleService.addOrRemoveFavorite(body);
 
-      const message = body.isFavorite ? "Ditambahkan" : "Dihilangkan";
+      const message = body.isFavorite == false ? "Dihilangkan dari" : "Ditambahkan ke";
 
       res
         .status(200)
-        .json(responses(true, `Produk Berhasil ${message} ke favorite`));
+        .json(responses(true, `Produk Berhasil ${message} favorite`));
     } catch (error) {
       res
         .status(error.code || 500)
