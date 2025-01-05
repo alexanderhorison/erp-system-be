@@ -109,6 +109,35 @@ class MasterDataCustomerController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async createCustomerAtPos(req, res) {
+    try {
+      const schema = yup.object({
+        name: yup.string().required("Nama customer harus diisi"),
+        phoneNumber: yup.string().optional(),
+        email: yup
+          .string()
+          .optional()
+          .email("email tidak sesuai format"),
+        address: yup.string().optional(),
+        gender: yup.string().optional(),
+        notes: yup.string().optional(),
+        rankId: yup.number().required("Rank harus diisi"),
+      });
+
+      const body = await yupSchemaValidation(req.body, schema);
+
+      const newCustomer = await MasterDataCustomerService.create(body);
+
+      res
+        .status(201)
+        .json(responses(true, "Customer berhasil ditambahkan", newCustomer));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = MasterDataCustomerController;

@@ -3,6 +3,7 @@ const router = require("express").Router();
 
 router.get("/all", MasterDataCustomerController.getAllCustomer);
 router.post("/create", MasterDataCustomerController.createCustomer);
+router.post("/create-pos", MasterDataCustomerController.createCustomerAtPos);
 
 router.put("/:id", MasterDataCustomerController.updateCustomer);
 router.get("/:id", MasterDataCustomerController.getDetailCustomer);
