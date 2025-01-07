@@ -129,6 +129,9 @@ class MasterDataCustomerController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
+      // is pos Customer selalu true
+      body.isPosCustomer = true;
+
       const newCustomer = await MasterDataCustomerService.create(body);
 
       res
