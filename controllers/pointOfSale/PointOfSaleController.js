@@ -71,7 +71,7 @@ class PointOfSaleController {
   static async createPointOfSale(req, res) {
     try {
       const schema = yup.object({
-        customerId: yup.number().required("Customer harus diisi"),
+        customerId: yup.number().optional().nullable(),
         subTotal: yup.number().required("Sub Total harus ada"),
         totalDiscount: yup.number().required("Total Discount harus ada"),
         grandTotal: yup.number().required("Grand Total harus ada"),

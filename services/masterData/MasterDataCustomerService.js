@@ -4,7 +4,16 @@ const { throwValidation } = require("../../helpers/responses");
 class MasterDataCustomerService {
   static async create(data) {
     try {
-      const { name, phoneNumber, email, address, gender, notes, rankId } = data;
+      const {
+        name,
+        phoneNumber,
+        email,
+        address,
+        gender,
+        notes,
+        rankId,
+        isPosCustomer,
+      } = data;
 
       const existingCustomer = await Master_Customer.findOne({
         where: { name: name },
@@ -22,6 +31,7 @@ class MasterDataCustomerService {
         gender: gender,
         notes: notes,
         rankId: rankId,
+        isPosCustomer: isPosCustomer ? true : false,
       });
     } catch (error) {
       throw error;
@@ -78,7 +88,7 @@ class MasterDataCustomerService {
     }
   }
 
-  static async findAll() {
+  static async findAll(query) {
     try {
       const data = await Master_Customer.findAll({
         include: [
@@ -87,6 +97,9 @@ class MasterDataCustomerService {
             attributes: ["name"],
           },
         ],
+        where: {
+          ...(query.isPosCustomer && { isPosCustomer: query.isPosCustomer }),
+        },
       });
       const result = data.map((item) => ({
         id: item.id,
@@ -99,6 +112,7 @@ class MasterDataCustomerService {
         phoneNumber: item.phoneNumber,
         rankId: item.rankId,
         rankName: item.Master_Rank ? item.Master_Rank?.name : "",
+        isPosCustomer: item.isPosCustomer,
       }));
       return result;
     } catch (error) {

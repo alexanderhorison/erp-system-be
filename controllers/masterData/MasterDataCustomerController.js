@@ -17,6 +17,7 @@ class MasterDataCustomerController {
         gender: yup.string().optional(),
         notes: yup.string().optional(),
         rankId: yup.number().required("Rank harus diisi"),
+        isPosCustomer: yup.boolean().optional(),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -82,7 +83,8 @@ class MasterDataCustomerController {
 
   static async getAllCustomer(req, res) {
     try {
-      const customer = await MasterDataCustomerService.findAll();
+      const query = req.query
+      const customer = await MasterDataCustomerService.findAll(query);
       res
         .status(200)
         .json(responses(true, "Success get all customer", customer));
