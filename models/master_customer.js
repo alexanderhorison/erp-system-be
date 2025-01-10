@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       notes: DataTypes.TEXT,
       rankId: DataTypes.INTEGER,
       deletedAt: DataTypes.DATE,
+      isPosCustomer: DataTypes.BOOLEAN,
     },
     {
       sequelize,

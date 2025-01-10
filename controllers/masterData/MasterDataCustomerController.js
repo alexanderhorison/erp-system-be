@@ -17,6 +17,7 @@ class MasterDataCustomerController {
         gender: yup.string().optional(),
         notes: yup.string().optional(),
         rankId: yup.number().required("Rank harus diisi"),
+        isPosCustomer: yup.boolean().optional(),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -82,7 +83,8 @@ class MasterDataCustomerController {
 
   static async getAllCustomer(req, res) {
     try {
-      const customer = await MasterDataCustomerService.findAll();
+      const query = req.query
+      const customer = await MasterDataCustomerService.findAll(query);
       res
         .status(200)
         .json(responses(true, "Success get all customer", customer));
@@ -127,11 +129,28 @@ class MasterDataCustomerController {
 
       const body = await yupSchemaValidation(req.body, schema);
 
+      // is pos Customer selalu true
+      body.isPosCustomer = true;
+
       const newCustomer = await MasterDataCustomerService.create(body);
 
       res
         .status(201)
         .json(responses(true, "Customer berhasil ditambahkan", newCustomer));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getAllCustomerPos(req, res) {
+    try {
+      const query = req.query
+      const customer = await MasterDataCustomerService.findAll(query);
+      res
+        .status(200)
+        .json(responses(true, "Success get all customer", customer));
     } catch (error) {
       res
         .status(error.code || 500)
