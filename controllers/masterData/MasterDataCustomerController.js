@@ -143,6 +143,20 @@ class MasterDataCustomerController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async getAllCustomerPos(req, res) {
+    try {
+      const query = req.query
+      const customer = await MasterDataCustomerService.findAll(query);
+      res
+        .status(200)
+        .json(responses(true, "Success get all customer", customer));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = MasterDataCustomerController;
