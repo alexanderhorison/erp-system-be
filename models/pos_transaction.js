@@ -30,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
       Pos_Transaction.hasMany(models.Pos_Transaction_Payment_History, {
         foreignKey: "posTransactionId",
       });
+      Pos_Transaction.belongsTo(models.Master_Warehouse, {
+        foreignKey: "warehouseId",
+      });
     }
   }
   Pos_Transaction.init(
@@ -46,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       updatedBy: DataTypes.INTEGER,
       deletedAt: DataTypes.DATE,
       deletedBy: DataTypes.INTEGER,
+      warehouseId: DataTypes.INTEGER,
     },
     {
       sequelize,

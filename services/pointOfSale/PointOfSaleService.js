@@ -1,4 +1,5 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
+const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
@@ -14,6 +15,10 @@ const {
   Pos_Transaction_Payment_History,
   Pos_Transaction,
   Stock_Adjustment_History,
+  Master_User,
+  Master_Role,
+  Master_Customer,
+  Master_Rank,
 } = require("../../models");
 const { Op } = require("sequelize");
 
@@ -204,6 +209,7 @@ class PointOfSaleService {
           notes: data.notes,
           createdBy: user.id,
           updatedBy: user.id,
+          warehouseId: data.warehouseId,
           // Saat ini statusnya langsung paid
           status: "PAID",
         },
@@ -329,6 +335,174 @@ class PointOfSaleService {
       });
 
       return paymentTypes;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllPointOfSaleByWarehouseId(warehouseId) {
+    try {
+      const getAllPosTransaction = await Pos_Transaction.findAll({
+        where: {
+          warehouseId,
+        },
+        include: [
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: Master_Warehouse,
+            attributes: ["name"],
+            paranoid: true,
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      const all = getAllPosTransaction.map((item) => {
+        return {
+          id: item.id,
+          code: item.code,
+          subTotal: item.subTotal,
+          totalDiscount: item.totalDiscount,
+          grandTotal: item.grandTotal,
+          totalPayment: item.totalPayment,
+          notes: item.notes,
+          status: item.status,
+          createdAt: item.createdAt,
+          dateCreated: formatDate(item?.createdAt),
+          creator: {
+            name: item?.creator?.name,
+            role: item?.creator?.Master_Role?.name,
+          },
+          warehouseId: item?.warehouseId ?? null,
+          warehouseName: item?.Master_Warehouse?.name ?? "",
+        };
+      });
+
+      return all;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailPointOfSaleByCode(code) {
+    try {
+      const detail = await Pos_Transaction.findOne({
+        where: { code: code },
+        include: [
+          {
+            model: Master_Customer,
+            include: [
+              {
+                model: Master_Rank,
+                attributes: ["name", "level"],
+              },
+            ],
+            paranoid: true,
+          },
+          {
+            model: Master_Warehouse,
+            attributes: ["name"],
+            paranoid: true,
+          },
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              {
+                model: Master_Role,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!detail) {
+        throwValidation(400, "Data tidak ditemukan");
+      }
+
+      const products = await Pos_Transaction_Detail.findAll({
+        where: { posTransactionId: detail.id },
+        include: [
+          {
+            model: Warehouse_Product,
+            paranoid: false,
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["id", "name"],
+                include: [
+                  {
+                    model: Master_Company,
+                    attributes: ["id", "name"],
+                  },
+                ],
+              },
+              { model: Master_Unit, attributes: ["id", "name"] },
+              { model: Master_Warehouse_Rack, attributes: ["id", "name"] },
+              { model: Master_Warehouse, attributes: ["id", "name"] },
+            ],
+          },
+        ],
+      });
+
+      const listProduct = products.map((item) => {
+        return {
+          id: item?.id,
+          title: item?.title,
+          price: item?.price,
+          quantity: item?.quantity,
+          subTotal: item?.subTotal,
+          notes: item?.notes,
+          unitName: item?.Warehouse_Product?.Master_Unit?.name ?? "",
+          productName: item?.Warehouse_Product?.Master_Product?.name ?? "",
+          companyName:
+            item?.Warehouse_Product?.Master_Product?.Master_Company?.name ?? "",
+          rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name ?? "",
+          warehouseProductId: item?.Warehouse_Product?.id ?? "",
+          warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name ?? "",
+          warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id ?? "",
+        };
+      });
+
+      const sendData = {
+        id: detail.id,
+        customer: {
+          id: detail?.customerId ?? "",
+          name: detail?.Master_Customer?.name ?? "",
+          rankName: detail?.Master_Customer?.Master_Rank?.name ?? "",
+          phoneNumber: detail?.Master_Customer?.phoneNumber ?? "",
+          email: detail?.Master_Customer?.email ?? "",
+          level: detail?.Master_Customer?.Master_Rank?.level ?? "",
+          address: detail?.Master_Customer?.address ?? "",
+          gender: detail?.Master_Customer?.gender ?? "",
+        },
+        warehouseId: detail?.warehouseId ?? null,
+        warehouseName: detail?.Master_Warehouse?.name ?? "",
+        code: detail.code,
+        subTotal: detail.subTotal,
+        totalDiscount: detail.totalDiscount,
+        totalPayment: detail.totalPayment,
+        grandTotal: detail.grandTotal,
+        status: detail?.status,
+        notes: detail?.notes,
+        createdBy: detail?.creator?.name ?? "",
+        createdAt: detail?.createdAt,
+        listProducts: listProduct,
+      };
+
+      return sendData;
     } catch (error) {
       throw error;
     }
