@@ -331,7 +331,7 @@ class PointOfSaleService {
   static async getPaymentType() {
     try {
       const paymentTypes = await Pos_Payment_Type.findAll({
-        attributes: ["id", "label", "code"],
+        attributes: ["id", "label", "code", "icon", "description"],
       });
 
       return paymentTypes;
