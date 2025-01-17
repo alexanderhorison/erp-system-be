@@ -103,12 +103,12 @@ class PointOfSaleController {
 
       const user = req.userData;
 
-      await PointOfSaleService.createPointOfSale({
+      const data = await PointOfSaleService.createPointOfSale({
         data: body,
         user,
       });
 
-      res.status(200).json(responses(true, `Berhasil Membuat Sale`));
+      res.status(200).json(responses(true, `Berhasil Membuat Sale`, data));
     } catch (error) {
       res
         .status(error.code || 500)

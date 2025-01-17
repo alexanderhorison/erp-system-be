@@ -321,7 +321,11 @@ class PointOfSaleService {
       );
 
       await transaction.commit();
-      return true;
+      return {
+        id: createdPointOfSale.id,
+        code: createdPointOfSale.code,
+        status: createdPointOfSale.status,
+      };
     } catch (error) {
       await transaction.rollback();
       throw error;
