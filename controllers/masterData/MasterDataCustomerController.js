@@ -83,7 +83,11 @@ class MasterDataCustomerController {
 
   static async getAllCustomer(req, res) {
     try {
-      const query = req.query
+      const query = req.query;
+      // By Default is pos customer false
+      if (!query?.isPosCustomer) {
+        query.isPosCustomer = false;
+      }
       const customer = await MasterDataCustomerService.findAll(query);
       res
         .status(200)
@@ -117,10 +121,7 @@ class MasterDataCustomerController {
       const schema = yup.object({
         name: yup.string().required("Nama customer harus diisi"),
         phoneNumber: yup.string().optional(),
-        email: yup
-          .string()
-          .optional()
-          .email("email tidak sesuai format"),
+        email: yup.string().optional().email("email tidak sesuai format"),
         address: yup.string().optional(),
         gender: yup.string().optional(),
         notes: yup.string().optional(),
@@ -146,7 +147,7 @@ class MasterDataCustomerController {
 
   static async getAllCustomerPos(req, res) {
     try {
-      const query = req.query
+      const query = req.query;
       const customer = await MasterDataCustomerService.findAll(query);
       res
         .status(200)

@@ -197,6 +197,12 @@ class PointOfSaleService {
     try {
       const generateCode = await codeGenerator(8, "POS");
 
+      let totalQuantity = 0;
+      // Count total quantity
+      data.listProduct?.forEach((item) => {
+        totalQuantity += item.quantity;
+      });
+      
       // create point of sale
       const createdPointOfSale = await Pos_Transaction.create(
         {
@@ -212,6 +218,7 @@ class PointOfSaleService {
           warehouseId: data.warehouseId,
           // Saat ini statusnya langsung paid
           status: "PAID",
+          totalQuantity: totalQuantity,
         },
         { transaction }
       );
@@ -389,6 +396,7 @@ class PointOfSaleService {
           },
           warehouseId: item?.warehouseId ?? null,
           warehouseName: item?.Master_Warehouse?.name ?? "",
+          totalQuantity: item?.totalQuantity
         };
       });
 
