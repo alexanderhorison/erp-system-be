@@ -512,6 +512,7 @@ class PointOfSaleService {
         createdBy: detail?.creator?.name ?? "",
         createdAt: detail?.createdAt,
         listProducts: listProduct,
+        totalQuantity: detail?.totalQuantity
       };
 
       return sendData;
