@@ -1,0 +1,131 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      .content {
+        width: 100%;
+        padding: 20mm;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        margin: 0 auto;
+        box-shadow: 0 0 10px rgba(178, 19, 19, 0.1);
+        page-break-after: always; /* Paksa konten ini untuk memulai halaman baru */
+      }
+      h1,
+      p {
+        margin: 0 0 10px;
+      }
+      .no-break {
+        page-break-inside: avoid; /* Hindari pemutusan elemen ini di tengah halaman */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>Contoh Konten</h1>
+      <p>Ini adalah contoh konten di dalam halaman.</p>
+    </div>
+  </body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sales Order</title>
+    <style>
+      @page {
+        size: A4;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      .content {
+        width: 100%;
+        padding: 20mm;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        margin: 0 auto;
+        page-break-after: always; /* Paksa konten ini untuk memulai halaman baru */
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      /* Page break handling */
+      .page-break {
+        page-break-before: always;
+      }
+
+      @media print {
+        .page-break {
+          display: block;
+          break-before: page;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="content">
+    <h1>Sales Order</h1>
+    <p>Order Code: {{code}}</p>
+    <p>Customer Name: {{customer.name}}</p>
+    <p>Grand Total: {{grandTotal}}</p>
+    <h2>Products</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th>Price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each listProducts}}
+        <tr>
+          <td>{{productName}}</td>
+          <td>{{quantity}}</td>
+          <td>{{unitName}}</td>
+          <td>{{price}}</td>
+          <td>{{subTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </body>
+</html>

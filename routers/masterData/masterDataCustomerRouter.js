@@ -2,6 +2,8 @@ const MasterDataCustomerController = require("../../controllers/masterData/Maste
 const router = require("express").Router();
 
 router.get("/all", MasterDataCustomerController.getAllCustomer);
+router.get("/all-pos", MasterDataCustomerController.getAllCustomerPos);
+
 router.post("/create", MasterDataCustomerController.createCustomer);
 router.post("/create-pos", MasterDataCustomerController.createCustomerAtPos);
 

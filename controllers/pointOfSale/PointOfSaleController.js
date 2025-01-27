@@ -16,7 +16,8 @@ class PointOfSaleController {
 
       await PointOfSaleService.addOrRemoveFavorite(body);
 
-      const message = body.isFavorite == false ? "Dihilangkan dari" : "Ditambahkan ke";
+      const message =
+        body.isFavorite == false ? "Dihilangkan dari" : "Ditambahkan ke";
 
       res
         .status(200)
@@ -78,28 +79,20 @@ class PointOfSaleController {
         totalPayment: yup.number().required("Total Payment harus ada"),
         paymentTypeId: yup.number().required("Tipe Payment harus ada"),
         notes: yup.string().optional(),
+        warehouseId: yup.number().required("Warehouse Id harus ada"),
         listProduct: yup
           .array()
           .of(
             yup.object({
-              warehouseProductId: yup
-                .number()
-                // .nullable() // Allows null
-                // .transform((value, originalValue) =>
-                //   originalValue === "" ? null : value
-                // ) // Treats empty string as null
-                .required("Id product warehouse harus diisi"),
+              warehouseProductId: yup.number().when("title", (data, schema) => {
+                return data[0]
+                  ? schema.nullable()
+                  : schema.required("Id product warehouse harus diisi");
+              }),
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
               notes: yup.string().optional(),
-              // title: yup.string().when("warehouseProductId", {
-              //   is: (value) => value === null, // Checks if warehouseProductId is null or undefined
-              //   then: yup
-              //     .string()
-              //     .required("Title harus diisi jika warehouseProductId kosong"),
-              //   otherwise: yup.string().nullable(),
-              // }),
               title: yup.string().optional(),
             })
           )
@@ -110,12 +103,12 @@ class PointOfSaleController {
 
       const user = req.userData;
 
-      await PointOfSaleService.createPointOfSale({
+      const data = await PointOfSaleService.createPointOfSale({
         data: body,
         user,
       });
 
-      res.status(200).json(responses(true, `Berhasil Membuat Sale`));
+      res.status(200).json(responses(true, `Berhasil Membuat Sale`, data));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -128,6 +121,53 @@ class PointOfSaleController {
       const data = await PointOfSaleService.getPaymentType();
 
       res.status(200).json(responses(true, `Berhasil`, data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getAllPointOfSaleByWarehouseId(req, res) {
+    try {
+      const params = req.params;
+      const schemaParams = yup
+        .string()
+        .required("WarehouseId tidak boleh kosong");
+
+      const warehouseId = await yupSchemaValidation(
+        params.warehouseId,
+        schemaParams
+      );
+
+      // saat ini tidak ada params dlu
+      const data = await PointOfSaleService.getAllPointOfSaleByWarehouseId(
+        warehouseId
+      );
+
+      res.status(200).json(responses(true, `Sukses Get All Data`, data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getDetailPointOfSale(req, res) {
+    try {
+      const params = req.params;
+
+      const schemaParams = yup
+        .string()
+        .required("Code point of sale harus diisi");
+
+      const code = await yupSchemaValidation(params.code, schemaParams);
+
+      const getDetail = await PointOfSaleService.getDetailPointOfSaleByCode(
+        code
+      );
+
+      res.status(200).json(responses(true, "Berhasil", getDetail));
     } catch (error) {
       res
         .status(error.code || 500)

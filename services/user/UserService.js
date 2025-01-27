@@ -300,7 +300,10 @@ class UserService {
           "roleId",
           "warehouseId",
         ],
-        include: [{ model: Master_Role, attributes: ["name", "menuId"] }],
+        include: [
+          { model: Master_Role, attributes: ["name", "menuId"] },
+          { model: Master_Warehouse, attributes: ["name"], required: false },
+        ],
       });
 
       if (!user) {
@@ -322,6 +325,7 @@ class UserService {
           roleId: Number(user.roleId),
           menuId: user.Master_Role.menuId,
           warehouseId: user.warehouseId,
+          warehouseName: user?.Master_Warehouse?.name,
           role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.TOKEN_KEY,
@@ -339,6 +343,7 @@ class UserService {
           roleId: Number(user.roleId),
           menuId: user.Master_Role.menuId,
           warehouseId: user.warehouseId,
+          warehouseName: user?.Master_Warehouse?.name,
           role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
         },
         process.env.REFRESH_TOKEN_KEY,
@@ -356,6 +361,7 @@ class UserService {
         menuId: user.Master_Role.menuId,
         roleId: Number(user.roleId),
         warehouseId: user.warehouseId,
+        warehouseName: user?.Master_Warehouse?.name,
       };
       res.status(200).json(
         responses(true, "Berhasil", {
@@ -395,7 +401,10 @@ class UserService {
               "roleId",
               "warehouseId",
             ],
-            include: [{ model: Master_Role, attributes: ["name", "menuId"] }],
+            include: [
+              { model: Master_Role, attributes: ["name", "menuId"] },
+              { model: Master_Warehouse, attributes: ["name"], required: false },
+            ],
           });
 
           if (user) {
@@ -418,6 +427,7 @@ class UserService {
               menuId: user.Master_Role.menuId,
               roleId: Number(user.roleId),
               warehouseId: user.warehouseId,
+              warehouseName: user?.Master_Warehouse?.name,
             };
             res.status(200).json(
               responses(true, "Berhasil", {
