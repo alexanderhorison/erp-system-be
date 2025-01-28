@@ -3,7 +3,11 @@ const ExportController = require("../../controllers/exportController/ExportContr
 
 router.get("/purchase-order/:code", ExportController.purchaseOrder);
 router.get("/sales-order/:code", ExportController.salesOrder);
-
-
-router.get("/testing/:code", ExportController.testing);
+router.get("/delivery-order/:code", ExportController.deliveryOrder);
+router.get("/delivery-order-receive/:code", ExportController.deliveryOrderReceive);
+router.get("/delivery-order-receive-outstanding/:code", ExportController.deliveryOrderReceiveOutstanding);
+router.get("/stock-opname/:code", ExportController.stockOpname);
+router.get("/adjustment-goods-in/:code", ExportController.adjustmentGoodsIn);
+router.get("/adjustment-goods-out/:code", ExportController.adjustmentGoodsOut);
+router.get("/internal-transfer/:code", ExportController.internalTransfer);
 module.exports = router;

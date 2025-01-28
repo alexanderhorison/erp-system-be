@@ -1,11 +1,5 @@
 const ExportService = require('../../services/export/exportService');
-// const puppeteer = require('puppeteer');
-const handlebars = require('handlebars');
-const fs = require('fs');
-const path = require('path');
-const { priceFormatWIthCurrency } = require('../../helpers/priceFormat');
 const { responses } = require('../../helpers/responses');
-const PurchaseOrderService = require('../../services/purchaseOrder/PurchaseOrderService');
 const yup = require("yup");
 const { yupSchemaValidation } = require('../../helpers/yupSchemaValidation');
 
@@ -27,7 +21,8 @@ class ExportController {
       // Kirim PDF sebagai respons
       res.set({
         'Content-Type': 'application/pdf',
-        "Content-Disposition": `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
       });
 
       res.end(pdfBuffer);
@@ -41,7 +36,7 @@ class ExportController {
     try {
 
       const schemaParams = yup.object({
-        code: yup.string().required("Code sales order harus ada"),
+        code: yup.string().required("Code purchase order harus ada"),
       })
 
       const params = await yupSchemaValidation(req.params, schemaParams);
@@ -55,7 +50,8 @@ class ExportController {
       // Kirim PDF sebagai respons
       res.set({
         'Content-Type': 'application/pdf',
-        "Content-Disposition": `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
       });
 
       res.end(pdfBuffer);
@@ -65,17 +61,197 @@ class ExportController {
     }
   }
 
-  static async testing(req, res) {
+  static async deliveryOrder(req, res) {
     try {
-      res
-        .status(200)
-        .json(
-          responses(
-            true,
-            "Berhasil approval internal transfer rak",
-            // approveInternalTransfer
-          )
-        );
+      const schemaParams = yup.object({
+        code: yup.string().required("Code delivery order harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.deliveryOrder(code);
+
+      const fileName = `Delivery Order #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async deliveryOrderReceive(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code delivery order receipt harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.deliveryOrderReceive(code);
+
+      const fileName = `Delivery Order Receipt #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async deliveryOrderReceiveOutstanding(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Delivery Order Receipt Outstanding harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.deliveryOrderReceiveOutstanding(code);
+
+      const fileName = `Delivery Order Receipt Outstanding #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async stockOpname(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Stock Opname harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.stockOpname(code);
+
+      const fileName = `Stock Opname #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async adjustmentGoodsIn(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Goods In harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.adjustmentGoodsIn(code);
+
+      const fileName = `Goods In #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async adjustmentGoodsOut(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Goods Out harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.adjustmentGoodsOut(code);
+
+      const fileName = `Goods Out #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+    }
+  }
+
+  static async internalTransfer(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Internal Transfer harus ada"),
+      })
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code
+
+      const pdfBuffer = await ExportService.internalTransfer(code);
+
+      const fileName = `Internal Transfer #${code}.pdf`;
+
+      // Kirim PDF sebagai respons
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+      });
+
+      res.end(pdfBuffer);
+
     } catch (error) {
       res.status(500).json({ message: 'Error generating PDF', error: error.message });
     }

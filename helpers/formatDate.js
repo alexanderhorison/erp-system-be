@@ -1,21 +1,12 @@
+const moment = require("moment");
+require("moment/locale/id");
+
 function formatDate(dateString) {
   if (!dateString) {
     return "";
   }
 
-  const date = new Date(dateString);
-
-  const options = {
-    weekday: "long", // Nama hari dalam bahasa Inggris, misalnya: "Senin"
-    day: "numeric", // Tanggal dalam angka, misalnya: 22
-    month: "long", // Nama bulan dalam bahasa Inggris, misalnya: "April"
-    year: "numeric", // Tahun dalam angka, misalnya: 2024
-  };
-
-  const dateFormatter = new Intl.DateTimeFormat("id-ID", options);
-  const formattedDate = dateFormatter.format(date);
-
-  return formattedDate;
+  return moment(dateString).locale("id").format("DD MMMM YYYY");
 }
 
 function formatDateWithTime(dateString) {
@@ -23,28 +14,7 @@ function formatDateWithTime(dateString) {
     return "";
   }
 
-  const date = new Date(dateString);
-
-  const options = {
-    weekday: "long", // Nama hari dalam bahasa Inggris, misalnya: "Senin"
-    day: "numeric", // Tanggal dalam angka, misalnya: 22
-    month: "long", // Nama bulan dalam bahasa Inggris, misalnya: "April"
-    year: "numeric", // Tahun dalam angka, misalnya: 2024
-    hour: "numeric",
-    minute: "numeric",
-    timeZone: "Asia/Jakarta", // Explicitly setting the time zone to Asia/Jakarta
-    hour12: false,
-  };
-
-  const dateFormatter = new Intl.DateTimeFormat("id-ID", options);
-  const formattedDate = dateFormatter.format(date);
-
-  const formattedDateParts = formattedDate.split(" ");
-  const timePart = formattedDateParts.pop();
-  const datePart = formattedDateParts.join(" ");
-  const formattedTime = timePart.replace(":", ".");
-
-  return `${datePart} - ${formattedTime}`;
+  return moment(dateString).locale("id").format("DD MMMM YYYY - HH:mm");
 }
 
 function formatTime(dateString) {
@@ -52,24 +22,14 @@ function formatTime(dateString) {
     return "";
   }
 
-  const date = new Date(dateString);
+  return moment(dateString).locale("id").format("HH:mm");
+}
 
-  const options = {
-    weekday: "long", // Nama hari dalam bahasa Inggris, misalnya: "Senin"
-    day: "numeric", // Tanggal dalam angka, misalnya: 22
-    month: "long", // Nama bulan dalam bahasa Inggris, misalnya: "April"
-    year: "numeric", // Tahun dalam angka, misalnya: 2024
-    hour: "numeric",
-    minute: "numeric",
-  };
-
-  const dateFormatter = new Intl.DateTimeFormat("id-ID", options);
-  const formattedDate = dateFormatter.format(date);
-
-  const formattedDateParts = formattedDate.split(" ");
-  const timePart = formattedDateParts.pop();
-
-  return `${timePart}`;
+function formatTimeSecond(dateString) {
+  if (!dateString) {
+    return "";
+  }
+  return moment(dateString).format("HH:mm:ss");
 }
 
 function formatDateFromString(dateString) {
@@ -87,5 +47,6 @@ module.exports = {
   formatDate,
   formatDateWithTime,
   formatTime,
-  formatDateFromString
+  formatDateFromString,
+  formatTimeSecond,
 };
