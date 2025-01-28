@@ -3400,7 +3400,7 @@
                             <h6
                               class="MuiTypography-root MuiTypography-h6 css-1r9ijuc-MuiTypography-root"
                             >
-                              Sales Order
+                              Purchase Order
                             </h6>
                             <h6
                               class="MuiTypography-root MuiTypography-h6 css-1r9ijuc-MuiTypography-root"
@@ -3438,22 +3438,23 @@
                     <h6
                       class="MuiTypography-root MuiTypography-h6 css-1yambkh-MuiTypography-root"
                     >
-                      Tagihan Kepada
+                      Vendor
                     </h6>
                     <p
                       class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
                     >
-                      {{customer.name}}
+                      {{vendor.name}}
                     </p>
                     <p
                       class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
                     >
-                      {{customer.address}}
+                      {{vendor.address}}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
+            {{#if listProducts.length}}
             <hr
               class="MuiDivider-root MuiDivider-fullWidth css-16wcqaa-MuiDivider-root"
             />
@@ -3463,7 +3464,7 @@
               <p
                 class="MuiTypography-root MuiTypography-body1 css-6wkqjq-MuiTypography-root"
               >
-                Barang Sales Order
+                Barang Purchase Order
               </p>
               <table class="MuiTable-root css-x1bzil-MuiTable-root">
                 <thead class="MuiTableHead-root css-16argq0-MuiTableHead-root">
@@ -3550,6 +3551,7 @@
                 </div>
               </div>
             </div>
+            {{/if}} {{#if listBarterProducts.length}}
             <div class="no-page-break MuiBox-root css-0">
               <div
                 class="MuiTableContainer-root css-18srnxw-MuiTableContainer-root"
@@ -3651,6 +3653,7 @@
                 </div>
               </div>
             </div>
+            {{/if}}
             <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
               <div
                 class="MuiGrid-root MuiGrid-container css-9cyib4-MuiGrid-root"
@@ -3678,7 +3681,7 @@
                     <p
                       class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
                     >
-                      {{grandTotalCustomer}}
+                      {{grandTotalVendor}}
                     </p>
                   </div>
                 </div>

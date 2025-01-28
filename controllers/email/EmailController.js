@@ -1,12 +1,27 @@
 const transporter = require("../../helpers/emailConfig");
 const { responses } = require("../../helpers/responses");
+const ExportService = require("../../services/export/exportService");
 
 class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
     try {
       const { filename, module, additionSubjectText } = req.body; // Get filename from body
-      const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
+      // const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
+
+      let pdfBuffer = {}
+
+      if (filename.includes('PO')) {
+        pdfBuffer = await ExportService.purchaseOrder(filename);
+      }
+
+      if (filename.includes('SO')) {
+        pdfBuffer = await ExportService.salesOrder(filename);
+      }
+
+      if (!pdfBuffer) {
+        pdfBuffer = req.file.buffer;
+      }
 
       const transporterConnection = await transporter();
 
