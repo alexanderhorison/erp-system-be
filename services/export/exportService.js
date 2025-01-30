@@ -53,7 +53,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -107,7 +109,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -150,7 +154,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -195,7 +201,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -240,7 +248,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -294,7 +304,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -339,7 +351,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
@@ -384,7 +398,9 @@ class ExportService {
 
       const renderedHtml = template(result);
 
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       const page = await browser.newPage();
 
       await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
