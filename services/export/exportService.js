@@ -13,6 +13,9 @@ const DeliveryOrderReceiveOutstandingService = require('../deliveryOrderReceiveO
 const GoodsInService = require('../adjustmentGoods/GoodsInService');
 const GoodsOutService = require('../adjustmentGoods/GoodsOutService');
 const InternalTransferService = require('../internalTransfer/InternalTransferService');
+const ExcelJS = require("exceljs");
+const ProductWarehouseService = require('../productWarehouse/ProductWarehouseService');
+
 require('moment/locale/id');
 class ExportService {
   static async salesOrder(code) {
@@ -418,6 +421,47 @@ class ExportService {
     }
   }
 
+  static async allStock(res) {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile("./template/export/TotalStock.xlsx");
+
+      const getDataAllStock = await ProductWarehouseService.getExportAllStock();
+
+      const worksheet1 = await workbook.getWorksheet(1);
+      worksheet1.getColumn('A').width = 25;
+      worksheet1.getCell(`A1`).value = `TJAHAYA BERKAT ABADI`;
+      worksheet1.getColumn('B').width = 28;
+      worksheet1.getCell(`B1`).value = `Export Stock ${formatDate(Date.now())}`;
+      worksheet1.getColumn('C').width = 35;
+      worksheet1.getColumn('D').width = 20;
+
+      getDataAllStock.forEach((data, index) => {
+        worksheet1.getCell(`A${index + 3}`).value = String(data.productWarehouseId);
+        worksheet1.getCell(`B${index + 3}`).value = data.warehouseName;
+        worksheet1.getCell(`C${index + 3}`).value = data.productName;
+        worksheet1.getCell(`D${index + 3}`).value = data.companyName;
+        worksheet1.getCell(`E${index + 3}`).value = data.rackName;
+        worksheet1.getCell(`F${index + 3}`).value = data.unitName;
+        worksheet1.getCell(`G${index + 3}`).value = data.categoryName;
+        worksheet1.getCell(`H${index + 3}`).value = data.quantity;
+        worksheet1.getCell(`I${index + 3}`).value = data.minimumStock;
+      });
+
+      const fileName = "Total Stock.xlsx";
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      throw error
+    }
+  }
 }
 
 module.exports = ExportService

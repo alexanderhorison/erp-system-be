@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const ExportController = require("../../controllers/exportController/ExportController");
 
+router.get("/all-stock", ExportController.allStock)
+
 router.get("/purchase-order/:code", ExportController.purchaseOrder);
 router.get("/sales-order/:code", ExportController.salesOrder);
 router.get("/delivery-order/:code", ExportController.deliveryOrder);

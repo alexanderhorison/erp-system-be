@@ -256,6 +256,14 @@ class ExportController {
       res.status(500).json({ message: 'Error generating PDF', error: error.message });
     }
   }
+
+  static async allStock(req, res) {
+    try {
+      await ExportService.allStock(res);
+    } catch (error) {
+      res.status(500).json({ message: 'Error export all stock', error: error.message });
+    }
+  }
 }
 
 module.exports = ExportController;

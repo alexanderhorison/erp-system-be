@@ -714,6 +714,57 @@ class ProductWarehouseService {
       throw error;
     }
   }
+
+  static async getExportAllStock() {
+    try {
+      const data = await Warehouse_Product.findAll({
+        include: [
+          {
+            model: Master_Product,
+            include: [Master_Category, Master_Type, Master_Company],
+          },
+          Master_Unit,
+          Master_Warehouse,
+          Master_Warehouse_Rack,
+        ],
+      });
+
+      const temp = [];
+
+      data.forEach((item) =>
+        temp.push({
+          productWarehouseId: item.id,
+          productName: item.Master_Product.name,
+          categoryName: item.Master_Product.Master_Category.name,
+          typeName: item.Master_Product.Master_Type.name,
+          unitName: item.Master_Unit.name,
+          warehouseName: item.Master_Warehouse.name,
+          rackName: item?.Master_Warehouse_Rack?.name,
+          quantity: item.quantity,
+          minimumStock: item.minimumStock,
+          companyName: item?.Master_Product?.Master_Company?.name,
+          typeName: item?.Master_Product?.Master_Type?.name,
+          warehouseId: item?.warehouseId,
+          productId: item.productId,
+          unitId: item.unitId
+        })
+      );
+
+      temp.sort((a, b) => {
+        if (a.warehouseId !== b.warehouseId) {
+          return a.warehouseId - b.warehouseId;
+        }
+        if (a.productId !== b.productId) {
+          return a.productId - b.productId;
+        }
+        return a.unitId - b.unitId; // Ensures different units of the same product are grouped properly
+      });
+
+      return temp || [];
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductWarehouseService;
