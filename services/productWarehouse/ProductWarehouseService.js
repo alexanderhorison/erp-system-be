@@ -733,20 +733,20 @@ class ProductWarehouseService {
 
       data.forEach((item) =>
         temp.push({
-          productWarehouseId: item.id,
-          productName: item.Master_Product.name,
-          categoryName: item.Master_Product.Master_Category.name,
-          typeName: item.Master_Product.Master_Type.name,
-          unitName: item.Master_Unit.name,
-          warehouseName: item.Master_Warehouse.name,
+          productWarehouseId: item?.id,
+          productName: item?.Master_Product?.name,
+          categoryName: item?.Master_Product?.Master_Category?.name,
+          typeName: item?.Master_Product.Master_Type?.name,
+          unitName: item?.Master_Unit?.name,
+          warehouseName: item?.Master_Warehouse?.name,
           rackName: item?.Master_Warehouse_Rack?.name,
-          quantity: item.quantity,
-          minimumStock: item.minimumStock,
+          quantity: item?.quantity,
+          minimumStock: item?.minimumStock,
           companyName: item?.Master_Product?.Master_Company?.name,
           typeName: item?.Master_Product?.Master_Type?.name,
           warehouseId: item?.warehouseId,
-          productId: item.productId,
-          unitId: item.unitId
+          productId: item?.productId,
+          unitId: item?.unitId
         })
       );
 
