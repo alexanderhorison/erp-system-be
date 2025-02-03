@@ -1,5 +1,6 @@
 const { Master_Rank, Master_Customer } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
+const { Op } = require("sequelize");
 
 class MasterDataCustomerService {
   static async create(data) {
@@ -153,6 +154,47 @@ class MasterDataCustomerService {
       throw error;
     }
   }
+
+  static async findAllPosCustomer({ page = 1, pageSize = 10, name = "" }) {
+    try {
+      const { count, rows } = await Master_Customer.findAndCountAll({
+        include: [
+          {
+            model: Master_Rank,
+            attributes: ["name"],
+          },
+        ],
+        where: {
+          ...(name && { name: { [Op.iLike]: `%${name}%` } }),
+          isPosCustomer: true,
+        },
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        order: [["createdAt", "DESC"]],
+      });
+
+      const result = rows.map((item) => ({
+        id: item.id,
+        name: item.name,
+        phoneNumber: item.phoneNumber,
+        email: item.email,
+        isPosCustomer: item.isPosCustomer,
+      }));
+
+      return {
+        data: result,
+        pagination: {
+          total: count,
+          page,
+          pageSize,
+          totalPages: Math.ceil(count / pageSize),
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = MasterDataCustomerService;

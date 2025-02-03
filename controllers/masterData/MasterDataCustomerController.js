@@ -148,7 +148,7 @@ class MasterDataCustomerController {
   static async getAllCustomerPos(req, res) {
     try {
       const query = req.query;
-      const customer = await MasterDataCustomerService.findAll(query);
+      const customer = await MasterDataCustomerService.findAllPosCustomer(query);
       res
         .status(200)
         .json(responses(true, "Success get all customer", customer));
