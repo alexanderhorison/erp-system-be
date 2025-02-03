@@ -705,26 +705,31 @@ class DashboardService {
           name: "totalSalesOrder",
           value: customerSummary?.totalSalesOrder || 0,
           title: "Total Pesanan",
+          description: "Total Pesanan yang sudah dipesan"
         },
         {
           name: "totalAmountSalesOrder",
           value: customerSummary?.totalAmountSalesOrder || 0,
           title: "Total Nilai Pesanan",
+          description: "Total Akumulasi nilai pesanan"
         },
         {
           name: "totalAmountPaymentSalesOrder",
           value: customerSummary?.totalAmountPaidSalesOrder || 0,
           title: "Total Pembayaran",
+          description: "Total Pembayaran yang sudah dibayarkan"
         },
         {
           name: "totalAmountDebtSalesOrder",
           value: customerSummary?.totalAmountDebtSalesOrder || 0,
           title: "Total Hutang",
+          description: "Total Hutang pembayaran yang belum dibayarkan"
         },
         {
           name: "totalAmountBarterSalesOrder",
           value: customerSummary?.totalAmountBarterSalesOrder || 0,
           title: "Total Barter",
+          description: "Total Akumulasi Nilai Barang yang dibarter"
         }
       );
 
