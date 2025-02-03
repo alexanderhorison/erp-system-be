@@ -15,6 +15,7 @@ const GoodsOutService = require('../adjustmentGoods/GoodsOutService');
 const InternalTransferService = require('../internalTransfer/InternalTransferService');
 const ExcelJS = require("exceljs");
 const ProductWarehouseService = require('../productWarehouse/ProductWarehouseService');
+const StockOpnameService = require('../stockOpname/StockOpnameService');
 
 require('moment/locale/id');
 class ExportService {
@@ -271,15 +272,6 @@ class ExportService {
     }
   }
 
-  //! Tidak ada
-  static async stockOpname(code) {
-    try {
-
-    } catch (error) {
-      throw error
-    }
-  }
-
   static async adjustmentGoodsIn(code) {
     try {
       const filePath = path.join('./template/export/', 'AdjustmentGoodsIn.html');
@@ -462,6 +454,88 @@ class ExportService {
       throw error
     }
   }
+
+  static async stockOpnameExcel(code) {
+    try {
+      const data = await StockOpnameService.getDetailByCode(code);
+
+      if (!data) {
+        throw { code: 404, message: "Data not found" };
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Stock Opname");
+
+      worksheet.getColumn("A").width = 7;
+      worksheet.getColumn("B").width = 20;
+      worksheet.getColumn("C").width = 35;
+      worksheet.getColumn("D").width = 15;
+      worksheet.getColumn("E").width = 15;
+      worksheet.getColumn("F").width = 15;
+      worksheet.getColumn("G").width = 15;
+      worksheet.getColumn("H").width = 15;
+      worksheet.getColumn("I").width = 15;
+      worksheet.getColumn("J").width = 15;
+
+      // Metadata (Column A)
+      const metadata = [
+        "TJAHAYA BERKAT ABADI",
+        `Stock Opname Date: ${data.opnameDate}`,
+        `Stock Opname Code: ${data.code}`,
+        `Status: ${data.status}`,
+        `Warehouse Name: ${data.warehouseName}`,
+        `Creator Name: ${data.creatorName}`,
+        `Notes: ${data.notes}`,
+        ""
+      ];
+
+      metadata.forEach((text, index) => {
+        worksheet.addRow([text]);
+      });
+
+      // Headers in Column B
+      const headers = [
+        "ID",
+        "Product Warehouse ID",
+        "Product Name",
+        "Company Name",
+        "Rack Name",
+        "Unit Name",
+        "System Stock",
+        "Actual Stock",
+        "Different",
+        "Is Adjustment"
+      ];
+
+      worksheet.addRow(headers);
+
+      // Data in Column C
+      data.listProduct.forEach((product, index) => {
+        worksheet.addRow([
+          product.id,
+          product.productWarehouseId,
+          product.productName,
+          product.companyName,
+          product.rackName,
+          product.unitName,
+          product.systemStock,
+          product.actualStock,
+          product.diff,
+          product.isAdjustment ? "Yes" : "No"
+        ])
+      });
+
+      for (let col = 1; col <= 2; col++) {
+        worksheet.getColumn(col).alignment = { horizontal: 'left' };
+      }
+
+
+      return await workbook.xlsx.writeBuffer();
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = ExportService

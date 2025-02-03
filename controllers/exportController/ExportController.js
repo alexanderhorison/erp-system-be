@@ -155,18 +155,18 @@ class ExportController {
 
       const code = params.code
 
-      const pdfBuffer = await ExportService.stockOpname(code);
+      const excelFile = await ExportService.stockOpnameExcel(code);
 
-      const fileName = `Stock Opname #${code}.pdf`;
+      const fileName = `Stock Opname #${code}.xlsx`;
 
-      // Kirim PDF sebagai respons
+      // Kirim Excel sebagai respons
       res.set({
-        'Content-Type': 'application/pdf',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${fileName}"`,
         'Access-Control-Expose-Headers': 'Content-Disposition'
       });
 
-      res.end(pdfBuffer);
+      res.end(excelFile);
 
     } catch (error) {
       res.status(500).json({ message: 'Error generating PDF', error: error.message });
