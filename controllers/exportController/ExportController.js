@@ -16,19 +16,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.salesOrder(code);
 
-      const fileName = `Sales Order #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Sales Order #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -45,19 +43,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.purchaseOrder(code);
 
-      const fileName = `Purchase Order #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Purchase Order #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -73,19 +69,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.deliveryOrder(code);
 
-      const fileName = `Delivery Order #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Delivery Order #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -101,19 +95,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.deliveryOrderReceive(code);
 
-      const fileName = `Delivery Order Receipt #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Delivery Order Receipt #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -129,19 +121,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.deliveryOrderReceiveOutstanding(code);
 
-      const fileName = `Delivery Order Receipt Outstanding #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Delivery Order Receipt Outstanding #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -169,7 +159,7 @@ class ExportController {
       res.end(excelFile);
 
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -185,19 +175,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.adjustmentGoodsIn(code);
 
-      const fileName = `Goods In #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Goods In #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -213,19 +201,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.adjustmentGoodsOut(code);
 
-      const fileName = `Goods Out #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Goods Out #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -241,19 +227,17 @@ class ExportController {
 
       const pdfBuffer = await ExportService.internalTransfer(code);
 
-      const fileName = `Internal Transfer #${code}.pdf`;
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
 
-      // Kirim PDF sebagai respons
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Access-Control-Expose-Headers': 'Content-Disposition'
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Internal Transfer #${code}.pdf`,
+        mimeType: "application/pdf",
       });
 
-      res.end(pdfBuffer);
-
     } catch (error) {
-      res.status(500).json({ message: 'Error generating PDF', error: error.message });
+      res.status(500).json({ status: false, message: 'Error generating PDF', error: error.message });
     }
   }
 
@@ -261,7 +245,7 @@ class ExportController {
     try {
       await ExportService.allStock(res);
     } catch (error) {
-      res.status(500).json({ message: 'Error export all stock', error: error.message });
+      res.status(500).json({ status: false, message: 'Error export all stock', error: error.message });
     }
   }
 }
