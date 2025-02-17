@@ -715,9 +715,12 @@ class ProductWarehouseService {
     }
   }
 
-  static async getExportAllStock() {
+  static async getExportAllStock(warehouseId) {
     try {
       const data = await Warehouse_Product.findAll({
+        where: {
+          warehouseId: warehouseId,
+        },
         include: [
           {
             model: Master_Product,
