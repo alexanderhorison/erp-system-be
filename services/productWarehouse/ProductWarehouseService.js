@@ -25,7 +25,7 @@ const {
   Delivery_Order_Receipt,
   Sales_Order,
   Purchase_Order,
-  Pos_Transaction
+  Pos_Transaction,
 } = require("../../models");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
@@ -302,7 +302,7 @@ class ProductWarehouseService {
           {
             model: Master_User,
             attributes: ["id", "name"],
-            as: "deleter"
+            as: "deleter",
           },
         ],
         paranoid: false,
@@ -385,7 +385,7 @@ class ProductWarehouseService {
             date: formatDateWithTime(dataProduct?.deletedAt).split("-")[0],
             time: formatDateWithTime(dataProduct?.deletedAt).split("-")[1],
             createdBy: dataProduct?.deleter?.name,
-          })
+          });
         }
 
         mappingHistory.push({
@@ -418,19 +418,19 @@ class ProductWarehouseService {
           // ini untuk case yang delivery order receive yang lama
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderId && {
-            deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
-            notes: item?.Delivery_Order?.notes,
-            deliveryOrderCode: item?.Delivery_Order?.code,
-          }),
+              deliveryOrder: `Surat Jalan: ${item?.Delivery_Order?.code}`,
+              notes: item?.Delivery_Order?.notes,
+              deliveryOrderCode: item?.Delivery_Order?.code,
+            }),
           // ini untuk case yang delivery order receive terbaru
           ...(item?.info === "DELIVERY ORDER RECEIVE" &&
             item?.deliveryOrderReceiptId && {
-            deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
-            deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
-            deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
-            notes: item?.Delivery_Order_Receipt?.notes,
-            deliveryOrderCode: deliveryOrder.code,
-          }),
+              deliveryOrderReceipt: `Penerimaan Surat Jalan: ${item?.Delivery_Order_Receipt?.code}`,
+              deliveryOrderReceiptCode: item?.Delivery_Order_Receipt?.code,
+              deliveryOrder: `Surat Jalan: ${deliveryOrder.code}`,
+              notes: item?.Delivery_Order_Receipt?.notes,
+              deliveryOrderCode: deliveryOrder.code,
+            }),
           ...(item?.info === "STOCK OPNAME" && {
             stockOpname: `Stock Opname: ${item?.Stock_Opname?.code}`,
             notes: item?.Stock_Opname?.notes,
@@ -552,17 +552,17 @@ class ProductWarehouseService {
         };
       }
 
-      const data = await Warehouse_Product.update({
-        deletedBy: user?.id || 3,
-        info: "DELETED",
-        deletedAt: new Date(),
-        restoredBy: null,
-        restoredAt: null,
-      },
+      const data = await Warehouse_Product.update(
+        {
+          deletedBy: user?.id || 3,
+          info: "DELETED",
+          deletedAt: new Date(),
+          restoredBy: null,
+          restoredAt: null,
+        },
         { where: { id } },
         { transaction }
-      )
-
+      );
 
       await transaction.commit();
       return data;
@@ -612,7 +612,7 @@ class ProductWarehouseService {
             operator: "=",
             value: query.warehouseId,
             model: "Warehouse_Product",
-          }
+          },
         ];
         queryFilter = generateFilter(filters);
       }
@@ -679,15 +679,18 @@ class ProductWarehouseService {
 
   static async restoreProduct({ id, user }) {
     try {
-      const existingData = await Warehouse_Product.findOne({ where: { id: id }, paranoid: false });
+      const existingData = await Warehouse_Product.findOne({
+        where: { id: id },
+        paranoid: false,
+      });
 
       const checkProduct = await Warehouse_Product.findOne({
         where: {
           productId: existingData.productId,
           warehouseId: existingData.warehouseId,
           unitId: existingData.unitId,
-        }
-      })
+        },
+      });
 
       if (checkProduct) {
         throw {
@@ -696,18 +699,21 @@ class ProductWarehouseService {
         };
       }
 
-      const data = await Warehouse_Product.update({
-        info: "RESTORED",
-        deletedBy: null,
-        deletedAt: null,
-        restoredBy: user?.id || 3,
-        restoredAt: new Date(),
-      }, {
-        where: {
-          id: id
+      const data = await Warehouse_Product.update(
+        {
+          info: "RESTORED",
+          deletedBy: null,
+          deletedAt: null,
+          restoredBy: user?.id || 3,
+          restoredAt: new Date(),
         },
-        paranoid: false
-      })
+        {
+          where: {
+            id: id,
+          },
+          paranoid: false,
+        }
+      );
 
       return data;
     } catch (error) {
@@ -724,12 +730,13 @@ class ProductWarehouseService {
         include: [
           {
             model: Master_Product,
-            include: [Master_Category, Master_Type, Master_Company],
+            include: [Master_Category, Master_Company],
           },
           Master_Unit,
           Master_Warehouse,
           Master_Warehouse_Rack,
         ],
+        order: [[Master_Product, Master_Company, "name", "ASC"]],
       });
 
       const temp = [];
@@ -739,17 +746,17 @@ class ProductWarehouseService {
           productWarehouseId: item?.id,
           productName: item?.Master_Product?.name,
           categoryName: item?.Master_Product?.Master_Category?.name,
-          typeName: item?.Master_Product.Master_Type?.name,
+          // typeName: item?.Master_Product.Master_Type?.name,
           unitName: item?.Master_Unit?.name,
           warehouseName: item?.Master_Warehouse?.name,
-          rackName: item?.Master_Warehouse_Rack?.name,
+          // rackName: item?.Master_Warehouse_Rack?.name,
           quantity: item?.quantity,
-          minimumStock: item?.minimumStock,
+          // minimumStock: item?.minimumStock,
           companyName: item?.Master_Product?.Master_Company?.name,
           typeName: item?.Master_Product?.Master_Type?.name,
-          warehouseId: item?.warehouseId,
-          productId: item?.productId,
-          unitId: item?.unitId
+          // warehouseId: item?.warehouseId,
+          // productId: item?.productId,
+          // unitId: item?.unitId
         })
       );
 

@@ -427,28 +427,52 @@ class ExportService {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile("./template/export/TotalStock.xlsx");
 
-      const getDataAllStock = await ProductWarehouseService.getExportAllStock(warehouseId);
+      const getDataAllStock = await ProductWarehouseService.getExportAllStock(
+        warehouseId
+      );
 
-      const worksheet1 = await workbook.getWorksheet(1);
-      worksheet1.getColumn("A").width = 25;
-      worksheet1.getCell(`A1`).value = `TJAHAYA BERKAT ABADI`;
-      worksheet1.getColumn("B").width = 28;
-      worksheet1.getCell(`B1`).value = `Export Stock ${formatDate(Date.now())}`;
-      worksheet1.getColumn("C").width = 35;
-      worksheet1.getColumn("D").width = 20;
+      // Define worksheet mapping
+      const worksheetMapping = {
+        "GUDANG GARAM": 1,
+        "SAMPOERNA": 2,
+        "DJARUM": 3,
+        "BRAND KECIL": 4,
+      };
 
-      getDataAllStock.forEach((data, index) => {
-        worksheet1.getCell(`A${index + 3}`).value = String(
-          data.productWarehouseId
-        );
-        worksheet1.getCell(`B${index + 3}`).value = data.warehouseName;
-        worksheet1.getCell(`C${index + 3}`).value = data.productName;
-        worksheet1.getCell(`D${index + 3}`).value = data.companyName;
-        worksheet1.getCell(`E${index + 3}`).value = data.rackName;
-        worksheet1.getCell(`F${index + 3}`).value = data.unitName;
-        worksheet1.getCell(`G${index + 3}`).value = data.categoryName;
-        worksheet1.getCell(`H${index + 3}`).value = data.quantity;
-        worksheet1.getCell(`I${index + 3}`).value = data.minimumStock;
+      // Grouping products by company and name
+      const groupedData = {};
+      
+      // Group products by company
+      getDataAllStock.forEach((data) => {
+        const key = `${data.companyName.toUpperCase()}||${data.productName}`;
+        if (!groupedData[key]) {
+          groupedData[key] = {
+            companyName: data.companyName.toUpperCase(),
+            productName: data.productName,
+            KARTON: 0,
+            BAL: 0,
+            SLOP: 0,
+          };
+        }
+        // Filter by the Unit
+        if (["KARTON", "BAL", "SLOP"].includes(data.unitName)) {
+          groupedData[key][data.unitName] = data.quantity;
+        }
+      });
+      // Index for start from row 2
+      const rowIndexMap = { 1: 2, 2: 2, 3: 2, 4: 2 };
+
+      // loop key to made the row
+      Object.values(groupedData).forEach((item, index) => {
+        const sheetIndex = worksheetMapping[item.companyName] || 4;
+        const worksheet = workbook.getWorksheet(sheetIndex);
+        const rowIndex = rowIndexMap[sheetIndex]++; 
+
+        worksheet.getCell(`A${rowIndex}`).value = item.companyName.toUpperCase();
+        worksheet.getCell(`B${rowIndex}`).value = item.productName;
+        worksheet.getCell(`C${rowIndex}`).value = item.KARTON;
+        worksheet.getCell(`D${rowIndex}`).value = item.BAL;
+        worksheet.getCell(`E${rowIndex}`).value = item.SLOP;
       });
 
       const fileName = "Total Stock.xlsx";
