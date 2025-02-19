@@ -1,5 +1,4 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
-const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
@@ -21,6 +20,16 @@ const {
   Master_Rank,
 } = require("../../models");
 const { Op } = require("sequelize");
+const ConfigService = require("../config/configService");
+
+//! SHOULD INSTALL escpos and escpos-network
+// const escpos = require("escpos");
+// const Network = require("escpos-network");
+
+const { formatDate, formatTimeSecond } = require("../../helpers/formatDate");
+const { addLine, justifyLeft, justifyRight, addSpace } = require("../../helpers/posFunction");
+const { priceFormat, formatPricePosWithCurrency } = require("../../helpers/priceFormat");
+
 
 class PointOfSaleService {
   static async addOrRemoveFavorite(data) {
@@ -202,7 +211,7 @@ class PointOfSaleService {
       data.listProduct?.forEach((item) => {
         totalQuantity += item.quantity;
       });
-      
+
       // create point of sale
       const createdPointOfSale = await Pos_Transaction.create(
         {
@@ -520,6 +529,300 @@ class PointOfSaleService {
       throw error;
     }
   }
+
+  //! SHOULD INSTALL PACKAGE escpos
+  // static async printPos(code) {
+  //   try {
+  //     // CONFIG PRINTER
+  //     const configPrinter = await ConfigService.get({
+  //       key: "PRINTER_SETTING",
+  //     })
+  //     const printerSetting = configPrinter.value_json
+
+  //     // COMPANY INFO 
+  //     const configCompany = await ConfigService.get({
+  //       key: "COMPANY_INFO",
+  //     })
+  //     const companyInfo = configCompany.value_json
+
+  //     // DATA
+  //     const data = await PointOfSaleService.getDetailPointOfSaleByCode(code)
+
+  //     // INITIATE PRINTER
+  //     const device = new Network(printerSetting.ip, printerSetting.port);
+  //     const printer = new escpos.Printer(device);
+
+  //     // Membuka koneksi dengan printer menggunakan Promise
+  //     await new Promise((resolve, reject) => {
+  //       device.open((err) => {
+  //         if (err) {
+  //           console.error("Error:", err);
+  //           reject(err); // Reject jika gagal membuka koneksi
+  //         } else {
+  //           resolve(); // Resolve jika berhasil membuka koneksi
+  //         }
+  //       });
+  //     });
+
+  //     // HEADER
+  //     printer
+  //       .align("ct")
+  //       .size(1, 1)
+  //       .text(companyInfo.companyName)
+  //       .size(0, 0)
+  //       .text(companyInfo.address)
+  //       .text(companyInfo.phoneNumber)
+  //       .text(addLine(printerSetting.col))
+  //       .style("normal")
+  //       .align("lt")
+  //       .text(justifyLeft(formatDate(data.createdAt), printerSetting.col / 2) + justifyRight(formatTimeSecond(data.createdAt), printerSetting.col / 2))
+  //       .text(justifyLeft(`Order ID`, printerSetting.col / 2) + justifyRight(data.code, printerSetting.col / 2))
+  //       .text(justifyLeft(`Customer Name`, printerSetting.col / 2) + justifyRight(data?.customer?.name || '-', printerSetting.col / 2))
+  //       .text(addLine(printerSetting.col));
+
+  //     // LIST PRODUK
+  //     data.listProducts.forEach((product) => {
+  //       let baseProductName = product?.productName || product?.title || '-';
+  //       let productName = product?.productName || product?.title || '-';
+  //       let addNewLineProduct = false;
+  //       let newLineProduct = "";
+
+  //       // Cek apakah nama produk melebihi batas
+  //       if (productName.length > printerSetting.maxProductName) {
+  //         productName = baseProductName.substring(0, printerSetting.maxProductName);  // Potong nama produk pada batas
+  //         addNewLineProduct = true;  // Tandai bahwa kita perlu menambahkan baris baru
+  //         newLineProduct = baseProductName.substring(printerSetting.maxProductName, baseProductName.length);  // Ambil sisa nama produk untuk baris kedua
+  //       }
+
+  //       // Cetak baris pertama: nama produk + quantity + subtotal
+  //       printer
+  //         .align("lt")
+  //         .text(
+  //           justifyLeft(productName, printerSetting.maxProductName)
+  //           + ` x${product.quantity}`
+  //           + justifyRight(`${formatPricePosWithCurrency(product.subTotal)}`, printerSetting.col / 2 - product?.quantity?.toString().length - 7)
+  //         );
+
+  //       // Jika ada baris kedua, cetak newLineProduct
+  //       if (addNewLineProduct) {
+  //         printer
+  //           .text(newLineProduct);  // Cetak nama produk yang terpotong pada baris kedua
+  //       }
+
+  //       // Cetak baris informasi tambahan (unit dan harga)
+  //       printer
+  //         .text(addSpace(2) + product?.unitName + "@" + priceFormat(product?.price));
+  //     });
+
+
+  //     printer.text(addLine(printerSetting.col));
+  //     // TOTAL QUANTITY
+  //     printer.text(justifyLeft(`Total Quantity`, printerSetting.maxProductName) + ` x${data.totalQuantity}`);
+
+  //     printer.text(addLine(printerSetting.col));
+  //     // SUBTOTAL
+  //     printer.text(justifyLeft(`Subtotal`, printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.subTotal), printerSetting.col / 2));
+
+  //     printer.text(addLine(printerSetting.col));
+
+  //     // TOTAL
+  //     printer.text(justifyLeft(`Total`, printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.grandTotal), printerSetting.col / 2));
+
+  //     // PAYMENT
+  //     printer.text(justifyLeft(`Cash`, printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.totalPayment), printerSetting.col / 2));
+
+  //     // PAYMENT
+  //     printer.text(justifyLeft(`Change`, printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal), printerSetting.col / 2));
+
+  //     // CUT & CLOSE
+  //     printer.text("")
+
+  //     printer.cut();
+  //     printer.close();
+
+  //     return data;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
+
+  //! SHOULD INSTALL PACKAGE escpos
+  // static async printPosV2(code) {
+  //   try {
+  //     // CONFIG PRINTER
+  //     const configPrinter = await ConfigService.get({
+  //       key: "PRINTER_SETTING",
+  //     });
+  //     const printerSetting = configPrinter.value_json;
+
+  //     // COMPANY INFO
+  //     const configCompany = await ConfigService.get({
+  //       key: "COMPANY_INFO",
+  //     });
+  //     const companyInfo = configCompany.value_json;
+
+  //     // DATA
+  //     const data = await PointOfSaleService.getDetailPointOfSaleByCode(code);
+
+  //     // Buat buffer kosong
+  //     const buffer = [];
+
+  //     // Gunakan buffer untuk menyusun ESC/POS commands
+  //     // HEADER
+  //     buffer.push(Buffer.from([0x1B, 0x61, 0x01])); // Center alignment
+  //     buffer.push(Buffer.from(companyInfo.companyName + '\n'));
+  //     buffer.push(Buffer.from(companyInfo.address + '\n'));
+  //     buffer.push(Buffer.from(companyInfo.phoneNumber + '\n'));
+  //     buffer.push(Buffer.from(addLine(printerSetting.col) + '\n'));
+
+  //     // Header Informasi Order
+  //     buffer.push(Buffer.from(justifyLeft(formatDate(data.createdAt), printerSetting.col / 2) + justifyRight(formatTimeSecond(data.createdAt), printerSetting.col / 2) + '\n'));
+  //     buffer.push(Buffer.from(justifyLeft('Order ID', printerSetting.col / 2) + justifyRight(data.code, printerSetting.col / 2) + '\n'));
+  //     buffer.push(Buffer.from(justifyLeft('Customer Name', printerSetting.col / 2) + justifyRight(data?.customer?.name || '-', printerSetting.col / 2) + '\n'));
+  //     buffer.push(Buffer.from(addLine(printerSetting.col) + '\n'));
+
+  //     // List Produk
+  //     data.listProducts.forEach((product) => {
+  //       let baseProductName = product?.productName || product?.title || '-';
+  //       let productName = baseProductName;
+  //       let addNewLineProduct = false;
+  //       let newLineProduct = "";
+
+  //       if (productName.length > printerSetting.maxProductName) {
+  //         productName = baseProductName.substring(0, printerSetting.maxProductName); // Potong nama produk
+  //         addNewLineProduct = true; // Tandai produk terpotong
+  //         newLineProduct = baseProductName.substring(printerSetting.maxProductName); // Ambil sisa nama
+  //       }
+
+  //       // Cetak Nama Produk, Quantity, Subtotal
+  //       buffer.push(Buffer.from(justifyLeft(productName, printerSetting.maxProductName) + ` x${product.quantity}` + justifyRight(`${formatPricePosWithCurrency(product.subTotal)}`, printerSetting.col / 2 - product?.quantity?.toString().length - 7) + '\n'));
+
+  //       // Jika ada nama produk yang terpotong, cetak pada baris kedua
+  //       if (addNewLineProduct) {
+  //         buffer.push(Buffer.from(newLineProduct + '\n')); // Cetak nama produk yang terpotong
+  //       }
+
+  //       // Informasi tambahan produk (unit dan harga)
+  //       buffer.push(Buffer.from(addSpace(2) + product?.unitName + "@" + priceFormat(product?.price) + '\n'));
+  //     });
+
+  //     buffer.push(Buffer.from(addLine(printerSetting.col) + '\n'));
+
+  //     // Total Quantity
+  //     buffer.push(Buffer.from(justifyLeft('Total Quantity', printerSetting.maxProductName) + ` x${data.totalQuantity}` + '\n'));
+
+  //     buffer.push(Buffer.from(addLine(printerSetting.col) + '\n'));
+
+  //     // Subtotal
+  //     buffer.push(Buffer.from(justifyLeft('Subtotal', printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.subTotal), printerSetting.col / 2) + '\n'));
+
+  //     buffer.push(Buffer.from(addLine(printerSetting.col) + '\n'));
+
+  //     // Total
+  //     buffer.push(Buffer.from(justifyLeft('Total', printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.grandTotal), printerSetting.col / 2) + '\n'));
+
+  //     // Payment
+  //     buffer.push(Buffer.from(justifyLeft('Cash', printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.totalPayment), printerSetting.col / 2) + '\n'));
+
+  //     // Change
+  //     buffer.push(Buffer.from(justifyLeft('Change', printerSetting.col / 2) + justifyRight(formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal), printerSetting.col / 2) + '\n'));
+
+  //     // Cut & Close
+  //     buffer.push(Buffer.from('\n'));
+
+  //     return {
+  //       buffer,
+  //       printerSetting,
+  //     }; // Mengembalikan buffer yang sudah dibentuk
+  //   } catch (error) {
+  //     console.error("❌ Error printing:", error);
+  //     throw error;
+  //   }
+  // }
+
+  // CONVERT SEMUA DATA MENJADI STRING DAN DIPISAH MENGGUNAKAN \N
+  static async printPosV3(code) {
+    try {
+      // CONFIG PRINTER
+      const configPrinter = await ConfigService.get({ key: "PRINTER_SETTING" });
+      const printerSetting = configPrinter.value_json;
+
+      // COMPANY INFO 
+      const configCompany = await ConfigService.get({ key: "COMPANY_INFO" });
+      const companyInfo = configCompany.value_json;
+
+      // DATA
+      const data = await PointOfSaleService.getDetailPointOfSaleByCode(code);
+
+      // 🔹 BUAT STRING PRINT
+      let printString = "";
+
+      // 🔹 HEADER
+      // Kode untuk Justify Center
+      printString += `\x1b\x61\x01\x1b\x21\x30${companyInfo.companyName}\n`;
+      // untuk center
+      printString += `\x1b\x21\x00${companyInfo.address}\n`; // 🔹 Center (Normal Size)
+      printString += `${companyInfo.phoneNumber}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
+
+      // 🔹 Reset ke left align
+      printString += `\x1b\x61\x00${justifyLeft(formatDate(data.createdAt), printerSetting.col / 2)}${justifyRight(formatTimeSecond(data.createdAt), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Order ID`, printerSetting.col / 2)}${justifyRight(data.code, printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Customer Name`, printerSetting.col / 2)}${justifyRight(data?.customer?.name || '-', printerSetting.col / 2)}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
+
+      // 🔹 LIST PRODUK
+      data.listProducts.forEach((product) => {
+        let baseProductName = product?.productName || product?.title || '-';
+        let productName = baseProductName;
+        let addNewLineProduct = false;
+        let newLineProduct = "";
+
+        // Cek apakah nama produk terlalu panjang
+        if (productName.length > printerSetting.maxProductName) {
+          productName = baseProductName.substring(0, printerSetting.maxProductName);
+          addNewLineProduct = true;
+          newLineProduct = baseProductName.substring(printerSetting.maxProductName);
+        }
+
+        // Cetak baris pertama: Nama produk + quantity + subtotal
+        printString += `${justifyLeft(productName, printerSetting.maxProductName)} x${product.quantity}${justifyRight(formatPricePosWithCurrency(product.subTotal), printerSetting.col / 2 - product?.quantity?.toString().length - 7)}\n`;
+
+        // Jika ada baris kedua, tambahkan ke string
+        if (addNewLineProduct) {
+          printString += `${newLineProduct}\n`;
+        }
+
+        // Cetak unit dan harga
+        printString += `${addSpace(2)}${product?.unitName} @${priceFormat(product?.price)}\n`;
+      });
+
+      // 🔹 TOTAL QUANTITY
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `${justifyLeft(`Total Quantity`, printerSetting.maxProductName)} x${data.totalQuantity}\n`;
+
+      // 🔹 SUBTOTAL
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `${justifyLeft(`Subtotal`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.subTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 TOTAL
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `${justifyLeft(`Total`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.grandTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 PEMBAYARAN
+      printString += `${justifyLeft(`Cash`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Change`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 AKHIR
+      printString += `\n`;
+
+      return { string: printString, printerSetting };
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = PointOfSaleService;

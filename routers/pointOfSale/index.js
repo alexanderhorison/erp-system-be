@@ -17,6 +17,8 @@ router.post("/add-favorite", PointOfSaleController.addOrRemoveFavorite);
 router.post("/create-point-of-sale", PointOfSaleController.createPointOfSale);
 router.get("/payment-type", PointOfSaleController.getPaymentType);
 
+router.post("/print-v3/:code", PointOfSaleController.printPos);
+
 router.get("/:code", PointOfSaleController.getDetailPointOfSale);
 
 module.exports = router;
