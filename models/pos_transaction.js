@@ -50,7 +50,8 @@ module.exports = (sequelize, DataTypes) => {
       deletedAt: DataTypes.DATE,
       deletedBy: DataTypes.INTEGER,
       warehouseId: DataTypes.INTEGER,
-      totalQuantity: DataTypes.INTEGER
+      totalQuantity: DataTypes.INTEGER,
+      totalItems: DataTypes.INTEGER,
     },
     {
       sequelize,
