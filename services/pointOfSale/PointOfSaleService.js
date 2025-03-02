@@ -412,7 +412,8 @@ class PointOfSaleService {
           },
           warehouseId: item?.warehouseId ?? null,
           warehouseName: item?.Master_Warehouse?.name ?? "",
-          totalQuantity: item?.totalQuantity
+          totalQuantity: item?.totalQuantity,
+          totalItems: item?.totalItems,
         };
       });
 
