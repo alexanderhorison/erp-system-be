@@ -441,7 +441,7 @@ class ExportService {
 
       // Grouping products by company and name
       const groupedData = {};
-      
+
       // Group products by company
       getDataAllStock.forEach((data) => {
         const key = `${data.companyName.toUpperCase()}||${data.productName}`;
@@ -466,7 +466,7 @@ class ExportService {
       Object.values(groupedData).forEach((item, index) => {
         const sheetIndex = worksheetMapping[item.companyName] || 4;
         const worksheet = workbook.getWorksheet(sheetIndex);
-        const rowIndex = rowIndexMap[sheetIndex]++; 
+        const rowIndex = rowIndexMap[sheetIndex]++;
 
         worksheet.getCell(`A${rowIndex}`).value = item.companyName.toUpperCase();
         worksheet.getCell(`B${rowIndex}`).value = item.productName;
@@ -501,37 +501,34 @@ class ExportService {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Stock Opname");
 
-      worksheet.getColumn("A").width = 7;
-      worksheet.getColumn("B").width = 20;
-      worksheet.getColumn("C").width = 35;
+      worksheet.getColumn("A").width = 35;
+      worksheet.getColumn("B").width = 35;
+      worksheet.getColumn("C").width = 15;
       worksheet.getColumn("D").width = 15;
       worksheet.getColumn("E").width = 15;
       worksheet.getColumn("F").width = 15;
       worksheet.getColumn("G").width = 15;
       worksheet.getColumn("H").width = 15;
-      worksheet.getColumn("I").width = 15;
-      worksheet.getColumn("J").width = 15;
 
       // Metadata (Column A)
       const metadata = [
-        "TJAHAYA BERKAT ABADI",
-        `Stock Opname Date: ${data.opnameDate}`,
-        `Stock Opname Code: ${data.code}`,
-        `Status: ${data.status}`,
-        `Warehouse Name: ${data.warehouseName}`,
-        `Creator Name: ${data.creatorName}`,
-        `Notes: ${data.notes}`,
-        "",
+        { key: `Stock Opname Date`, value: data.opnameDate },
+        { key: `Stock Opname Code`, value: data.code },
+        { key: `Status`, value: data.status },
+        { key: `Warehouse Name`, value: data.warehouseName },
+        { key: `Creator Name`, value: data.creatorName },
+        { key: `Notes`, value: data.notes },
       ];
 
-      metadata.forEach((text, index) => {
-        worksheet.addRow([text]);
+      metadata.forEach((item, index) => {
+        worksheet.addRow([item.key, item?.value || ""]);
       });
 
-      // Headers in Column B
+      // FOR SPACE
+      worksheet.addRow([""]);
+
+      // Headers in Row 9
       const headers = [
-        "ID",
-        "Product Warehouse ID",
         "Product Name",
         "Company Name",
         "Rack Name",
@@ -539,16 +536,40 @@ class ExportService {
         "System Stock",
         "Actual Stock",
         "Different",
-        "Is Adjustment",
+        "Adjustment",
       ];
 
-      worksheet.addRow(headers);
+      const headerRow = worksheet.addRow(headers);
+
+      // Set border and fill for headers
+      headerRow.eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: '889ff2' },  // Biru muda
+        };
+
+        // Cek kolom pertama dan terakhir untuk border tebal
+        const isFirstCol = colNumber === 1;
+        const isLastCol = colNumber === headers.length;
+
+        cell.border = {
+          top: { style: 'thick', color: { argb: '000000' } },    // Atas tebal
+          bottom: { style: 'thick', color: { argb: '000000' } },  // Bawah tebal
+          left: { style: isFirstCol ? 'thick' : 'thin', color: { argb: '000000' } },   // Kiri tebal cuma di kolom pertama
+          right: { style: isLastCol ? 'thick' : 'thin', color: { argb: '000000' } },   // Kanan tebal cuma di kolom terakhir
+        };
+
+        cell.font = {
+          bold: true,
+          color: { argb: '000000' },
+        };
+      });
+
 
       // Data in Column C
       data.listProduct.forEach((product, index) => {
-        worksheet.addRow([
-          product.id,
-          product.productWarehouseId,
+        const row = worksheet.addRow([
           product.productName,
           product.companyName,
           product.rackName,
@@ -558,6 +579,15 @@ class ExportService {
           product.diff,
           product.isAdjustment ? "Yes" : "No",
         ]);
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: '000000' } },       // Biru muda
+            left: { style: 'thin', color: { argb: '000000' } },      // Biru muda
+            bottom: { style: 'thin', color: { argb: '000000' } },    // Biru muda
+            right: { style: 'thin', color: { argb: '000000' } },     // Biru muda
+          };
+        });
+
       });
 
       for (let col = 1; col <= 2; col++) {
