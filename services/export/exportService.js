@@ -473,9 +473,20 @@ class ExportService {
         worksheet.getCell(`C${rowIndex}`).value = item.KARTON;
         worksheet.getCell(`D${rowIndex}`).value = item.BAL;
         worksheet.getCell(`E${rowIndex}`).value = item.SLOP;
+
+          ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
+            worksheet.getCell(`${col}${rowIndex}`).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        })
       });
 
-      const fileName = "Total Stock.xlsx";
+      const currentDate = new Date();
+      const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD format
+      const fileName = `Current Stock - ${formattedDate}.xlsx`;
 
       res.setHeader(
         "Content-Type",
