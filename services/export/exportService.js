@@ -10,6 +10,7 @@ const {
   formatDate,
   formatTime,
   formatTimeSecond,
+  formatDateWithSlash,
 } = require("../../helpers/formatDate");
 const DeliveryOrderReceiveService = require("../deliveryOrderReceive/DeliveryOrderReceiveService");
 const moment = require("moment");
@@ -20,6 +21,7 @@ const InternalTransferService = require("../internalTransfer/InternalTransferSer
 const ExcelJS = require("exceljs");
 const ProductWarehouseService = require("../productWarehouse/ProductWarehouseService");
 const StockOpnameService = require("../stockOpname/StockOpnameService");
+const PointOfSaleService = require("../pointOfSale/PointOfSaleService");
 
 require("moment/locale/id");
 class ExportService {
@@ -473,9 +475,23 @@ class ExportService {
         worksheet.getCell(`C${rowIndex}`).value = item.KARTON;
         worksheet.getCell(`D${rowIndex}`).value = item.BAL;
         worksheet.getCell(`E${rowIndex}`).value = item.SLOP;
+
+        ["A", "B", "C", "D", "E"].forEach((col) => {
+          worksheet.getCell(`${col}${rowIndex}`).border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
       });
 
-      const fileName = "Total Stock.xlsx";
+      const currentDate = new Date();
+      const formattedDate = currentDate
+        .toISOString()
+        .split("T")[0]
+        .replace(/-/g, ""); // YYYYMMDD format
+      const fileName = `Current Stock - ${formattedDate}.xlsx`;
 
       res.setHeader(
         "Content-Type",
@@ -595,6 +611,55 @@ class ExportService {
       }
 
       return await workbook.xlsx.writeBuffer();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async pointOfSale(code) {
+    try {
+      const filePath = path.join("./template/export/", "PointOfSale.html");
+
+      const htmlTemplate = fs.readFileSync(filePath, "utf8");
+
+      const template = handlebars.compile(htmlTemplate);
+
+      const data = await PointOfSaleService.getDetailPointOfSaleByCode(code);
+
+      if (!data) {
+        throw {
+          code: 404,
+          message: "Data not found",
+        };
+      }
+
+      let result = {
+        ...data,
+        listProducts: data?.listProducts?.map((itemProduct) => ({
+          ...itemProduct,
+          price: priceFormatWIthCurrency(itemProduct.price),
+          subTotal: priceFormatWIthCurrency(itemProduct.subTotal),
+        })),
+        discount: priceFormatWIthCurrency(data.discount),
+        subTotal: priceFormatWIthCurrency(data.subTotal),
+        grandTotal: priceFormatWIthCurrency(data.grandTotal),
+        dueDate: formatDateWithSlash(data?.createdAt)
+      };
+
+      const renderedHtml = template(result);
+
+      const browser = await puppeteer.launch({
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+      const page = await browser.newPage();
+
+      await page.setContent(renderedHtml, { waitUntil: "networkidle0" });
+
+      const pdfBuffer = await page.pdf({ format: "A4" });
+
+      await browser.close();
+
+      return pdfBuffer;
     } catch (error) {
       throw error;
     }
