@@ -5,12 +5,25 @@ const {
 
 class ConfigService {
 
+  static async getAllConfig({ query }) {
+    try {
+      const data = await Config.findAll({
+        where: query
+      })
+
+      return data
+    } catch (error) {
+      throw error
+    }
+  }
+
   static async create({ payload }) {
     try {
       // UNTUK KEY UNIQUE, TAPI BISA DIJADIKAN 1 CATEGORY
       const exsisting = await Config.findOne({
         where: {
-          key: payload.key
+          key: payload.key,
+          value: payload.value
         }
       })
 
@@ -29,18 +42,16 @@ class ConfigService {
     }
   }
 
-  static async get({ key }) {
+  static async get({ query }) {
     try {
       const data = await Config.findOne({
-        where: {
-          key: key
-        }
+        where: query
       })
 
       if (!data) {
         throw {
-          code: 400,
-          message: "Config sudah ada"
+          code: 404,
+          message: "Config tidak ditemukan"
         }
       }
 
@@ -50,11 +61,11 @@ class ConfigService {
     }
   }
 
-  static async update({ payload }) {
+  static async update({ id, payload }) {
     try {
       const exsisting = await Config.findOne({
         where: {
-          key: payload.key
+          id: id
         }
       })
 
@@ -67,8 +78,20 @@ class ConfigService {
 
       const data = await Config.update(payload, {
         where: {
-          key: payload.key
+          id: id
         }
+      })
+
+      return data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  static async delete({ query }) {
+    try {
+      const data = await Config.destroy({
+        where: query
       })
 
       return data

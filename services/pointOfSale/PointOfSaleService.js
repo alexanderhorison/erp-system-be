@@ -22,12 +22,8 @@ const {
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
 
-//! SHOULD INSTALL escpos and escpos-network
-// const escpos = require("escpos");
-// const Network = require("escpos-network");
-
 const { formatDate, formatTimeSecond } = require("../../helpers/formatDate");
-const { addLine, justifyLeft, justifyRight, addSpace } = require("../../helpers/posFunction");
+const { addLine, justifyLeft, justifyRight, addSpace, virtualConsoleLogPos } = require("../../helpers/posFunction");
 const { priceFormat, formatPricePosWithCurrency } = require("../../helpers/priceFormat");
 
 
@@ -598,7 +594,7 @@ class PointOfSaleService {
 
       // 🔹 TOTAL ITEMS
       printString += `${addLine(printerSetting.col)}\n`;
-      printString += `${justifyLeft(`Total Items`, printerSetting.maxProductName)} x${data.totalItems}\n`;
+      printString += `Total Items: ${data.totalItems}\n`;
 
       // 🔹 SUBTOTAL
       printString += `${addLine(printerSetting.col)}\n`;
@@ -614,6 +610,9 @@ class PointOfSaleService {
 
       // 🔹 AKHIR
       printString += `\n`;
+
+      //! TESTING PURPOSE
+      // virtualConsoleLogPos(printString);
 
       return { string: printString, printerSetting };
     } catch (error) {
