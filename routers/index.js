@@ -73,6 +73,7 @@ router.use("/point-of-sale", routerPointOfSale);
 router.use("/export", routerExport);
 
 router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
+router.post("/send-email-pos", upload.single('pdf'), EmailController.sendEmailPos)
 
 router.use("/config", routerConfig)
 

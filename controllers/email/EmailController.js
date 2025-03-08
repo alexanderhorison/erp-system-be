@@ -54,5 +54,37 @@ class EmailController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async sendEmailPos(req, res) {
+    // code to send email goes here
+    try {
+      const { filename, module, email } = req.body; // Get filename from body
+
+      let pdfBuffer = await ExportService.pointOfSale(filename);
+
+      const transporterConnection = await transporter();
+
+      let subjectText = `${module} ${filename} `;
+
+      const msg = {
+        from: process.env.EMAIL_IS, // sender address
+        to: email, // list of receivers
+        subject: subjectText, // Subject line
+        text: `Berikut Hasil Print ${module} anda`, // plain text body
+        attachments: [
+          {
+            filename: `${filename}.pdf` || "point-of-sale.pdf", // Use the filename from the request or a default
+            content: pdfBuffer, // Attach the PDF buffer
+          },
+        ],
+      };
+      await transporterConnection.sendMail(msg);
+      res.status(200).json(responses(true, "Email berhasil dikirim"));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 module.exports = EmailController;

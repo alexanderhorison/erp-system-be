@@ -32,6 +32,13 @@ function formatTimeSecond(dateString) {
   return moment(dateString).format("HH:mm:ss");
 }
 
+function formatDateWithSlash(dateString){
+  if (!dateString) {
+    return "";
+  }
+  return moment(dateString).format("DD/MM/YYYY")
+}
+
 function formatDateFromString(dateString) {
   const tempDate = dateString?.split("/");
   const dueDate = `${tempDate[1]}/${tempDate[0]}/${tempDate[2]}`; // MM/DD/YYYY format
@@ -49,4 +56,5 @@ module.exports = {
   formatTime,
   formatDateFromString,
   formatTimeSecond,
+  formatDateWithSlash
 };
