@@ -539,7 +539,7 @@ class PointOfSaleService {
   static async printPosV3(code) {
     try {
       // CONFIG PRINTER
-      const configPrinter = await ConfigService.get({ key: "PRINTER_SETTING" });
+      const configPrinter = await ConfigService.get({ query: { key: "PRINTER_SETTING" } });
       const printerSetting = configPrinter.value_json;
 
       // COMPANY INFO 
