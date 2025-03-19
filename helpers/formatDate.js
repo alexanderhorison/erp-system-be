@@ -36,7 +36,7 @@ function formatDateWithSlash(dateString){
   if (!dateString) {
     return "";
   }
-  return moment(dateString).format("DD/MM/YYYY")
+  return moment(dateString).format("DD/MM/YYYY HH:mm")
 }
 
 function formatDateFromString(dateString) {

@@ -319,6 +319,16 @@
           box-shadow: none !important;
         }
 
+        .printBackgroundTableHead {
+          background-color: #F3F4F6   !important;
+        }
+
+        .css-table-border {
+          background-color: #F3F4F6 !important;
+          -webkit-print-color-adjust: exact; /* For Safari */
+          print-color-adjust: exact; /* For other browsers */
+        }
+
         /* Adjust padding for better fit on printed pages */
         .print-padding {
           padding: 16px !important;
@@ -2433,6 +2443,7 @@
         flex-direction: column;
         padding-top: 0.375rem;
         padding-bottom: 0.375rem;
+        margin-left: 10px;
       }
 
       .css-1yambkh-MuiTypography-root {
@@ -2508,6 +2519,11 @@
         border-spacing: 0;
       }
 
+      .css-table-border {
+        border: 2px solid #C4C4C4;
+        margin-top: 5px;
+      }
+
       .css-x1bzil-MuiTable-root caption {
         font-size: 0.8125rem;
         line-height: 1.53846154;
@@ -2535,6 +2551,7 @@
       .css-16argq0-MuiTableHead-root .MuiTableCell-root {
         font-weight: 800;
         max-width: 200px;
+        border: 2px solid #C4C4C4;
       }
 
       .css-1alvwbn-MuiTableCell-root {
@@ -2590,6 +2607,7 @@
         padding-top: 0.625rem !important;
         padding-bottom: 0.625rem !important;
         font-weight: 800;
+        border: 2px solid #C4C4C4;
       }
 
       .css-1sdh98x {
@@ -3435,22 +3453,24 @@
                     </table>
                   </div>
                 </div>
-                <div
-                  class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-sm-4 css-wg4xta-MuiGrid-root"
-                >
-                  <div class="MuiBox-root css-1lue6kh">
-                    <h6
-                      class="MuiTypography-root MuiTypography-h6 css-1yambkh-MuiTypography-root"
-                    >
-                      Pembeli
-                    </h6>
-                    <p
-                      class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
-                    >
-                      {{customer.name}}
-                    </p>
+                {{#if customer.name}}
+                  <div
+                    class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-sm-4 css-wg4xta-MuiGrid-root"
+                  >
+                    <div class="MuiBox-root css-1lue6kh">
+                      <h6
+                        class="MuiTypography-root MuiTypography-h6 css-1yambkh-MuiTypography-root"
+                      >
+                        Pembeli
+                      </h6>
+                      <p
+                        class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
+                      >
+                        {{customer.name}}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                {{/if}} 
               </div>
             </div>
             <hr
@@ -3462,10 +3482,10 @@
               <p
                 class="MuiTypography-root MuiTypography-body1 css-6wkqjq-MuiTypography-root"
               >
-                Barang Point of Sale
+                List Barang
               </p>
-              <table class="MuiTable-root css-x1bzil-MuiTable-root">
-                <thead class="MuiTableHead-root css-16argq0-MuiTableHead-root">
+              <table class="MuiTable-root css-x1bzil-MuiTable-root css-table-border">
+                <thead class="MuiTableHead-root css-16argq0-MuiTableHead-root printBackgroundTableHead">
                   <tr
                     class="MuiTableRow-root MuiTableRow-head css-18pt6fx-MuiTableRow-root"
                   >
@@ -3501,7 +3521,7 @@
                     </th>
                   </tr>
                 </thead>
-                <tbody class="MuiTableBody-root css-shzkw8-MuiTableBody-root">
+                <tbody class="MuiTableBody-root css-shzkw8-MuiTableBody-root backgroundTable">
                   {{#each listProducts}}
                   <tr class="MuiTableRow-root css-18pt6fx-MuiTableRow-root">
                     <td
@@ -3567,7 +3587,7 @@
                 </div>
               </div>
             </div>
-            <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
+            <!-- <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
               <div
                 class="MuiGrid-root MuiGrid-container css-9cyib4-MuiGrid-root"
               >
@@ -3598,7 +3618,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
               <div
                 class="MuiGrid-root MuiGrid-container css-9cyib4-MuiGrid-root"
