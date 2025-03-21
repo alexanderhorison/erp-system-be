@@ -60,6 +60,7 @@ class PurchaseOrderController {
                 price: yup.number().required("Harga barter harus diisi"),
                 quantity: yup.number().required("Kuantiti barter harus diisi"),
                 subTotal: yup.number().required("Sub Total barter harus diisi"),
+                modal: yup.number().required("Harga Modal harus diisi"),
               })
             );
           }
@@ -73,6 +74,7 @@ class PurchaseOrderController {
                 quantity: yup.number(),
                 subTotal: yup.number(),
                 warehouseId: yup.number(),
+                modal: yup.number(),
               })
             )
             .optional();
@@ -234,6 +236,7 @@ class PurchaseOrderController {
                 price: yup.number().required("Harga barter harus diisi"),
                 quantity: yup.number().required("Kuantiti barter harus diisi"),
                 subTotal: yup.number().required("Sub Total barter harus diisi"),
+                modal: yup.number().required("Modal barter harus diisi"),
               })
             );
           }
@@ -248,6 +251,7 @@ class PurchaseOrderController {
                 quantity: yup.number(),
                 subTotal: yup.number(),
                 warehouseId: yup.number(),
+                modal: yup.number(),
               })
             )
             .optional();
