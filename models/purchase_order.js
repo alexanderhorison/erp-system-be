@@ -50,6 +50,8 @@ module.exports = (sequelize, DataTypes) => {
       approvedBy: DataTypes.INTEGER,
       approvedAt: DataTypes.DATE,
       dueDate: DataTypes.STRING,
+      totalModal: DataTypes.BIGINT,
+      totalGainLoss: DataTypes.BIGINT,
     },
     {
       sequelize,

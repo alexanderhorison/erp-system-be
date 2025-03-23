@@ -50,6 +50,8 @@ module.exports = (sequelize, DataTypes) => {
       amountDebt: DataTypes.BIGINT,
       grandTotalCustomer: DataTypes.BIGINT,
       grandTotalBarter: DataTypes.BIGINT,
+      totalModal: DataTypes.BIGINT,
+      totalGainLoss: DataTypes.BIGINT,
     },
     {
       sequelize,

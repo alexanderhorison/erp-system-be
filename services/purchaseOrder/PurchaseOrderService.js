@@ -404,6 +404,9 @@ class PurchaseOrderService {
           },
         });
 
+      let totalModal = 0;
+      let totalGainLoss = 0;
+
       // PENGURANGAN PRODUCT HASIL BARTER DARI PRODUCT WAREHOUSE
       if (purchaseOrderBarterProducts?.length > 0) {
         for (const item of purchaseOrderBarterProducts) {
@@ -462,6 +465,26 @@ class PurchaseOrderService {
             }
           );
 
+          // update Gain Loss pada PO Barter Detail
+          const totalModalProduct = Number(item.modal) * Number(item.quantity);
+          const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct) 
+
+          await Purchase_Order_Barter_Detail.update(
+            {
+              gainLoss: gainLossProduct,
+            },
+            {
+              where: {
+                id: item?.id,
+              },
+              transaction,
+            }
+          );
+
+          // Sum for total modal and total gain loss PO
+          totalModal += Number(item.modal);
+          totalGainLoss += Number(gainLossProduct);
+
           // catat stock adjustment histories pengurangan
           await Stock_Adjustment_History.create(
             {
@@ -479,6 +502,20 @@ class PurchaseOrderService {
           );
         }
       }
+
+      // UPDATE total modal and total gain loss
+      await Purchase_Order.update(
+        {
+          totalModal,
+          totalGainLoss
+        },
+        {
+          where: {
+            id: exsistingData?.id
+          },
+          transaction
+        }
+      )
 
       /**
        * Jika grandtotal minus maka vendor harus bayar ke kita maka amountDebt vendor 0

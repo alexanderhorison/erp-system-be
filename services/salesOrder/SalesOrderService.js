@@ -212,6 +212,9 @@ class SalesOrderService {
         },
       });
 
+      let totalModal = 0;
+      let totalGainLoss = 0;
+
       for (const item of salesOrderProducts) {
         const warehouseProduct = await Warehouse_Product.findOne({
           where: {
@@ -267,6 +270,29 @@ class SalesOrderService {
           }
         );
 
+        // update Gain Loss pada SO Detail
+
+        // modal product -> modal * quantity
+        const totalModalProduct = Number(item.modal) * Number(item.quantity);
+        // Gain loss product Harga jual - Harga beli
+        const gainLossProduct =  Number(item.subTotal) - Number(totalModalProduct)
+
+        await Sales_Order_Detail.update(
+          {
+            gainLoss: gainLossProduct,
+          },
+          {
+            where: {
+              id: item?.id,
+            },
+            transaction,
+          }
+        );
+
+        // Sum for total modal and total gain loss SO
+        totalModal += Number(item.modal);
+        totalGainLoss += Number(gainLossProduct);
+        
         // catat stock adjustment histories
         await Stock_Adjustment_History.create(
           {
@@ -282,6 +308,20 @@ class SalesOrderService {
           { transaction }
         );
       }
+
+      // UPDATE total modal and total gain loss
+      await Sales_Order.update(
+        {
+          totalModal,
+          totalGainLoss,
+        },
+        {
+          where: {
+            id: exsistingData?.id,
+          },
+          transaction,
+        }
+      );
 
       // FIND PRODUCT SALES ORDER BARTER
       const salesOrderBarterProducts = await Sales_Order_Barter_Details.findAll(
@@ -379,7 +419,8 @@ class SalesOrderService {
           } else {
             // Jika ditemukan maka kalkulasi
 
-            const updatedQuantity = Number(findMasterModal?.quantity) + Number(item?.quantity);
+            const updatedQuantity =
+              Number(findMasterModal?.quantity) + Number(item?.quantity);
             const updatedAmountPurchaseOrder =
               Number(findMasterModal?.amountPurchaseOrder) +
               Number(item?.subTotal);
@@ -740,7 +781,7 @@ class SalesOrderService {
             quantity: item.quantity,
             price: item.price,
             subTotal: item.subTotal,
-            modal: item.modal
+            modal: item.modal,
           },
           { transaction }
         );
