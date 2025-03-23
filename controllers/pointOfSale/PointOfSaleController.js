@@ -28,6 +28,7 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+
   static async getProductByWarehouseId(req, res) {
     try {
       const schemaParams = yup.object({
@@ -50,6 +51,7 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+
   static async getAllProductByProductId(req, res) {
     try {
       const schemaParams = yup.object({
@@ -174,6 +176,31 @@ class PointOfSaleController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async printPos(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code point of sale harus diisi"),
+      });
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code;
+
+      //? KIRIM STRING YANG SUDAH DI FORMAT DENGAN \N
+      const data = await PointOfSaleService.printPosV3(code);
+
+      res.status(200).json(responses(true, "Success Print", {
+        buffer: data.string,
+        printerSetting: data.printerSetting
+      }));
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: error.message || error });
+    }
+  }
+
 }
 
 module.exports = PointOfSaleController;

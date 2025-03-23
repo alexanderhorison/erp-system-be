@@ -1,0 +1,13 @@
+{
+  "key": "PRINTER_SETTING",
+  "value": "",
+  "category": "PRINTER",
+  "value_json": {
+    "col": 48,
+    "maxProductName": 29,
+    "mode": "ethernet",
+    "ip": "192.168.2.123",
+    "port": 8008
+  },
+  "description": "IP dinamis sesuai dengan network printer, dan menggunakan static IP dan statis Port"
+}

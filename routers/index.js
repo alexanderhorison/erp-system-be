@@ -19,7 +19,7 @@ const EmailController = require('../controllers/email/EmailController');
 const routerExport = require("./export/index");
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
-
+const routerConfig = require("./config/index")
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
 });
@@ -73,5 +73,8 @@ router.use("/point-of-sale", routerPointOfSale);
 router.use("/export", routerExport);
 
 router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
+router.post("/send-email-pos", upload.single('pdf'), EmailController.sendEmailPos)
+
+router.use("/config", routerConfig)
 
 module.exports = router;

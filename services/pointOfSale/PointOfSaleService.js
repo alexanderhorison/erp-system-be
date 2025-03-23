@@ -1,5 +1,4 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
-const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
@@ -21,6 +20,12 @@ const {
   Master_Rank,
 } = require("../../models");
 const { Op } = require("sequelize");
+const ConfigService = require("../config/configService");
+
+const { formatDate, formatTimeSecond } = require("../../helpers/formatDate");
+const { addLine, justifyLeft, justifyRight, addSpace, virtualConsoleLogPos } = require("../../helpers/posFunction");
+const { priceFormat, formatPricePosWithCurrency } = require("../../helpers/priceFormat");
+
 
 class PointOfSaleService {
   static async addOrRemoveFavorite(data) {
@@ -198,11 +203,17 @@ class PointOfSaleService {
       const generateCode = await codeGenerator(8, "POS");
 
       let totalQuantity = 0;
+      let totalItems = 0;
       // Count total quantity
       data.listProduct?.forEach((item) => {
         totalQuantity += item.quantity;
       });
-      
+
+      // Count total item
+      data.listProduct?.forEach((item) => {
+        totalItems += 1;
+      });
+
       // create point of sale
       const createdPointOfSale = await Pos_Transaction.create(
         {
@@ -219,6 +230,7 @@ class PointOfSaleService {
           // Saat ini statusnya langsung paid
           status: "PAID",
           totalQuantity: totalQuantity,
+          totalItems: totalItems,
         },
         { transaction }
       );
@@ -396,7 +408,8 @@ class PointOfSaleService {
           },
           warehouseId: item?.warehouseId ?? null,
           warehouseName: item?.Master_Warehouse?.name ?? "",
-          totalQuantity: item?.totalQuantity
+          totalQuantity: item?.totalQuantity,
+          totalItems: item?.totalItems,
         };
       });
 
@@ -512,7 +525,8 @@ class PointOfSaleService {
         createdBy: detail?.creator?.name ?? "",
         createdAt: detail?.createdAt,
         listProducts: listProduct,
-        totalQuantity: detail?.totalQuantity
+        totalQuantity: detail?.totalQuantity,
+        totalItems: detail?.totalItems,
       };
 
       return sendData;
@@ -520,6 +534,92 @@ class PointOfSaleService {
       throw error;
     }
   }
+
+  // CONVERT SEMUA DATA MENJADI STRING DAN DIPISAH MENGGUNAKAN \N
+  static async printPosV3(code) {
+    try {
+      // CONFIG PRINTER
+      const configPrinter = await ConfigService.get({ query: { key: "PRINTER_SETTING" } });
+      const printerSetting = configPrinter.value_json;
+
+      // COMPANY INFO 
+      const configCompany = await ConfigService.get({ key: "COMPANY_INFO" });
+      const companyInfo = configCompany.value_json;
+
+      // DATA
+      const data = await PointOfSaleService.getDetailPointOfSaleByCode(code);
+
+      // 🔹 BUAT STRING PRINT
+      let printString = "";
+
+      // 🔹 HEADER
+      // Kode untuk Justify Center
+      printString += `\x1b\x61\x01\x1b\x21\x30${companyInfo.companyName}\n`;
+      // untuk center
+      printString += `\x1b\x21\x00${companyInfo.address}\n`; // 🔹 Center (Normal Size)
+      printString += `${companyInfo.phoneNumber}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
+
+      // 🔹 Reset ke left align
+      printString += `\x1b\x61\x00${justifyLeft(formatDate(data.createdAt), printerSetting.col / 2)}${justifyRight(formatTimeSecond(data.createdAt), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Order ID`, printerSetting.col / 2)}${justifyRight(data.code, printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Customer Name`, printerSetting.col / 2)}${justifyRight(data?.customer?.name || '-', printerSetting.col / 2)}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
+
+      // 🔹 LIST PRODUK
+      data.listProducts.forEach((product) => {
+        let baseProductName = product?.productName || product?.title || '-';
+        let productName = baseProductName;
+        let addNewLineProduct = false;
+        let newLineProduct = "";
+
+        // Cek apakah nama produk terlalu panjang
+        if (productName.length > printerSetting.maxProductName) {
+          productName = baseProductName.substring(0, printerSetting.maxProductName);
+          addNewLineProduct = true;
+          newLineProduct = baseProductName.substring(printerSetting.maxProductName);
+        }
+
+        // Cetak baris pertama: Nama produk + quantity + subtotal
+        printString += `${justifyLeft(productName, printerSetting.maxProductName)} x${product.quantity}${justifyRight(formatPricePosWithCurrency(product.subTotal), printerSetting.col / 2 - product?.quantity?.toString().length - 7)}\n`;
+
+        // Jika ada baris kedua, tambahkan ke string
+        if (addNewLineProduct) {
+          printString += `${newLineProduct}\n`;
+        }
+
+        // Cetak unit dan harga
+        printString += `${addSpace(2)}${product?.unitName} @${priceFormat(product?.price)}\n`;
+      });
+
+      // 🔹 TOTAL ITEMS
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `Total Items: ${data.totalItems}\n`;
+
+      // 🔹 SUBTOTAL
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `${justifyLeft(`Subtotal`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.subTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 TOTAL
+      printString += `${addLine(printerSetting.col)}\n`;
+      printString += `${justifyLeft(`Total`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.grandTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 PEMBAYARAN
+      printString += `${justifyLeft(`Cash`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(`Change`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal), printerSetting.col / 2)}\n`;
+
+      // 🔹 AKHIR
+      printString += `\n`;
+
+      //! TESTING PURPOSE
+      // virtualConsoleLogPos(printString);
+
+      return { string: printString, printerSetting };
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = PointOfSaleService;

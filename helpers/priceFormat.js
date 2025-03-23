@@ -29,8 +29,19 @@ const priceFormatWithZero = value => {
   return numberFormatter.format(value)
 }
 
+const formatPricePosWithCurrency = value => {
+  const numberFormatter = new Intl.NumberFormat('id-ID', {
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+
+  return `Rp ${numberFormatter.format(value)}`.trim();
+};
+
 module.exports = {
   priceFormat,
   priceFormatWIthCurrency,
   priceFormatWithZero,
+  formatPricePosWithCurrency,
 }

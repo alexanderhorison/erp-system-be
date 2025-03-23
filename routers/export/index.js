@@ -2,7 +2,7 @@ const router = require("express").Router();
 const ExportController = require("../../controllers/exportController/ExportController");
 
 // EXCEL
-router.get("/all-stock", ExportController.allStock)
+router.get("/all-stock/:warehouseId", ExportController.allStock)
 router.get("/stock-opname/:code", ExportController.stockOpname);
 
 // PEDF
