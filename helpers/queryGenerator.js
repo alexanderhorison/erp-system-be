@@ -1,5 +1,5 @@
-
 const { Op } = require("sequelize");
+const moment = require("moment-timezone");
 
 function generateFilter(filters) {
   const filter = {};
@@ -11,8 +11,14 @@ function generateFilter(filters) {
      * 3. value for query value
      * 4. model define in ur models (Warehouse_Product, Master_Product)
      */
-    if (column && operator && value !== undefined && value !== null && value !== '') {
-      const target = model ? filter[model] = filter[model] || {} : filter
+    if (
+      column &&
+      operator &&
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      const target = model ? (filter[model] = filter[model] || {}) : filter;
       switch (operator) {
         case "=":
           target[column] = value;
@@ -41,6 +47,29 @@ function generateFilter(filters) {
   return filter;
 }
 
+function generateFilterDate(month, year) {
+  const monthInt = parseInt(month, 10);
+  const yearInt = parseInt(year, 10);
+
+  const startDate = moment(
+    `${yearInt}-${monthInt}-01 00:00:00`,
+    "YYYY-M-DD HH:mm:ss"
+  ).format("YYYY-MM-DD HH:mm:ss");
+
+  // Get the last day of the month at 23:59:59
+  const lastDay = moment(`${yearInt}-${monthInt}`, "YYYY-M").daysInMonth(); // Get last day of the month
+  const endDate = moment(
+    `${yearInt}-${monthInt}-${lastDay} 23:59:59`,
+    "YYYY-M-DD HH:mm:ss"
+  ).format("YYYY-MM-DD HH:mm:ss");
+
+  return {
+    startDate,
+    endDate
+  }
+}
+
 module.exports = {
   generateFilter,
+  generateFilterDate,
 };
