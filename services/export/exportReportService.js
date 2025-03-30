@@ -7,6 +7,7 @@ const {
   formatDate,
 } = require("../../helpers/formatDate");
 const { priceFormatWIthCurrency } = require("../../helpers/priceFormat");
+const { applyCellFill, styleExcel } = require("../../helpers/excelHelperStyle");
 
 class ExportReportService {
   static async getReportSo({ query }) {
@@ -32,9 +33,14 @@ class ExportReportService {
       // Set the worksheet name dynamically
       const sheetName = `Sales_Order_Report_${monthName}_${query.year}`;
 
+      // Sheet 1 For Detail Transaction
       const worksheet = workbook.addWorksheet(`Catatan Pembelian ${monthName}`);
+      // Sheet 2 For Accumulation Order Transaction
+      const worksheet2 = workbook.addWorksheet(`Perincian ${monthName}`);
 
-      // Define column headers
+      const { styleBorder, fontBold, centerMiddle } = styleExcel;
+
+      // Define column headers sheet 1
       const headers = [
         "Tanggal",
         "Pembeli",
@@ -46,6 +52,8 @@ class ExportReportService {
         "Total Harga Jual",
         "Gain/Loss",
       ];
+
+      const headers2 = ["Tanggal", "Transaksi", "Nominal Transaksi"];
 
       worksheet.columns = [
         { header: headers[0], key: "tanggal", width: 15 },
@@ -59,36 +67,38 @@ class ExportReportService {
         { header: headers[8], key: "gainLoss", width: 15 },
       ];
 
-      // Apply styling to headers
+      worksheet2.columns = [
+        { header: headers2[0], key: "tanggal", width: 15 },
+        { header: headers2[1], key: "transaksi", width: 15 },
+        { header: headers2[2], key: "nominalTransaksi", width: 20 },
+      ];
+
+      // Apply styling to headers Sheet 1
       const headerRow = worksheet.getRow(1);
-      headerRow.font = { bold: true };
-      headerRow.alignment = { horizontal: "center", vertical: "middle" };
+      headerRow.font = fontBold;
+      headerRow.alignment = centerMiddle;
 
       headerRow.eachCell((cell, colNumber) => {
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" },
-        };
+        cell.border = styleBorder;
 
         // Apply RED to headers Tanggal → Quantity
         if (colNumber >= 1 && colNumber <= 8) {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FFFFC1C1" },
-          }; // Light red
+          applyCellFill(cell, "FFFFC1C1");
         }
 
         // Apply BLUE to Gain/Loss
         if (colNumber === 9) {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FFADD8E6" },
-          }; // Light blue
+          applyCellFill(cell, "FFADD8E6");
         }
+      });
+
+      // Apply styling to headers Sheet 2
+      const headerRow2 = worksheet2.getRow(1);
+      headerRow2.font = fontBold;
+      headerRow2.alignment = centerMiddle;
+      headerRow2.eachCell((cell) => {
+        cell.border = styleBorder;
+        applyCellFill(cell, "FFFFC1C1");
       });
 
       let rowIndex = 2; // Start inserting data from row 2
@@ -100,6 +110,7 @@ class ExportReportService {
           Sales_Order_Details,
           totalGainLoss,
           totalModal,
+          grandTotalCustomer,
         } = order;
 
         const startMergeIndex = rowIndex; // Store merge start index
@@ -129,16 +140,11 @@ class ExportReportService {
           // Apply Cell Formatting
           const lastRow = worksheet.lastRow;
           lastRow.eachCell((cell, colNumber) => {
-            cell.border = {
-              top: { style: "thin" },
-              left: { style: "thin" },
-              bottom: { style: "thin" },
-              right: { style: "thin" },
-            };
+            cell.border = styleBorder;
 
             // Center align numeric columns
             if (colNumber >= 4 && colNumber <= 9) {
-              cell.alignment = { horizontal: "center", vertical: "middle" };
+              cell.alignment = centerMiddle;
             }
           });
 
@@ -148,14 +154,8 @@ class ExportReportService {
         // Merge 'Tanggal' & 'Pembeli' columns
         worksheet.mergeCells(`A${startMergeIndex}:A${endMergeIndex}`);
         worksheet.mergeCells(`B${startMergeIndex}:B${endMergeIndex}`);
-        worksheet.getCell(`A${startMergeIndex}`).alignment = {
-          vertical: "middle",
-          horizontal: "center",
-        };
-        worksheet.getCell(`B${startMergeIndex}`).alignment = {
-          vertical: "middle",
-          horizontal: "center",
-        };
+        worksheet.getCell(`A${startMergeIndex}`).alignment = centerMiddle;
+        worksheet.getCell(`B${startMergeIndex}`).alignment = centerMiddle;
 
         // Add Total Row
         const totalRow = worksheet.addRow({
@@ -166,32 +166,19 @@ class ExportReportService {
           totalHargaJual: priceFormatWIthCurrency(sumTotalJual),
         });
 
-        totalRow.font = { bold: true };
+        totalRow.font = fontBold;
         totalRow.eachCell((cell, colNumber) => {
-          cell.border = {
-            top: { style: "thin" },
-            left: { style: "thin" },
-            bottom: { style: "thin" },
-            right: { style: "thin" },
-          };
+          cell.border = styleBorder;
 
           // Center align numeric total columns
           if (colNumber >= 4 && colNumber <= 9) {
-            cell.alignment = { horizontal: "center", vertical: "middle" };
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: { argb: "FFEE8C" },
-            };
+            cell.alignment = centerMiddle;
+            applyCellFill(cell, "FFEE8C");
           }
 
           // Blue background for Gain/Loss total
           if (colNumber === 9) {
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: { argb: "FFADD8E6" },
-            };
+            applyCellFill(cell, "FFADD8E6");
           }
         });
 
@@ -201,6 +188,22 @@ class ExportReportService {
         worksheet.addRow({});
         worksheet.addRow({});
         rowIndex += 2;
+
+        // Insert Data For Sheet 2
+        const sheetRow = worksheet2.addRow({
+          tanggal: approvedAt,
+          transaksi: Master_Customer?.name || "",
+          nominalTransaksi: priceFormatWIthCurrency(grandTotalCustomer),
+        });
+
+        sheetRow.font = fontBold;
+        sheetRow.eachCell((cell, colNumber) => {
+          cell.border = styleBorder;
+          cell.alignment = centerMiddle;
+          if (colNumber != 3) {
+            applyCellFill(cell, "FFFFFF00");
+          }
+        });
       }
 
       // Save the file
