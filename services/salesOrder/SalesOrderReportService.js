@@ -4,7 +4,6 @@ const {
   Master_Company,
   Master_Warehouse,
   Warehouse_Product,
-  Master_Warehouse_Rack,
   Sales_Order,
   Sales_Order_Detail,
   Master_Customer,
@@ -45,11 +44,6 @@ class SalesOrderReportService {
                     ],
                   },
                   { model: Master_Unit, attributes: ["id", "name"] }, // Fetch unit details
-                  {
-                    model: Master_Warehouse_Rack,
-                    as: "mwr",
-                    attributes: ["id", "name"],
-                  }, // Fetch warehouse rack details
                   {
                     model: Master_Warehouse,
                     attributes: ["id", "name"],
