@@ -32,7 +32,7 @@ function formatTimeSecond(dateString) {
   return moment(dateString).format("HH:mm:ss");
 }
 
-function formatDateWithSlash(dateString){
+function formatDateWithSlash(dateString) {
   if (!dateString) {
     return "";
   }
@@ -50,11 +50,33 @@ function formatDateFromString(dateString) {
   return formattedDate;
 }
 
+function formatStartDateDatabase(dateString) {
+  const serverOffset = 7 * 60; // Offset dalam menit (7 jam)
+  const formattedDateFrom = moment
+    .utc(dateString, 'YYYY-MM-DD', true) // Format eksplisit
+    .utcOffset(serverOffset)
+    .startOf('day')
+    .format('YYYY-MM-DD HH:mm:ss.SSS Z');
+  return new Date(formattedDateFrom).toISOString();
+}
+
+function formatEndDateDatabase(dateString) {
+  const serverOffset = 7 * 60; // Offset dalam menit (7 jam)
+  const formattedDateTo = moment
+    .utc(dateString, 'YYYY-MM-DD', true) // Format eksplisit
+    .utcOffset(serverOffset)
+    .endOf('day')
+    .format('YYYY-MM-DD HH:mm:ss.SSS Z');
+  return new Date(formattedDateTo).toISOString();
+}
+
 module.exports = {
   formatDate,
   formatDateWithTime,
   formatTime,
   formatDateFromString,
   formatTimeSecond,
-  formatDateWithSlash
+  formatDateWithSlash,
+  formatStartDateDatabase,
+  formatEndDateDatabase,
 };

@@ -38,6 +38,10 @@ class ExportReportService {
       // Sheet 2 For Accumulation Order Transaction
       const worksheet2 = workbook.addWorksheet(`Perincian ${monthName}`);
 
+      // Freeze the header row in both worksheets
+      worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+      worksheet2.views = [{ state: 'frozen', ySplit: 1 }];
+
       const { styleBorder, fontBold, centerMiddle } = styleExcel;
 
       // Define column headers sheet 1
