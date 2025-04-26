@@ -13,6 +13,9 @@ module.exports = (sequelize, DataTypes) => {
       Master_Unit.hasMany(models.Master_Product_Price, {
         foreignKey: "unitId",
       });
+      Master_Unit.hasMany(models.Master_Modal, {
+        foreignKey: "unitId",
+      });
     }
   }
 

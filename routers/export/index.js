@@ -1,5 +1,9 @@
 const router = require("express").Router();
 const ExportController = require("../../controllers/exportController/ExportController");
+const exportReportRouter = require("./exportReportRouter");
+
+// REPORT
+router.use("/report", exportReportRouter)
 
 // EXCEL
 router.get("/all-stock/:warehouseId", ExportController.allStock)

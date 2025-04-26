@@ -18,6 +18,7 @@ const {
   Purchase_Order_Detail,
   Purchase_Order_Barter_Detail,
   Dashboard_Summary_Vendor,
+  Master_Modal,
 } = require("../../models");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
@@ -212,6 +213,7 @@ class PurchaseOrderService {
             price: item.price,
             quantity: item.quantity,
             subTotal: item.subTotal,
+            modal: item.modal,
           });
         }
       }
@@ -332,6 +334,66 @@ class PurchaseOrderService {
           },
           { transaction }
         );
+
+        // Start Calculation For Master Modal
+        const findMasterModal = await Master_Modal.findOne({
+          where: {
+            productId: warehouseProduct?.productId,
+            unitId: warehouseProduct?.unitId,
+          },
+        });
+
+        // Jika tidak ditemukan create
+        if (!findMasterModal) {
+          /**
+           * Rumus Modal
+           * Case Jika modal baru
+           * create baru dengan harga modal adalah price pada po detail
+           * **/
+          await Master_Modal.create(
+            {
+              productId: warehouseProduct?.productId,
+              unitId: warehouseProduct?.unitId,
+              quantity: item?.quantity,
+              amountPurchaseOrder: item?.subTotal, // total harga pembelian barang produk tersebut
+              modal: item?.price, // harga modal pembelian
+              totalPurchaseOrder: 1, // Iniate total berapa kali purchase order adalah 1
+            },
+            { transaction }
+          );
+
+          // Jika ditemukan maka kalkulasi
+        } else {
+          /**
+           * case jika modal sudah ada
+           *   - quantity * price -> subTotal
+           *   - (subTotal + amountPurchaseOrder master modal) / (quantity PO baru + quantity master modal)
+           */
+
+          const updatedQuantity =
+            Number(findMasterModal?.quantity) + Number(item?.quantity);
+          const updatedAmountPurchaseOrder =
+            Number(findMasterModal?.amountPurchaseOrder) +
+            Number(item?.subTotal);
+          const updatedModal = Math.round(
+            Number(updatedAmountPurchaseOrder) / Number(updatedQuantity)
+          );
+
+          await Master_Modal.update(
+            {
+              quantity: updatedQuantity,
+              amountPurchaseOrder: updatedAmountPurchaseOrder,
+              modal: updatedModal,
+              totalPurchaseOrder: findMasterModal?.totalPurchaseOrder + 1,
+            },
+            {
+              where: {
+                id: findMasterModal?.id,
+              },
+              transaction,
+            }
+          );
+        }
       }
 
       // FIND PRODUCT PURCHASE ORDER BARTER
@@ -341,6 +403,9 @@ class PurchaseOrderService {
             purchaseOrderId: exsistingData?.id,
           },
         });
+
+      let totalModal = 0;
+      let totalGainLoss = 0;
 
       // PENGURANGAN PRODUCT HASIL BARTER DARI PRODUCT WAREHOUSE
       if (purchaseOrderBarterProducts?.length > 0) {
@@ -400,6 +465,26 @@ class PurchaseOrderService {
             }
           );
 
+          // update Gain Loss pada PO Barter Detail
+          const totalModalProduct = Number(item.modal) * Number(item.quantity);
+          const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct) 
+
+          await Purchase_Order_Barter_Detail.update(
+            {
+              gainLoss: gainLossProduct,
+            },
+            {
+              where: {
+                id: item?.id,
+              },
+              transaction,
+            }
+          );
+
+          // Sum for total modal and total gain loss PO
+          totalModal += Number(item.modal);
+          totalGainLoss += Number(gainLossProduct);
+
           // catat stock adjustment histories pengurangan
           await Stock_Adjustment_History.create(
             {
@@ -417,6 +502,20 @@ class PurchaseOrderService {
           );
         }
       }
+
+      // UPDATE total modal and total gain loss
+      await Purchase_Order.update(
+        {
+          totalModal,
+          totalGainLoss
+        },
+        {
+          where: {
+            id: exsistingData?.id
+          },
+          transaction
+        }
+      )
 
       /**
        * Jika grandtotal minus maka vendor harus bayar ke kita maka amountDebt vendor 0
@@ -677,6 +776,7 @@ class PurchaseOrderService {
             warehouseName:
               item?.Warehouse_Product?.Master_Warehouse?.name || "",
             warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
+            modal: item?.modal || 0,
           };
         });
       }
@@ -781,6 +881,7 @@ class PurchaseOrderService {
               quantity: item.quantity,
               price: item.price,
               subTotal: item.subTotal,
+              modal: item.modal,
             },
             { transaction }
           );

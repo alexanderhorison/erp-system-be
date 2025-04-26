@@ -17,6 +17,9 @@ module.exports = (sequelize, DataTypes) => {
       Master_Product.hasMany(models.Master_Product_Price, {
         foreignKey: "productId",
       });
+      Master_Product.hasMany(models.Master_Modal, {
+        foreignKey: "productId",
+      });
     }
   }
   Master_Product.init(

@@ -44,6 +44,7 @@ class SalesOrderController {
               warehouseId: yup
                 .number()
                 .required("Gudang asal sales order harus diisi"),
+              modal: yup.number().required("Harga Modal harus diisi"),
             })
           )
           .required("List sales order produk harus ada"),
@@ -202,6 +203,7 @@ class SalesOrderController {
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
+              modal: yup.number().required("Modal Product harus diisi"),
               warehouseId: yup
                 .number()
                 .required("Gudang asal sales order harus diisi"),

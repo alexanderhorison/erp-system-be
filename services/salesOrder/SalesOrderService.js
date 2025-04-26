@@ -18,6 +18,7 @@ const {
   Master_Rank,
   Dashboard_Summary_Customer,
   Sales_Order_Barter_Details,
+  Master_Modal,
 } = require("../../models");
 
 class SalesOrderService {
@@ -133,6 +134,7 @@ class SalesOrderService {
           price: item.price,
           quantity: item.quantity,
           subTotal: item.subTotal,
+          modal: item.modal,
         });
       }
 
@@ -210,6 +212,9 @@ class SalesOrderService {
         },
       });
 
+      let totalModal = 0;
+      let totalGainLoss = 0;
+
       for (const item of salesOrderProducts) {
         const warehouseProduct = await Warehouse_Product.findOne({
           where: {
@@ -265,6 +270,29 @@ class SalesOrderService {
           }
         );
 
+        // update Gain Loss pada SO Detail
+
+        // modal product -> modal * quantity
+        const totalModalProduct = Number(item.modal) * Number(item.quantity);
+        // Gain loss product Harga jual - Harga beli
+        const gainLossProduct =  Number(item.subTotal) - Number(totalModalProduct)
+
+        await Sales_Order_Detail.update(
+          {
+            gainLoss: gainLossProduct,
+          },
+          {
+            where: {
+              id: item?.id,
+            },
+            transaction,
+          }
+        );
+
+        // Sum for total modal and total gain loss SO
+        totalModal += Number(item.modal);
+        totalGainLoss += Number(gainLossProduct);
+        
         // catat stock adjustment histories
         await Stock_Adjustment_History.create(
           {
@@ -280,6 +308,20 @@ class SalesOrderService {
           { transaction }
         );
       }
+
+      // UPDATE total modal and total gain loss
+      await Sales_Order.update(
+        {
+          totalModal,
+          totalGainLoss,
+        },
+        {
+          where: {
+            id: exsistingData?.id,
+          },
+          transaction,
+        }
+      );
 
       // FIND PRODUCT SALES ORDER BARTER
       const salesOrderBarterProducts = await Sales_Order_Barter_Details.findAll(
@@ -352,6 +394,55 @@ class SalesOrderService {
             },
             { transaction }
           );
+
+          // Start calculation For Master Modal
+          const findMasterModal = await Master_Modal.findOne({
+            where: {
+              productId: warehouseProduct?.productId,
+              unitId: warehouseProduct?.unitId,
+            },
+          });
+
+          // Jika tidak ditemukan create
+          if (!findMasterModal) {
+            await Master_Modal.create(
+              {
+                productId: warehouseProduct?.productId,
+                unitId: warehouseProduct?.unitId,
+                quantity: item?.quantity,
+                amountPurchaseOrder: item?.subTotal, // total harga pembelian barang produk tersebut
+                modal: item?.price, // harga modal pembelian
+                totalPurchaseOrder: 1, // Iniate total berapa kali purchase order adalah 1
+              },
+              { transaction }
+            );
+          } else {
+            // Jika ditemukan maka kalkulasi
+
+            const updatedQuantity =
+              Number(findMasterModal?.quantity) + Number(item?.quantity);
+            const updatedAmountPurchaseOrder =
+              Number(findMasterModal?.amountPurchaseOrder) +
+              Number(item?.subTotal);
+            const updatedModal = Math.round(
+              Number(updatedAmountPurchaseOrder) / Number(updatedQuantity)
+            );
+
+            await Master_Modal.update(
+              {
+                quantity: updatedQuantity,
+                amountPurchaseOrder: updatedAmountPurchaseOrder,
+                modal: updatedModal,
+                totalPurchaseOrder: findMasterModal?.totalPurchaseOrder + 1,
+              },
+              {
+                where: {
+                  id: findMasterModal?.id,
+                },
+                transaction,
+              }
+            );
+          }
         }
       }
 
@@ -363,9 +454,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalCustomer) -
+          ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
@@ -592,6 +683,7 @@ class SalesOrderService {
           qty: item?.Warehouse_Product?.quantity,
           warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name || "",
           warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
+          modal: item?.modal || 0,
         };
       });
 
@@ -689,6 +781,7 @@ class SalesOrderService {
             quantity: item.quantity,
             price: item.price,
             subTotal: item.subTotal,
+            modal: item.modal,
           },
           { transaction }
         );

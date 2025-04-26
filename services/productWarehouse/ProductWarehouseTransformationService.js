@@ -1,3 +1,4 @@
+const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
   Master_Product,
@@ -9,6 +10,7 @@ const {
   Master_Product_Transformation,
   Stock_Adjustment_History,
   Master_Warehouse_Rack,
+  Master_Modal,
 } = require("../../models");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
@@ -111,12 +113,99 @@ class ProductWarehouseTransformationService {
         transaction,
       });
 
+      // Find Master Modal Origin
+      const modalOrigin = await Master_Modal.findOne({
+        where: {
+          productId: originProduct.productId,
+          unitId: originProduct.unitId
+        }
+      })
+
+      // Jika Base modal asal tidak ada throw error
+      if (!modalOrigin) {
+        throwValidation(400, "Data base modal pada produk asal tidak ditemukan, silahkan buat po terlebih dahulu untuk mendapatkan base modal")
+      }
+      // Find Master Modal Destination
+      const modalDestination = await Master_Modal.findOne({
+        where: {
+          productId: originProduct.productId,
+          unitId: transformationData.unitToId,
+        }
+      })
+
+      /**
+         * Quantity Modal Tujuan -> (data transformasi / Amount konversi asal) *  total qty konversi rumus tujuan
+         * Harga Modal Tujuan -> Harga modal asal / quantity Rumus Transform unit
+         * Harga total purchase Order -> Harga Modal Tujuan * Jumlah Quantity produk yang di transformasi
+         */
+      const hasilQuantityTransformation = (Number(data.qtyTransformation) / Number(transformationData.amountFrom)) * Number(transformationData.amountTo)
+      let newQuantityDestination = hasilQuantityTransformation
+      let newModalDestination;
+
+      // Menentukan Modal Tujuan
+      if (transformationData?.amountTo == 1) {
+        // Jika transformasi dari kecil ke besar
+        newModalDestination = Math.round(
+          Number(modalOrigin?.modal) * Number(transformationData?.amountFrom)
+        );
+      } else if (transformationData?.amountTo != 1) {
+        // jika transformasi dari besar ke kecil
+        newModalDestination = Math.round(
+          Number(modalOrigin?.modal) / Number(transformationData?.amountTo)
+        );
+      }
+
+      let newAmountPurchaseOrder = Number(newModalDestination) * Number(newQuantityDestination)
+
+      // Process Calculate Base Modal For Transformation
+      if (modalDestination) {
+        // Jika modal tujuan ada maka kalkulasi rumus
+        /**
+         * Quantity Baru -> quantity produk lama + quantity produk baru
+         * Amount Purchase Order Baru -> total PO lama + total Amount PO baru
+         * Modal Baru -> amount PO Baru / Quantity Baru
+         */
+        newQuantityDestination = Number(modalDestination?.quantity) + Number(newQuantityDestination)
+        newAmountPurchaseOrder = Number(modalDestination?.amountPurchaseOrder) + Number(newAmountPurchaseOrder)
+        newModalDestination = Math.round(
+          Number(newAmountPurchaseOrder) / Number(newQuantityDestination)
+        );
+
+        await Master_Modal.update(
+          {
+            quantity: newQuantityDestination,
+            amountPurchaseOrder: newAmountPurchaseOrder,
+            modal: newModalDestination,
+          },
+          {
+            where: {
+              id: modalDestination?.id,
+            },
+            transaction,
+          }
+        );
+
+      } else {
+        // jika modal destinasi tidak ada maka buat baru
+        await Master_Modal.create(
+          {
+            productId: originProduct.productId,
+            unitId: transformationData.unitToId,
+            quantity: hasilQuantityTransformation, // total quantity transformasi
+            amountPurchaseOrder: newAmountPurchaseOrder, // total harga modal * quantity transformation
+            modal: newModalDestination, // harga modal Asal / quantity transformation tujuan
+            totalPurchaseOrder: 0, // Iniate 
+          },
+          { transaction }
+        );
+
+      }
       if (destinationProduct) {
         // FOR SALES ORDER
         result = {
           warehouseProductId: destinationProduct.id,
-          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
-          qty: destinationProduct.quantity + (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          quantity: hasilQuantityTransformation,
+          qty: destinationProduct.quantity + hasilQuantityTransformation,
           masterProductId: originProduct.productId,
           rackName: destinationProduct.Master_Warehouse_Rack.name,
           unitName: destinationProduct.Master_Unit.name,
@@ -127,13 +216,13 @@ class ProductWarehouseTransformationService {
         }
         // PRODUCT SUDAH ADA
         // TAMBAHKAN PRODUCT TUJUAN
-        destinationProduct.quantity += (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo
+        destinationProduct.quantity += hasilQuantityTransformation
         await destinationProduct.save({ transaction });
         await StockAdjustmentHistoryService.createOne({
           data: destinationProduct,
           user,
           adjustmentType: "PLUS",
-          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          quantity: hasilQuantityTransformation,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
           lastQuantity: destinationProduct.quantity,
@@ -145,7 +234,7 @@ class ProductWarehouseTransformationService {
         const newDestinationProduct = await Warehouse_Product.create({
           productId: originProduct.productId,
           warehouseId: originProduct.warehouseId,
-          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          quantity: hasilQuantityTransformation,
           unitId: transformationData.unitToId,
           minimumStock: 1,
           // Jika produk baru maka tambahkan ke rack product origin
@@ -181,7 +270,7 @@ class ProductWarehouseTransformationService {
 
         result = {
           warehouseProductId: newDestinationProduct.id,
-          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          quantity: hasilQuantityTransformation,
           qty: newDestinationProduct.quantity,
           masterProductId: originProduct.productId,
           rackName: product.Master_Warehouse_Rack.name,
@@ -196,10 +285,10 @@ class ProductWarehouseTransformationService {
           data: newDestinationProduct,
           user,
           adjustmentType: "INITIATE",
-          quantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          quantity: hasilQuantityTransformation,
           info: "TRANSFORMATION PRODUCT",
           description: transformationData?.info,
-          lastQuantity: (data.qtyTransformation / transformationData.amountFrom) * transformationData.amountTo,
+          lastQuantity: hasilQuantityTransformation,
           transaction,
         });
       }

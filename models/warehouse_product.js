@@ -17,10 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, {
         foreignKey: "warehouseRackId",
       });
-      Warehouse_Product.belongsTo(models.Master_Warehouse_Rack, {
-        foreignKey: "warehouseRackId",
-        as: "mwr",
-      });
       Warehouse_Product.hasMany(
         models.Delivery_Order_Receipt_Outstanding_Product,
         {
