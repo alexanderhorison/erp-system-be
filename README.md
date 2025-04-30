@@ -70,6 +70,10 @@ ID MENU : NAMA
 26  View Deleted Product
 27  Point Of Sale
 28  Printer Setting
+29  Master Category Cost Tak Terduga
+30  Report
+31  Master Mobil
+32  Master Karyawan
 ```
 
 ### API Migration (15 Agustus 2024)
