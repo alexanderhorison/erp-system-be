@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  api-erp:
+    container_name: api-erp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-4000}:${PORT:-4000}"
+    env_file:
+      - .env
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis_db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRE_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRE_DB:-inventory_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRE_USERNAME:-postgres} -d ${POSTGRE_DB:-inventory_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis_db:
+    image: redis:alpine
+    container_name: redis_db
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    env_file:
+      - .env
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+networks:
+  app_network:
+    driver: bridge
