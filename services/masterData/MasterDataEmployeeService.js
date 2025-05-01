@@ -21,7 +21,6 @@ class MasterDataEmployeeService {
       const existingEmployee = await Tm_Employee.findOne({
         where: {
           nama: nama,
-          phone: phone,
         },
       });
 
@@ -29,7 +28,7 @@ class MasterDataEmployeeService {
         throw {
           code: 400,
           message:
-            "Karyawan dengan nama dan nomor telepon ini sudah ada dalam database",
+            "Karyawan dengan nama ini sudah ada dalam database",
         };
       }
 
@@ -47,6 +46,7 @@ class MasterDataEmployeeService {
       });
     } catch (error) {
       console.log(error);
+      
       throw error;
     }
   }
@@ -84,9 +84,14 @@ class MasterDataEmployeeService {
     }
   }
 
-  static async findAll() {
+  static async findAll(query) {
     try {
+      const { active } = query;
+
       return await Tm_Employee.findAll({
+        where: {
+          ...(active !== undefined && { is_active: active }),
+        },
         order: [["nama", "ASC"]],
       });
     } catch (error) {

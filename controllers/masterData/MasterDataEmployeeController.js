@@ -8,15 +8,15 @@ class MasterEmployeeController {
     try {
       const schema = yup.object({
         nama: yup.string().required("Nama karyawan harus diisi"),
-        phone: yup.string().optional(),
-        address: yup.string().optional(),
-        dob: yup.date().optional(),
-        sex: yup.string().optional(),
-        role: yup.string().optional(),
-        status: yup.string().optional(),
-        salary: yup.number().optional(),
-        bonus: yup.number().optional(),
-        is_active: yup.boolean().optional(),
+        phone: yup.string().optional().nullable(),
+        address: yup.string().optional().nullable(),
+        dob: yup.date().optional().nullable(),
+        sex: yup.string().optional().nullable(),
+        role: yup.string().optional().nullable(),
+        status: yup.string().optional().nullable(),
+        salary: yup.number().optional().nullable(),
+        bonus: yup.number().optional().nullable(),
+        is_active: yup.boolean().optional().nullable(),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -27,6 +27,8 @@ class MasterEmployeeController {
         .status(201)
         .json(responses(true, "Karyawan berhasil ditambahkan", newEmployee));
     } catch (error) {
+      console.log(error);
+      
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
@@ -37,16 +39,16 @@ class MasterEmployeeController {
     try {
       const schemaParams = yup.number().required("Id karyawan kosong");
       const schemaBody = yup.object({
-        nama: yup.string().optional(),
-        phone: yup.string().optional(),
-        address: yup.string().optional(),
-        dob: yup.date().optional(),
-        sex: yup.string().optional(),
-        role: yup.string().optional(),
-        status: yup.string().optional(),
-        salary: yup.number().optional(),
-        bonus: yup.number().optional(),
-        is_active: yup.boolean().optional(),
+        nama: yup.string().optional().nullable(),
+        phone: yup.string().optional().nullable(),
+        address: yup.string().optional().nullable(),
+        dob: yup.date().optional().nullable(),
+        sex: yup.string().optional().nullable(),
+        role: yup.string().optional().nullable(),
+        status: yup.string().optional().nullable(),
+        salary: yup.number().optional().nullable(),
+        bonus: yup.number().optional().nullable(),
+        is_active: yup.boolean().optional().nullable(),
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);
@@ -82,7 +84,11 @@ class MasterEmployeeController {
 
   static async getAllEmployees(req, res) {
     try {
-      const employees = await MasterDataEmployeeService.findAll();
+      const schemaQuery = yup.object({
+        active: yup.boolean().optional(),
+      });
+      const query = await yupSchemaValidation(req.query, schemaQuery);
+      const employees = await MasterDataEmployeeService.findAll(query);
       res
         .status(200)
         .json(responses(true, "Success get all employees", employees));
