@@ -25,12 +25,16 @@ module.exports = {
       },
     });
 
+    // Get the last menu to determine the next menuId
     const lastMenu = await queryInterface.sequelize.query(
       `SELECT id, "menuId" FROM "Menus" ORDER BY id DESC LIMIT 1;`,
       {
         type: Sequelize.QueryTypes.SELECT,
       }
     );
+
+    // Set a default menuId of 1 if no menus exist or menuId is not present
+    const nextMenuId = (lastMenu && lastMenu[0] && lastMenu[0].menuId) ? lastMenu[0].menuId + 1 : 1;
 
     await queryInterface.bulkInsert("Menus",
       [
@@ -39,11 +43,10 @@ module.exports = {
           description: "Manajemen Company Produk",
           createdAt: new Date(),
           updatedAt: new Date(),
-          menuId: lastMenu[0].menuId + 1
+          menuId: nextMenuId
         }
       ]
     )
-
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable("Companies");
