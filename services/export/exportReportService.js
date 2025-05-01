@@ -1,15 +1,25 @@
 const ExcelJS = require("exceljs");
 const SalesOrderReportService = require("../salesOrder/SalesOrderReportService");
 const { generateFilterDate } = require("../../helpers/queryGenerator");
-const path = require("path");
-const {
-  formatDateFromString,
-  formatDate,
-} = require("../../helpers/formatDate");
 const { priceFormatWIthCurrency } = require("../../helpers/priceFormat");
 const { applyCellFill, styleExcel } = require("../../helpers/excelHelperStyle");
+const { throwValidation } = require("../../helpers/responses");
 
 class ExportReportService {
+  static async getReport({ query }) {
+    const enumTypeReport = {
+      SALES_ORDER: "SALES_ORDER"
+    }
+
+    switch (query.reportType) {
+      case enumTypeReport.SALES_ORDER:
+        return await ExportReportService.getReportSo({ query });
+
+      default:
+        throw throwValidation(500, "Tipe Report tidak ditemukan");
+    }
+  }
+
   static async getReportSo({ query }) {
     try {
       const { startDate, endDate } = generateFilterDate(
@@ -211,13 +221,12 @@ class ExportReportService {
       }
 
       // Save the file
-      const filePath = path.join(__dirname, `${sheetName}.xlsx`);
-      await workbook.xlsx.writeFile(filePath);
+      const file = await workbook.xlsx.writeBuffer();
 
-      console.log(`Excel report generated: ${filePath}`);
+      console.log(`Excel report generated: ${query.reportType}`);
       return {
-        filePath,
         sheetName,
+        file
       };
     } catch (error) {
       throw error;

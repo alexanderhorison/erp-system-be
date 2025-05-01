@@ -2,13 +2,13 @@ const { responses } = require("../../helpers/responses");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const ExportReportService = require("../../services/export/exportReportService");
 const yup = require("yup");
-const fs = require("fs");
 
 
 class ExportReportController {
-  static async exportReportSo(req, res) {
+  static async exportReport(req, res) {
     try {
       const reportQuerySchema = yup.object({
+        reportType: yup.string().required("Tipe Report harus diisi"),
         month: yup
           .number()
           .required("Bulan Report harus diisi")
@@ -19,18 +19,22 @@ class ExportReportController {
           .number()
           .required("Tahun Report harus diisi")
           .integer("Tahun harus tipe angka")
-          .min(2023, "Tahun harus lebih dari 2023")
+          .min(2025, "Tahun harus lebih dari 2025")
           .max(new Date().getFullYear(), "Hanya bisa diambil sampai tahun ini"),
       });
-
       const query = await yupSchemaValidation(req.query, reportQuerySchema);
 
-      const {filePath, sheetName} = await ExportReportService.getReportSo({ query });
+      const { sheetName, file } = await ExportReportService.getReport({ query });
 
-      res.download(filePath, `${sheetName}.xlsx`, (err) => {
-        if (err) console.error("Download error:", err);
-        fs.unlinkSync(filePath); // Delete file after sending
+      // Kirim Excel sebagai respons
+      res.set({
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${sheetName}"`,
+        "Access-Control-Expose-Headers": "Content-Disposition",
       });
+
+      res.end(file);
     } catch (error) {
       res
         .status(error.code || 500)
