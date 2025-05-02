@@ -74,6 +74,7 @@ ID MENU : NAMA
 30  Report
 31  Master Mobil
 32  Master Karyawan
+33  Daily Cost Calendar
 ```
 
 ### API Migration (15 Agustus 2024)
