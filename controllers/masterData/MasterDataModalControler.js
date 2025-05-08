@@ -57,6 +57,26 @@ class MasterDataModalControler {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async forceUpdateModal(req, res) {
+    try {
+      const schema = yup.object({
+        productId: yup.number().required("productId harus diisi"),
+        unitId: yup.number().required("unitId harus diisi"),
+        modal: yup.number().required("modal harus diisi"),
+      });
+
+      const body = await yupSchemaValidation(req.body, schema);
+
+      await MasterDataModalService.createOrUpdate(body);
+
+      res.status(200).json(responses(true, "Master Modal berhasil diubah"));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = MasterDataModalControler;

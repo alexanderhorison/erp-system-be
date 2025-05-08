@@ -571,6 +571,43 @@ class MasterDataModalService {
       throw error;
     }
   }
+
+  static async createOrUpdate(data) {
+    const transaction = await sq.transaction();
+    try {
+      const { productId, unitId, modal } = data;
+
+      const existingModal = await Master_Modal.findOne({
+        where: { productId, unitId },
+      });
+
+      if (existingModal) {
+        existingModal.modal = modal;
+        existingModal.quantity = 1;
+        existingModal.amountPurchaseOrder = modal;
+        existingModal.totalPurchaseOrder = 1;
+        await existingModal.save({ transaction });
+      } else {
+        await Master_Modal.create(
+          {
+            productId,
+            unitId,
+            modal,
+            quantity: 1,
+            amountPurchaseOrder: modal,
+            totalPurchaseOrder: 1,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+      return true;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
 
 module.exports = MasterDataModalService;
