@@ -159,6 +159,7 @@ class SalesOrderService {
             price: item.price,
             quantity: item.quantity,
             subTotal: item.subTotal,
+            isNewModal: item.isNewModal
           });
         }
       }
@@ -307,6 +308,33 @@ class SalesOrderService {
           },
           { transaction }
         );
+
+
+        // Update Base Modal Jika input harga modal beda dengan base master modal
+        const findMasterModal = await Master_Modal.findOne({
+          where: {
+            productId: warehouseProduct?.productId,
+            unitId: warehouseProduct?.unitId,
+          },
+        });
+
+        if (findMasterModal && item?.modal != findMasterModal?.modal) {
+          await Master_Modal.update(
+            {
+              modal: item?.modal,
+              quantity: 1,
+              amountPurchaseOrder: item?.modal,
+              totalPurchaseOrder: 0,
+            },
+            {
+              where: {
+                id: findMasterModal?.id,
+              },
+              transaction,
+            }
+          );
+        }
+
       }
 
       // UPDATE total modal and total gain loss
@@ -415,6 +443,22 @@ class SalesOrderService {
                 totalPurchaseOrder: 1, // Iniate total berapa kali purchase order adalah 1
               },
               { transaction }
+            );
+          // Jika flag isNewModal true, maka rumus modal akan diperbarui
+          } else if (item?.isNewModal && findMasterModal) {
+            await Master_Modal.update(
+              {
+                quantity: item?.quantity,
+                amountPurchaseOrder: item?.subTotal,
+                modal: item?.price, 
+                totalPurchaseOrder: 1,
+              },
+              {
+                where: {
+                  id: findMasterModal?.id,
+                },
+                transaction,
+              }
             );
           } else {
             // Jika ditemukan maka kalkulasi
@@ -706,6 +750,7 @@ class SalesOrderService {
             warehouseName:
               item?.Warehouse_Product?.Master_Warehouse?.name || "",
             warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
+            isNewModal: item?.isNewModal,
           };
         });
       }
@@ -807,6 +852,7 @@ class SalesOrderService {
               quantity: item.quantity,
               price: item.price,
               subTotal: item.subTotal,
+              isNewModal: item.isNewModal,
             },
             { transaction }
           );
