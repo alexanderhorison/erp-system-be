@@ -62,6 +62,7 @@ class SalesOrderController {
                 warehouseId: yup
                   .number()
                   .required("Gudang asal barter harus diisi"),
+                isNewModal: yup.boolean().optional(),
               })
             );
           }
@@ -75,6 +76,7 @@ class SalesOrderController {
                 quantity: yup.number(),
                 subTotal: yup.number(),
                 warehouseId: yup.number(),
+                isNewModal: yup.boolean(),
               })
             )
             .optional();
@@ -227,6 +229,7 @@ class SalesOrderController {
                 warehouseId: yup
                   .number()
                   .required("Gudang asal barter harus diisi"),
+                isNewModal: yup.boolean().optional(),
               })
             );
           }
@@ -241,6 +244,7 @@ class SalesOrderController {
                 quantity: yup.number(),
                 subTotal: yup.number(),
                 warehouseId: yup.number(),
+                isNewModal: yup.boolean().optional(),
               })
             )
             .optional();
