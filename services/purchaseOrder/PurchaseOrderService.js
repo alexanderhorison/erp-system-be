@@ -179,6 +179,7 @@ class PurchaseOrderService {
             price: item.price,
             quantity: item.quantity,
             subTotal: item.subTotal,
+            isNewModal: item.isNewModal,
           });
         } else {
           // Push purchase product
@@ -188,6 +189,7 @@ class PurchaseOrderService {
             price: item.price,
             quantity: item.quantity,
             subTotal: item.subTotal,
+            isNewModal: item.isNewModal,
           });
         }
       }
@@ -361,6 +363,22 @@ class PurchaseOrderService {
             },
             { transaction }
           );
+          // Jika flag isNewModal true, maka rumus modal akan diperbarui
+        } else if (item?.isNewModal && findMasterModal) {
+          await Master_Modal.update(
+            {
+              quantity: item?.quantity,
+              amountPurchaseOrder: item?.subTotal,
+              modal: item?.price, 
+              totalPurchaseOrder: 1,
+            },
+            {
+              where: {
+                id: findMasterModal?.id,
+              },
+              transaction,
+            }
+          );
 
           // Jika ditemukan maka kalkulasi
         } else {
@@ -500,6 +518,32 @@ class PurchaseOrderService {
             },
             { transaction }
           );
+
+          // Update Base Modal Jika input harga modal beda dengan base master modal
+          const findMasterModal = await Master_Modal.findOne({
+            where: {
+              productId: warehouseProduct?.productId,
+              unitId: warehouseProduct?.unitId,
+            },
+          });
+
+          if (findMasterModal && item?.modal != findMasterModal?.modal) {
+            await Master_Modal.update(
+              {
+                modal: item?.modal,
+                quantity: 1,
+                amountPurchaseOrder: item?.modal,
+                totalPurchaseOrder: 0,
+              },
+              {
+                where: {
+                  id: findMasterModal?.id,
+                },
+                transaction,
+              }
+            );
+          }
+
         }
       }
 
@@ -754,6 +798,7 @@ class PurchaseOrderService {
           qty: item?.Warehouse_Product?.quantity,
           warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name || "",
           warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
+          isNewModal: item?.isNewModal,
         };
       });
 
@@ -856,6 +901,7 @@ class PurchaseOrderService {
             quantity: item.quantity,
             price: item.price,
             subTotal: item.subTotal,
+            isNewModal: item.isNewModal,
           },
           { transaction }
         );

@@ -2,6 +2,7 @@ const {
   Master_Unit,
   Master_Product,
   Master_Product_Price,
+  Master_Modal,
 } = require("../../models");
 
 class MasterDataProductPriceService {
@@ -44,10 +45,19 @@ class MasterDataProductPriceService {
         include: [Master_Product, Master_Unit],
       });
 
+      const masterModal = await Master_Modal.findAll({
+        where: { productId: payload.productId },
+        include: [Master_Product, Master_Unit],
+      });
+
       const result = units.map((unit, index) => {
         // Find if this unit has an existing price for the product
         const existingPrice = existingPrices.find(
           (price) => price.unitId === unit.id
+        );
+
+        const existingModal = masterModal.find(
+          (modal) => modal.unitId === unit.id
         );
 
         return {
@@ -55,6 +65,7 @@ class MasterDataProductPriceService {
           unitId: unit.id,
           unitName: unit.name, // Assuming Master_Unit has a 'name' column
           basePrice: existingPrice ? existingPrice.basePrice : 0,
+          masterModal: existingModal ? existingModal.modal : 0,
         };
       });
 

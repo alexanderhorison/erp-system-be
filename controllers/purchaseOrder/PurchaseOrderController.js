@@ -43,6 +43,7 @@ class PurchaseOrderController {
               unitId: yup.number().required("Satuan product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
+              isNewModal: yup.boolean().optional(),
             })
           )
           .required("List purchase order produk harus ada"),
@@ -216,6 +217,7 @@ class PurchaseOrderController {
               price: yup.number().required("Price product harus diisi"),
               quantity: yup.number().required("Quantity harus diisi"),
               subTotal: yup.number().required("Sub Total Product harus diisi"),
+              isNewModal: yup.boolean().optional(),
             })
           )
           .required("List purchase order produk harus ada"),
