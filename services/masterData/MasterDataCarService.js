@@ -3,8 +3,10 @@ const { Tm_Cars } = require("../../models");
 class MasterDataCarService {
   static async create(data, user) {
     try {
-      const { name, description, is_active } = data;
-      const plate_number = data.plate_number ? data.plate_number.toUpperCase().replace(/\s+/g, '') : null;
+      const { name, description, is_active, emoneyBalance } = data;
+      const plate_number = data.plate_number
+        ? data.plate_number.toUpperCase().replace(/\s+/g, "")
+        : null;
 
       const existingCar = await Tm_Cars.findOne({
         where: { plate_number: plate_number },
@@ -22,6 +24,7 @@ class MasterDataCarService {
         plate_number: plate_number,
         description: description,
         is_active: is_active ?? true,
+        emoneyBalance: emoneyBalance ?? 0,
       });
     } catch (error) {
       throw error;
@@ -30,8 +33,10 @@ class MasterDataCarService {
 
   static async update(id, data, user) {
     try {
-      const { name, description, is_active } = data;
-      const plate_number = data.plate_number ? data.plate_number.toUpperCase().replace(/\s+/g, '') : null;
+      const { name, description, is_active, emoneyBalance } = data;
+      const plate_number = data.plate_number
+        ? data.plate_number.toUpperCase().replace(/\s+/g, "")
+        : null;
 
       const existingCar = await Tm_Cars.findByPk(id);
 
@@ -61,6 +66,7 @@ class MasterDataCarService {
         plate_number: plate_number,
         description: description,
         is_active: is_active,
+        emoneyBalance: emoneyBalance,
       });
 
       return updatedCar;
@@ -76,7 +82,7 @@ class MasterDataCarService {
       if (!car) {
         throw {
           code: 404,
-          message: "Kendaraan tidak ditemukan"
+          message: "Kendaraan tidak ditemukan",
         };
       }
 
@@ -99,6 +105,10 @@ class MasterDataCarService {
         where: {
           ...(active !== undefined && { is_active: active }),
         },
+        order: [
+          ['is_active', 'DESC'], // Active cars first
+          ['name', 'ASC'], // Then sort by name alphabetically
+        ],
       });
 
       const result = data.map((item) => ({
@@ -107,8 +117,9 @@ class MasterDataCarService {
         plate_number: item.plate_number,
         description: item.description,
         is_active: item.is_active,
+        emoneyBalance: item.emoneyBalance,
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        updatedAt: item.updatedAt,
       }));
       return result;
     } catch (error) {
@@ -133,8 +144,9 @@ class MasterDataCarService {
         plate_number: car.plate_number,
         description: car.description,
         is_active: car.is_active,
+        emoneyBalance: car.emoneyBalance,
         createdAt: car.createdAt,
-        updatedAt: car.updatedAt
+        updatedAt: car.updatedAt,
       };
 
       return result;

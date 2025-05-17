@@ -19,9 +19,7 @@ class ConfigController {
 
       const result = await ConfigService.getAllConfig({ query: body });
 
-      res
-        .status(200)
-        .json(responses(true, "Success", result));
+      res.status(200).json(responses(true, "Success", result));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -45,9 +43,7 @@ class ConfigController {
         payload: body,
       });
 
-      res
-        .status(200)
-        .json(responses(true, "Success", body));
+      res.status(200).json(responses(true, "Success", body));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -70,9 +66,7 @@ class ConfigController {
         query: body,
       });
 
-      res
-        .status(200)
-        .json(responses(true, "Success", data));
+      res.status(200).json(responses(true, "Success", data));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -84,7 +78,7 @@ class ConfigController {
     try {
       const schemaParams = yup.object({
         id: yup.number().required("Id harus diisi"),
-      })
+      });
 
       const schemaBody = yup.object({
         key: yup.string().optional(),
@@ -102,9 +96,7 @@ class ConfigController {
         payload: body,
       });
 
-      res
-        .status(200)
-        .json(responses(true, "Success", body));
+      res.status(200).json(responses(true, "Success", body));
     } catch (error) {
       console.log(error);
 
@@ -118,7 +110,7 @@ class ConfigController {
     try {
       const schemaBody = yup.object({
         id: yup.number().required("Id harus diisi"),
-      })
+      });
 
       const body = await yupSchemaValidation(req.body, schemaBody);
 
@@ -134,6 +126,32 @@ class ConfigController {
     }
   }
 
+  // BULK UPDATE CONFIG BY CATEGORY
+  static async bulkUpdateConfig(req, res) {
+    try {
+      const schemaBody = yup.array().of(
+        yup.object({
+          key: yup.string().required("Key harus diisi"),
+          value: yup.string().optional(),
+          category: yup.string().optional(),
+          value_json: yup.mixed().optional(),
+          description: yup.string().optional(),
+        })
+      );
+
+      const body = await yupSchemaValidation(req.body, schemaBody);
+
+      await ConfigService.bulkUpdate({
+        payload: body,
+      });
+
+      res.status(200).json(responses(true, "Success", body));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ConfigController;

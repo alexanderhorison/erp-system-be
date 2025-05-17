@@ -48,7 +48,8 @@ class MasterDataUnexpectedCostCategoryService {
         if (duplicateName) {
           throw {
             code: 400,
-            message: "Nama kategori biaya tidak terduga sudah ada dalam database",
+            message:
+              "Nama kategori biaya tidak terduga sudah ada dalam database",
           };
         }
       }
@@ -72,7 +73,7 @@ class MasterDataUnexpectedCostCategoryService {
       if (!category) {
         throw {
           code: 404,
-          message: "Kategori biaya tidak terduga tidak ditemukan"
+          message: "Kategori biaya tidak terduga tidak ditemukan",
         };
       }
 
@@ -94,7 +95,7 @@ class MasterDataUnexpectedCostCategoryService {
           ...(query.active !== undefined && {
             is_active: query.active,
           }),
-        }
+        },
       });
       const result = data.map((item) => ({
         id: item.id,
@@ -102,7 +103,7 @@ class MasterDataUnexpectedCostCategoryService {
         description: item.description,
         is_active: item.is_active,
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        updatedAt: item.updatedAt,
       }));
       return result;
     } catch (error) {
@@ -127,7 +128,7 @@ class MasterDataUnexpectedCostCategoryService {
         description: category.description,
         is_active: category.is_active,
         createdAt: category.createdAt,
-        updatedAt: category.updatedAt
+        updatedAt: category.updatedAt,
       };
 
       return result;

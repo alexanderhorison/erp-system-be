@@ -19,7 +19,9 @@ const EmailController = require('../controllers/email/EmailController');
 const routerExport = require("./export/index");
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
-const routerConfig = require("./config/index")
+const routerConfig = require("./config/index");
+const routerDailyCost = require("./dailyCost/index");
+
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
 });
@@ -71,6 +73,9 @@ router.use("/purchase-order", routerPurchaseOrder);
 router.use("/point-of-sale", routerPointOfSale);
 
 router.use("/export", routerExport);
+
+// Daily Cost
+router.use("/daily-cost", routerDailyCost);
 
 router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
 router.post("/send-email-pos", upload.single('pdf'), EmailController.sendEmailPos)

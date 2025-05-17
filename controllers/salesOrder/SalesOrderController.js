@@ -7,9 +7,14 @@ class SalesOrderController {
   static async getAllSalesOrder(req, res) {
     try {
       const user = req.userData;
+      const schemaQuery = yup.object({
+        date: yup.string().optional(),
+      })
+      const query = await yupSchemaValidation(req.query, schemaQuery);
 
       const getAllSalesOrder = await SalesOrderService.getAll({
         user,
+        query
       });
 
       res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
@@ -274,6 +279,27 @@ class SalesOrderController {
       const getAllSalesOrder =
         await SalesOrderService.getSalesOrderByCustomerId({
           customerId,
+        });
+
+      res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getSalesOrderByDate(req, res) {
+    try {
+      const params = req.params;
+
+      const schemaParams = yup.string().required("Tanggal harus diisi");
+
+      const date = await yupSchemaValidation(params.date, schemaParams);
+
+      const getAllSalesOrder =
+        await SalesOrderService.getSalesOrderByDate({
+          date,
         });
 
       res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));

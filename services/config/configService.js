@@ -100,6 +100,25 @@ class ConfigService {
     }
   }
 
+  static async bulkUpdate({ payload }) {
+    try {
+      const transaction = await sq.transaction()
+
+      for (const item of payload) {
+        await Config.update(item, {
+          where: {
+            key: item.key
+          },
+          transaction
+        })
+      }
+
+      await transaction.commit()
+    } catch (error) {
+      throw error
+    }
+  }
+
 }
 
 module.exports = ConfigService

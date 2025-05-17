@@ -28,7 +28,7 @@ class MasterEmployeeController {
         .json(responses(true, "Karyawan berhasil ditambahkan", newEmployee));
     } catch (error) {
       console.log(error);
-      
+
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
@@ -88,6 +88,8 @@ class MasterEmployeeController {
         active: yup.boolean().optional(),
       });
       const query = await yupSchemaValidation(req.query, schemaQuery);
+      console.log(query);
+
       const employees = await MasterDataEmployeeService.findAll(query);
       res
         .status(200)

@@ -20,14 +20,24 @@ const {
   Sales_Order_Barter_Details,
   Master_Modal,
 } = require("../../models");
-
+const moment = require("moment");
+const { Op } = require("sequelize");
 class SalesOrderService {
-  static async getAll({ user }) {
+  static async getAll({ user, query }) {
     try {
+      const formattedDate = query?.date ? moment(query?.date, "DD-MM-YYYY").format("YYYY-MM-DD") : null;
+
       const allData = await Sales_Order.findAll({
-        // where: {
-        //   ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
-        // },
+        where: {
+          ...(query?.status && { status: query?.status }),
+          ...(query?.customerId && { customerId: query?.customerId }),
+          ...(query?.date && {
+            approvedAt: {
+              [Op.gte]: moment(formattedDate).startOf("day").toDate(),
+              [Op.lte]: moment(formattedDate).endOf("day").toDate(),
+            },
+          }),
+        },
         include: [
           // {
           //   model: Master_Warehouse,
@@ -56,6 +66,9 @@ class SalesOrderService {
               },
             ],
           },
+          {
+            model: Master_Customer,
+          }
         ],
         order: [["createdAt", "DESC"]],
       });
@@ -82,6 +95,7 @@ class SalesOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
+          customer: item?.Master_Customer,
         };
       });
 
@@ -275,7 +289,7 @@ class SalesOrderService {
         // modal product -> modal * quantity
         const totalModalProduct = Number(item.modal) * Number(item.quantity);
         // Gain loss product Harga jual - Harga beli
-        const gainLossProduct =  Number(item.subTotal) - Number(totalModalProduct)
+        const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct)
 
         await Sales_Order_Detail.update(
           {
@@ -292,7 +306,7 @@ class SalesOrderService {
         // Sum for total modal and total gain loss SO
         totalModal += Number(item.modal);
         totalGainLoss += Number(gainLossProduct);
-        
+
         // catat stock adjustment histories
         await Stock_Adjustment_History.create(
           {
@@ -454,9 +468,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalCustomer) -
+            ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
