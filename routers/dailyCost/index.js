@@ -14,7 +14,7 @@ router.get("/all", DailyCostController.getAllDailyCosts);
 router.get("/by-date", DailyCostController.getDailyCostByDate);
 
 // Update daily cost
-router.put("/:date", DailyCostController.updateDailyCost);
+router.put("/update/:date", DailyCostController.updateDailyCost);
 
 // Delete daily cost
 router.delete("/:date", DailyCostController.deleteDailyCost);

@@ -12,10 +12,6 @@ const {
 } = require("../../models");
 const { Op } = require("sequelize");
 const moment = require("moment");
-const {
-  formatStartDateDatabase,
-  formatEndDateDatabase,
-} = require("../../helpers/formatDate");
 
 class DailyCostService {
   static async create(data, user) {
@@ -102,6 +98,27 @@ class DailyCostService {
         });
       }
 
+      // UPDATE EMONEY CARS
+      if (costGenerals && costGenerals.length > 0) {
+        for (const item of costGenerals) {
+          const findCar = await Tm_Cars.findOne({
+            where: {
+              id: item.carsId,
+            },
+            transaction,
+          });
+          if (findCar) {
+            const balanceEMoney = +findCar.emoneyBalance || 0;
+            const updateEmoneyCar =
+              balanceEMoney -
+              (item?.tollCost || 0) +
+              (item?.eMoneyBalance || 0);
+            findCar.emoneyBalance = updateEmoneyCar;
+            await findCar.save({ transaction });
+          }
+        }
+      }
+
       await transaction.commit();
       return newDailyCost;
     } catch (error) {
@@ -109,8 +126,8 @@ class DailyCostService {
       throw error;
     }
   }
-
   static async update(date, data, user) {
+    const transaction = await sequelize.transaction();
     try {
       const {
         date,
@@ -131,9 +148,21 @@ class DailyCostService {
             [Op.between]: DailyCostService.formatDateDailyCost(date),
           },
         },
+        include: [
+          {
+            model: Daily_Cost_General,
+          },
+          {
+            model: Daily_Cost_Employee,
+          },
+          {
+            model: Daily_Cost_Unexpected,
+          },
+        ],
       });
 
       if (!existingDailyCost) {
+        await transaction.rollback();
         throw {
           code: 404,
           message: "Daily cost tidak ditemukan",
@@ -142,79 +171,116 @@ class DailyCostService {
 
       const id = existingDailyCost?.id;
 
-      // Set the time to noon in local timezone to avoid date shift issues
       const localDate = date
         ? moment(date).hours(12).minutes(0).seconds(0)
         : existingDailyCost.date;
 
-      // Update main daily cost record
-      const updatedDailyCost = await existingDailyCost.update({
-        date: localDate,
-        notes,
-        status,
-        grandTotal:
-          grandTotal !== undefined ? grandTotal : existingDailyCost.grandTotal,
-        totalCostGeneral:
-          totalCostGeneral !== undefined
-            ? totalCostGeneral
-            : existingDailyCost.totalCostGeneral,
-        totalCostEmployee:
-          totalCostEmployee !== undefined
-            ? totalCostEmployee
-            : existingDailyCost.totalCostEmployee,
-        totalCostUnexpected:
-          totalCostUnexpected !== undefined
-            ? totalCostUnexpected
-            : existingDailyCost.totalCostUnexpected,
+      const updatedDailyCost = await existingDailyCost.update(
+        {
+          date: localDate,
+          notes,
+          status,
+          grandTotal:
+            grandTotal !== undefined
+              ? grandTotal
+              : existingDailyCost.grandTotal,
+          totalCostGeneral:
+            totalCostGeneral !== undefined
+              ? totalCostGeneral
+              : existingDailyCost.totalCostGeneral,
+          totalCostEmployee:
+            totalCostEmployee !== undefined
+              ? totalCostEmployee
+              : existingDailyCost.totalCostEmployee,
+          totalCostUnexpected:
+            totalCostUnexpected !== undefined
+              ? totalCostUnexpected
+              : existingDailyCost.totalCostUnexpected,
+        },
+        { transaction }
+      );
+
+      // UPDATE GENERAL COST
+      await Daily_Cost_General.destroy({
+        where: { dailyCostId: id },
+        transaction,
+      });
+      const costGeneralRecords = costGenerals.map((costGeneral) => ({
+        ...costGeneral,
+        dailyCostId: id,
+      }));
+      await Daily_Cost_General.bulkCreate(costGeneralRecords, {
+        transaction,
       });
 
-      // Update related cost general records
-      if (costGenerals && costGenerals.length > 0) {
-        // Delete existing records
-        await Daily_Cost_General.destroy({
-          where: { dailyCostId: id },
+      // UPDATE EMONEY CARS
+      // Restore previous eMoney balance
+      const previousCostGenerals = existingDailyCost.Daily_Cost_Generals || [];
+      for (const item of previousCostGenerals) {
+        const findCar = await Tm_Cars.findOne({
+          where: {
+            id: item.carsId,
+          },
+          transaction,
         });
-
-        // Create new records
-        const costGeneralRecords = costGenerals.map((costGeneral) => ({
-          ...costGeneral,
-          dailyCostId: id,
-        }));
-        await Daily_Cost_General.bulkCreate(costGeneralRecords);
+        // Kalau update, maka tollcost - eMoneyBalance
+        if (findCar) {
+          const balanceEMoney = +findCar.emoneyBalance || 0;
+          const restoreEmoney =
+            (item.tollCost || 0) - (item.eMoneyBalance || 0);
+          findCar.emoneyBalance = balanceEMoney + restoreEmoney;
+          await findCar.save({ transaction });
+        }
       }
 
-      // Update related cost employee records
-      if (costEmployees && costEmployees.length > 0) {
-        // Delete existing records
-        await Daily_Cost_Employee.destroy({
-          where: { dailyCostId: id },
+      for (const item of costGenerals) {
+        const findCar = await Tm_Cars.findOne({
+          where: {
+            id: item.carsId,
+          },
+          transaction,
         });
 
-        // Create new records
-        const costEmployeeRecords = costEmployees.map((costEmployee) => ({
-          ...costEmployee,
-          dailyCostId: id,
-        }));
-        await Daily_Cost_Employee.bulkCreate(costEmployeeRecords);
+        if (findCar) {
+          const balanceEMoney = +findCar.emoneyBalance || 0;
+          const updateEmoneyCar =
+            balanceEMoney - (item?.tollCost || 0) - (item?.eMoneyBalance || 0);
+          findCar.emoneyBalance = updateEmoneyCar;
+          await findCar.save({ transaction });
+        }
       }
 
-      // Update related cost unexpected records
-      if (costUnexpecteds && costUnexpecteds.length > 0) {
-        // Delete existing records
-        await Daily_Cost_Unexpected.destroy({
-          where: { dailyCostId: id },
-        });
+      // UPDATE EMPLOYEE COST
+      await Daily_Cost_Employee.destroy({
+        where: { dailyCostId: id },
+        transaction,
+      });
+      const costEmployeeRecords = costEmployees.map((costEmployee) => ({
+        ...costEmployee,
+        dailyCostId: id,
+      }));
+      await Daily_Cost_Employee.bulkCreate(costEmployeeRecords, {
+        transaction,
+      });
 
-        // Create new records
-        const costUnexpectedRecords = costUnexpecteds.map((costUnexpected) => ({
-          ...costUnexpected,
-          dailyCostId: id,
-        }));
-        await Daily_Cost_Unexpected.bulkCreate(costUnexpectedRecords);
-      }
+      // UPDATE UNEXPECTED COST
+      await Daily_Cost_Unexpected.destroy({
+        where: { dailyCostId: id },
+        transaction,
+      });
+      const costUnexpectedRecords = costUnexpecteds.map((costUnexpected) => ({
+        ...costUnexpected,
+        dailyCostId: id,
+      }));
+      await Daily_Cost_Unexpected.bulkCreate(costUnexpectedRecords, {
+        transaction,
+      });
 
+      // throw new Error("test");
+      await transaction.commit();
       return updatedDailyCost;
     } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }
@@ -231,15 +297,12 @@ class DailyCostService {
         include: [
           {
             model: Daily_Cost_General,
-            as: "Daily_Cost_Generals",
           },
           {
             model: Daily_Cost_Employee,
-            as: "Daily_Cost_Employees",
           },
           {
             model: Daily_Cost_Unexpected,
-            as: "Daily_Cost_Unexpecteds",
           },
         ],
         transaction,
@@ -251,26 +314,28 @@ class DailyCostService {
           message: "Daily cost tidak ditemukan",
         };
       }
-      
+
       const id = dailyCost?.id;
 
-      // RESTORE EMONEY CARS
-      // if (dailyCost?.Daily_Cost_Generals?.length > 0) {
-      //   await Promise.all(
-      //     dailyCost.Daily_Cost_Generals.map(async (item) => {
-      //       const findCar = await Tm_Cars.findOne({
-      //         where: {
-      //           id: item.carsId,
-      //         },
-      //         transaction,
-      //       });
-      //       const restoreEmoney =
-      //         (item.tollCost || 0) - (item.eMoneyBalance || 0);
-      //       findCar.eMoneyBalance -= restoreEmoney;
-      //       await findCar.save({ transaction });
-      //     })
-      //   );
-      // }
+      // UPDATE EMONEY CARS
+      // Restore previous eMoney balance
+      const previousCostGenerals = dailyCost.Daily_Cost_Generals || [];
+      for (const item of previousCostGenerals) {
+        const findCar = await Tm_Cars.findOne({
+          where: {
+            id: item.carsId,
+          },
+          transaction,
+        });
+        // Kalau update, maka tollcost - eMoneyBalance
+        if (findCar) {
+          const balanceEMoney = +findCar.emoneyBalance || 0;
+          const restoreEmoney =
+            (item.tollCost || 0) - (item.eMoneyBalance || 0);
+          findCar.emoneyBalance = balanceEMoney + restoreEmoney;
+          await findCar.save({ transaction });
+        }
+      }
 
       // Delete related records first within the transaction
       await Daily_Cost_General.destroy({
@@ -385,16 +450,16 @@ class DailyCostService {
                 include: [
                   {
                     model: Master_Customer,
-                  }
-                ]
-              },  
+                  },
+                ],
+              },
               {
                 model: Tm_Cars,
               },
               {
                 model: Tm_Employee,
               },
-            ]
+            ],
           },
           {
             model: Daily_Cost_Employee,
@@ -402,7 +467,7 @@ class DailyCostService {
               {
                 model: Tm_Employee,
               },
-            ]
+            ],
           },
           {
             model: Daily_Cost_Unexpected,
@@ -410,7 +475,7 @@ class DailyCostService {
               {
                 model: Tm_Unexpected_Cost_Categories,
               },
-            ]
+            ],
           },
         ],
       });
@@ -495,7 +560,6 @@ class DailyCostService {
       new Date(date).setHours(23, 59, 59, 999),
     ];
   }
-
 }
 
 module.exports = DailyCostService;
