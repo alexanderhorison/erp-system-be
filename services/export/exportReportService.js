@@ -318,7 +318,15 @@ class ExportReportService {
 
           /* ── add row to sheet ────────────────────────────────── */
           const r = worksheet3.addRow(rowObj);
-          r.eachCell(c => { c.border = styleBorder; c.alignment = centerMiddle; });
+          const colCount = worksheet3.columns.length;
+
+          for (let col = 1; col <= colCount; col++) {
+            const cell = r.getCell(col);            // makes sure the cell is instantiated
+            if (cell.value === undefined) cell.value = '';  // keep it visually empty
+
+            cell.border = styleBorder;           // your existing border style
+            cell.alignment = centerMiddle;          // your alignment
+          }
         });
 
         /* ── MERGE VERTICAL CELLS (date + repeated cols) ───────── */
