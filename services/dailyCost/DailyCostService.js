@@ -510,21 +510,23 @@ class DailyCostService {
     }
   }
 
-  static async findByMonth(month, year) {
+  static async findByMonth({
+    date
+  }) {
     try {
-      // Get first and last day of the month
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-
-      // Set time to include all records for the start and end days
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+      const dateStart = moment(date).startOf("month");
+      const dateEnd = moment(date).endOf("month");
 
       // Fetch all daily costs for the month
+      console.log(dateStart);
+
       const dailyCosts = await Daily_Cost.findAll({
         where: {
           date: {
-            [Op.between]: [startDate, endDate],
+            [Op.between]: [
+              dateStart,
+              dateEnd,
+            ],
           },
         },
         attributes: [
@@ -543,7 +545,10 @@ class DailyCostService {
         where: {
           status: "APPROVED",
           approvedAt: {
-            [Op.between]: [startDate, endDate],
+            [Op.between]: [
+              dateStart,
+              dateEnd,
+            ],
           },
         },
         attributes: ["id", "approvedAt"],
@@ -559,43 +564,38 @@ class DailyCostService {
         salesOrdersByDate[dateKey] += 1;
       });
 
-      // If no sales orders in the month, return empty array
-      if (Object.keys(salesOrdersByDate).length === 0) {
-        return [];
-      }
-
-      // Create result array only for dates that have sales orders
+      // Create result array for all daily costs
       const result = [];
 
-      // Process each date that has sales orders
-      for (const dateString in salesOrdersByDate) {
-        // Find daily cost for this date if it exists
-        const dailyCost = dailyCosts.find(
-          (item) => moment(item?.date).format("YYYY-MM-DD") === dateString
-        );
+      // First add all daily costs to the result
+      dailyCosts.forEach(dailyCost => {
+        const dateString = moment(dailyCost.date).format("YYYY-MM-DD");
+        result.push({
+          id: dailyCost.id,
+          date: dateString,
+          grandTotal:
+            Number(dailyCost.totalCostEmployee || 0) +
+            Number(dailyCost.totalCostGeneral || 0) +
+            Number(dailyCost.totalCostUnexpected || 0),
+          notes: dailyCost.notes,
+          status: dailyCost.status,
+          totalSo: salesOrdersByDate[dateString] || 0,
+        });
+      });
 
-        if (dailyCost) {
+      // Then add any dates with sales orders but no daily costs
+      for (const dateString in salesOrdersByDate) {
+        const alreadyAdded = result.some(item => item.date === dateString);
+
+        if (!alreadyAdded) {
           result.push({
-            id: dailyCost.id,
+            id: null,
             date: dateString,
-            grandTotal:
-              Number(dailyCost.totalCostEmployee || 0) +
-              Number(dailyCost.totalCostGeneral || 0) +
-              Number(dailyCost.totalCostUnexpected || 0),
-            notes: dailyCost.notes,
-            status: dailyCost.status,
+            grandTotal: null,
+            notes: null,
+            status: "EMPTY",
             totalSo: salesOrdersByDate[dateString],
           });
-        } else {
-          // Return empty daily cost with date and totalSo for days with SO but no daily cost
-          // result.push({
-          //   id: null,
-          //   date: dateString,
-          //   grandTotal: null,
-          //   notes: null,
-          //   status: "EMPTY",
-          //   totalSo: salesOrdersByDate[dateString],
-          // });
         }
       }
 
@@ -611,6 +611,15 @@ class DailyCostService {
       new Date(date).setHours(23, 59, 59, 999),
     ];
   }
+
+  static formatQueryBetweenDateDc(date1, date2) {
+    return [
+      new Date(date1).setHours(0, 0, 0, 0),
+      new Date(date2).setHours(23, 59, 59, 999),
+    ];
+  }
+
+
 }
 
 module.exports = DailyCostService;

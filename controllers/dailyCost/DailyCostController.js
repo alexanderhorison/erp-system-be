@@ -210,13 +210,10 @@ class DailyCostController {
       });
       const query = await yupSchemaValidation(req.query, schemaQuery);
 
-      // Extract month and year from the provided date
-      const date = new Date(query.date);
-      const month = date.getMonth() + 1; // JavaScript months are 0-indexed
-      const year = date.getFullYear();
-
       // Get all daily costs for the month with calculated grandTotal
-      const data = await DailyCostService.findByMonth(month, year);
+      const data = await DailyCostService.findByMonth({
+        date: query.date,
+      });
 
       res
         .status(200)
