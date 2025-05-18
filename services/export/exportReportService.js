@@ -346,7 +346,6 @@ class ExportReportService {
       const totalRowObj = { tanggal: 'TOTAL' };
       let grandTotal = 0
       Object.entries(grand).forEach(([k, v]) => {
-        console.log(k, v);
         if (k !== 'tanggal') {
           totalRowObj[k] = priceFormatWIthCurrency(v)
           grandTotal += v;
