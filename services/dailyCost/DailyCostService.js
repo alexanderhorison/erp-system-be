@@ -499,7 +499,9 @@ class DailyCostService {
         totalCostUnexpected: dailyCost.totalCostUnexpected,
         createdAt: dailyCost.createdAt,
         updatedAt: dailyCost.updatedAt,
-        costGenerals: dailyCost.Daily_Cost_Generals || [],
+        costGenerals: (dailyCost.Daily_Cost_Generals || []).sort(
+          (a, b) => a.id - b.id
+        ),
         costEmployees: dailyCost.Daily_Cost_Employees || [],
         costUnexpecteds: dailyCost.Daily_Cost_Unexpecteds || [],
       };
@@ -510,23 +512,15 @@ class DailyCostService {
     }
   }
 
-  static async findByMonth({
-    date
-  }) {
+  static async findByMonth({ date }) {
     try {
       const dateStart = moment(date).startOf("month");
       const dateEnd = moment(date).endOf("month");
 
-      // Fetch all daily costs for the month
-      console.log(dateStart);
-
       const dailyCosts = await Daily_Cost.findAll({
         where: {
           date: {
-            [Op.between]: [
-              dateStart,
-              dateEnd,
-            ],
+            [Op.between]: [dateStart, dateEnd],
           },
         },
         attributes: [
@@ -545,10 +539,7 @@ class DailyCostService {
         where: {
           status: "APPROVED",
           approvedAt: {
-            [Op.between]: [
-              dateStart,
-              dateEnd,
-            ],
+            [Op.between]: [dateStart, dateEnd],
           },
         },
         attributes: ["id", "approvedAt"],
@@ -568,7 +559,7 @@ class DailyCostService {
       const result = [];
 
       // First add all daily costs to the result
-      dailyCosts.forEach(dailyCost => {
+      dailyCosts.forEach((dailyCost) => {
         const dateString = moment(dailyCost.date).format("YYYY-MM-DD");
         result.push({
           id: dailyCost.id,
@@ -585,7 +576,7 @@ class DailyCostService {
 
       // Then add any dates with sales orders but no daily costs
       for (const dateString in salesOrdersByDate) {
-        const alreadyAdded = result.some(item => item.date === dateString);
+        const alreadyAdded = result.some((item) => item.date === dateString);
 
         if (!alreadyAdded) {
           result.push({
@@ -618,8 +609,6 @@ class DailyCostService {
       new Date(date2).setHours(23, 59, 59, 999),
     ];
   }
-
-
 }
 
 module.exports = DailyCostService;

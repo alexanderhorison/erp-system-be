@@ -25,7 +25,9 @@ const { Op } = require("sequelize");
 class SalesOrderService {
   static async getAll({ user, query }) {
     try {
-      const formattedDate = query?.date ? moment(query?.date, "DD-MM-YYYY").format("YYYY-MM-DD") : null;
+      const formattedDate = query?.date
+        ? moment(query?.date, "DD-MM-YYYY").format("YYYY-MM-DD")
+        : null;
 
       const allData = await Sales_Order.findAll({
         where: {
@@ -68,9 +70,9 @@ class SalesOrderService {
           },
           {
             model: Master_Customer,
-          }
+          },
         ],
-        order: [["createdAt", "DESC"]],
+        order: [["createdAt", query?.sort || "DESC"]],
       });
 
       const sendData = allData.map((item) => {
@@ -173,7 +175,7 @@ class SalesOrderService {
             price: item.price,
             quantity: item.quantity,
             subTotal: item.subTotal,
-            isNewModal: item.isNewModal
+            isNewModal: item.isNewModal,
           });
         }
       }
@@ -290,7 +292,8 @@ class SalesOrderService {
         // modal product -> modal * quantity
         const totalModalProduct = Number(item.modal) * Number(item.quantity);
         // Gain loss product Harga jual - Harga beli
-        const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct)
+        const gainLossProduct =
+          Number(item.subTotal) - Number(totalModalProduct);
 
         await Sales_Order_Detail.update(
           {
@@ -323,7 +326,6 @@ class SalesOrderService {
           { transaction }
         );
 
-
         // Update Base Modal Jika input harga modal beda dengan base master modal
         const findMasterModal = await Master_Modal.findOne({
           where: {
@@ -348,7 +350,6 @@ class SalesOrderService {
             }
           );
         }
-
       }
 
       // UPDATE total modal and total gain loss
@@ -458,13 +459,13 @@ class SalesOrderService {
               },
               { transaction }
             );
-          // Jika flag isNewModal true, maka rumus modal akan diperbarui
+            // Jika flag isNewModal true, maka rumus modal akan diperbarui
           } else if (item?.isNewModal && findMasterModal) {
             await Master_Modal.update(
               {
                 quantity: item?.quantity,
                 amountPurchaseOrder: item?.subTotal,
-                modal: item?.price, 
+                modal: item?.price,
                 totalPurchaseOrder: 1,
               },
               {
@@ -512,9 +513,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalCustomer) -
+          ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
