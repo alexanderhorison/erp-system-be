@@ -520,6 +520,7 @@ class DailyCostService {
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
+      // Fetch all daily costs for the month
       const dailyCosts = await Daily_Cost.findAll({
         where: {
           date: {
@@ -537,17 +538,66 @@ class DailyCostService {
         ],
       });
 
-      // Transform the results to include only id and calculated grandTotal
-      const result = dailyCosts.map((item) => ({
-        id: item.id,
-        date: moment(item?.date).format("YYYY-MM-DD"),
-        grandTotal:
-          Number(item.totalCostEmployee || 0) +
-          Number(item.totalCostGeneral || 0) +
-          Number(item.totalCostUnexpected || 0),
-        notes: item.notes,
-        status: item.status,
-      }));
+      // Fetch all approved Sales Orders for the month
+      const salesOrders = await Sales_Order.findAll({
+        where: {
+          status: "APPROVED",
+          approvedAt: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+        attributes: ["id", "approvedAt"],
+      });
+
+      // Group sales orders by date
+      const salesOrdersByDate = {};
+      salesOrders.forEach((so) => {
+        const dateKey = moment(so.approvedAt).format("YYYY-MM-DD");
+        if (!salesOrdersByDate[dateKey]) {
+          salesOrdersByDate[dateKey] = 0;
+        }
+        salesOrdersByDate[dateKey] += 1;
+      });
+
+      // If no sales orders in the month, return empty array
+      if (Object.keys(salesOrdersByDate).length === 0) {
+        return [];
+      }
+
+      // Create result array only for dates that have sales orders
+      const result = [];
+
+      // Process each date that has sales orders
+      for (const dateString in salesOrdersByDate) {
+        // Find daily cost for this date if it exists
+        const dailyCost = dailyCosts.find(
+          (item) => moment(item?.date).format("YYYY-MM-DD") === dateString
+        );
+
+        if (dailyCost) {
+          result.push({
+            id: dailyCost.id,
+            date: dateString,
+            grandTotal:
+              Number(dailyCost.totalCostEmployee || 0) +
+              Number(dailyCost.totalCostGeneral || 0) +
+              Number(dailyCost.totalCostUnexpected || 0),
+            notes: dailyCost.notes,
+            status: dailyCost.status,
+            totalSo: salesOrdersByDate[dateString],
+          });
+        } else {
+          // Return empty daily cost with date and totalSo for days with SO but no daily cost
+          // result.push({
+          //   id: null,
+          //   date: dateString,
+          //   grandTotal: null,
+          //   notes: null,
+          //   status: "EMPTY",
+          //   totalSo: salesOrdersByDate[dateString],
+          // });
+        }
+      }
 
       return result;
     } catch (error) {
