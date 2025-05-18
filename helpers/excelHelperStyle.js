@@ -31,8 +31,13 @@ const styleExcel = {
   centerMiddle: { horizontal: "center", vertical: "middle" },
 };
 
+function addTo(obj, k, v) {
+   return obj[k] = (obj[k] || 0) + v; 
+}
+
 module.exports = {
   applyHeaderStyle,
   applyCellFill,
   styleExcel,
+  addTo
 };

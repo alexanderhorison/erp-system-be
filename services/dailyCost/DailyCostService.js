@@ -370,6 +370,7 @@ class DailyCostService {
   static async findAll(query) {
     try {
       const whereClause = {};
+      let orderBy = query.orderBy.toUpperCase() === "ASC" ? "ASC" : "DESC";
 
       if (query.startDate && query.endDate) {
         whereClause.date = {
@@ -408,7 +409,7 @@ class DailyCostService {
             as: "Daily_Cost_Unexpecteds",
           },
         ],
-        order: [["date", "DESC"]],
+        order: [["date", orderBy]],
       });
 
       const result = data.map((item) => ({
