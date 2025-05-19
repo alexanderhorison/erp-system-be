@@ -88,7 +88,6 @@ class MasterEmployeeController {
         active: yup.boolean().optional(),
       });
       const query = await yupSchemaValidation(req.query, schemaQuery);
-      console.log(query);
 
       const employees = await MasterDataEmployeeService.findAll(query);
       res

@@ -375,8 +375,7 @@ class MasterDataModalService {
               modal = 3190000;
           }
           if (detailSo.so_detail_id === 427) {
-            console.log("detailSo", detailSo);
-            console.log("modal", modal);
+            
           }
           //! ====================================
           temp.total_modal += Math.ceil(modal * detailSo.so_qty);
