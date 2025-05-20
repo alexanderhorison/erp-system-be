@@ -269,84 +269,123 @@ class ExportReportService {
       );
 
       for (const dailyCost of getDataDailyCost) {
-        // Separate by each SO
-        const generalsBySO = dailyCost.costGenerals.reduce((acc, cg) => {
-          (acc[cg.salesOrderId] = acc[cg.salesOrderId] || []).push(cg);
-          return acc;
-        }, {});
-
-        const soIds = Object.keys(generalsBySO);
-        const startRowIdx = worksheet3.rowCount + 1;
-        // loop through each SO
-        soIds.forEach((soId, idx) => {
+        if (dailyCost.costGenerals.length === 0) {
           const rowObj = { tanggal: dailyCost.date };
+          dailyCost.costEmployees.forEach((e) => {
+            rowObj[`emp_${e.employeeId}_gaji`] = priceFormatWIthCurrency(
+              +e.salary || 0
+            );
+            rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
+              +e.bonus || 0
+            );
 
-          // STATIC COST
-          let toll = 0, fuel = 0, transport = 0;
-          generalsBySO[soId].forEach(g => {
-            toll += +g.tollCost || 0;
-            fuel += +g.fuelCost || 0;
-            transport += +g.transportAllowance || 0;
-          });
-          Object.assign(rowObj, {
-            tollCost: priceFormatWIthCurrency(toll),
-            fuelCost: priceFormatWIthCurrency(fuel),
-            transportAllowance: priceFormatWIthCurrency(transport)
+            addTo(grand, `emp_${e.employeeId}_gaji`, +e.salary || 0);
+            addTo(grand, `emp_${e.employeeId}_bonus`, +e.bonus || 0);
           });
 
-          addTo(grand, 'tollCost', toll);
-          addTo(grand, 'fuelCost', fuel);
-          addTo(grand, 'transportAllowance', transport);
+          dailyCost.costUnexpecteds.forEach((u) => {
+            const k = `unexpectedCost_${u.categoryId}`;
+            rowObj[k] = priceFormatWIthCurrency(+u.price || 0);
+            addTo(grand, k, +u.price || 0);
+          });
 
-          if (idx === 0) {
-            dailyCost.costEmployees.forEach(e => {
-              rowObj[`emp_${e.employeeId}_gaji`] =
-                priceFormatWIthCurrency(+e.salary || 0);
-              rowObj[`emp_${e.employeeId}_bonus`] =
-                priceFormatWIthCurrency(+e.bonus || 0);
-
-              addTo(grand, `emp_${e.employeeId}_gaji`, +e.salary || 0);
-              addTo(grand, `emp_${e.employeeId}_bonus`, +e.bonus || 0);
-            });
-
-            dailyCost.costUnexpecteds.forEach(u => {
-              const k = `unexpectedCost_${u.categoryId}`;
-              rowObj[k] = priceFormatWIthCurrency(+u.price || 0);
-              addTo(grand, k, +u.price || 0);
-            });
-          }
-
-          /* ── add row to sheet ────────────────────────────────── */
           const r = worksheet3.addRow(rowObj);
           const colCount = worksheet3.columns.length;
 
           for (let col = 1; col <= colCount; col++) {
-            const cell = r.getCell(col);            // makes sure the cell is instantiated
-            if (cell.value === undefined) cell.value = '';  // keep it visually empty
+            const cell = r.getCell(col); // makes sure the cell is instantiated
+            if (cell.value === undefined) cell.value = ""; // keep it visually empty
 
-            cell.border = styleBorder;           // your existing border style
-            cell.alignment = centerMiddle;          // your alignment
+            cell.border = styleBorder; // your existing border style
+            cell.alignment = centerMiddle; // your alignment
           }
-        });
+        } else {
+          // Separate by each SO
+          const generalsBySO = dailyCost.costGenerals.reduce((acc, cg) => {
+            (acc[cg.salesOrderId] = acc[cg.salesOrderId] || []).push(cg);
+            return acc;
+          }, {});
 
-        /* ── MERGE VERTICAL CELLS (date + repeated cols) ───────── */
-        const endRowIdx = worksheet3.rowCount;
-        if (endRowIdx > startRowIdx) {
-          // merge the Date column
-          worksheet3.mergeCells(`A${startRowIdx}:A${endRowIdx}`);
+          const soIds = Object.keys(generalsBySO);
+          const startRowIdx = worksheet3.rowCount + 1;
+          // loop through each SO
+          soIds.forEach((soId, idx) => {
+            const rowObj = { tanggal: dailyCost.date };
 
-          const mergeKeys = [
-            ...employeesMaster.flatMap(e => [`emp_${e.id}_gaji`, `emp_${e.id}_bonus`]),
-            ...unexpectedCostMaster.map(u => `unexpectedCost_${u.id}`)
-          ];
+            // STATIC COST
+            let toll = 0,
+              fuel = 0,
+              transport = 0;
+            generalsBySO[soId].forEach((g) => {
+              toll += +g.tollCost || 0;
+              fuel += +g.fuelCost || 0;
+              transport += +g.transportAllowance || 0;
+            });
+            Object.assign(rowObj, {
+              tollCost: priceFormatWIthCurrency(toll),
+              fuelCost: priceFormatWIthCurrency(fuel),
+              transportAllowance: priceFormatWIthCurrency(transport),
+            });
 
-          mergeKeys.forEach(k => {
-            const col = worksheet3.getColumn(k);
-            if (!col || !col.letter) return;        // column might not exist (no data)
-            worksheet3.mergeCells(
-              `${col.letter}${startRowIdx}:${col.letter}${endRowIdx}`
-            );
+            addTo(grand, "tollCost", toll);
+            addTo(grand, "fuelCost", fuel);
+            addTo(grand, "transportAllowance", transport);
+
+            if (idx === 0) {
+              dailyCost.costEmployees.forEach((e) => {
+                rowObj[`emp_${e.employeeId}_gaji`] = priceFormatWIthCurrency(
+                  +e.salary || 0
+                );
+                rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
+                  +e.bonus || 0
+                );
+
+                addTo(grand, `emp_${e.employeeId}_gaji`, +e.salary || 0);
+                addTo(grand, `emp_${e.employeeId}_bonus`, +e.bonus || 0);
+              });
+
+              dailyCost.costUnexpecteds.forEach((u) => {
+                const k = `unexpectedCost_${u.categoryId}`;
+                rowObj[k] = priceFormatWIthCurrency(+u.price || 0);
+                addTo(grand, k, +u.price || 0);
+              });
+            }
+
+            /* ── add row to sheet ────────────────────────────────── */
+            const r = worksheet3.addRow(rowObj);
+            const colCount = worksheet3.columns.length;
+
+            for (let col = 1; col <= colCount; col++) {
+              const cell = r.getCell(col); // makes sure the cell is instantiated
+              if (cell.value === undefined) cell.value = ""; // keep it visually empty
+
+              cell.border = styleBorder; // your existing border style
+              cell.alignment = centerMiddle; // your alignment
+            }
           });
+
+          /* ── MERGE VERTICAL CELLS (date + repeated cols) ───────── */
+          const endRowIdx = worksheet3.rowCount;
+          if (endRowIdx > startRowIdx) {
+            // merge the Date column
+            worksheet3.mergeCells(`A${startRowIdx}:A${endRowIdx}`);
+
+            const mergeKeys = [
+              ...employeesMaster.flatMap((e) => [
+                `emp_${e.id}_gaji`,
+                `emp_${e.id}_bonus`,
+              ]),
+              ...unexpectedCostMaster.map((u) => `unexpectedCost_${u.id}`),
+            ];
+
+            mergeKeys.forEach((k) => {
+              const col = worksheet3.getColumn(k);
+              if (!col || !col.letter) return; // column might not exist (no data)
+              worksheet3.mergeCells(
+                `${col.letter}${startRowIdx}:${col.letter}${endRowIdx}`
+              );
+            });
+          }
         }
       }
 
