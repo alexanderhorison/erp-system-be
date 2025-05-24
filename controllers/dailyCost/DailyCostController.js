@@ -41,6 +41,20 @@ class DailyCostController {
               employeeName: yup.string().required("Nama karyawan harus diisi"),
               salary: yup.number().required("Gaji harus diisi"),
               bonus: yup.number().default(0).optional(),
+              amountDebt: yup.number().default(0).optional(),
+              amountDebtPaid: yup.number().default(0).optional().when("salary", (salary, schema) =>
+                schema.test(
+                  "debt-paid-not-more-than-salary",
+                  "Jumlah pembayaran hutang tidak boleh melebihi gaji",
+                  function (amountDebtPaid) {
+                    if (amountDebtPaid > 0 && salary !== undefined) {
+                      return amountDebtPaid <= salary;
+                    }
+                    return true;
+                  }
+                )
+              ),
+              notes: yup.string().optional()
             })
           )
           .optional(),
@@ -110,6 +124,20 @@ class DailyCostController {
               employeeName: yup.string().required("Nama karyawan harus diisi"),
               salary: yup.number().required("Gaji harus diisi"),
               bonus: yup.number().default(0).optional(),
+              amountDebt: yup.number().default(0).optional(),
+              amountDebtPaid: yup.number().default(0).optional().when("salary", (salary, schema) =>
+                schema.test(
+                  "debt-paid-not-more-than-salary",
+                  "Jumlah pembayaran hutang tidak boleh melebihi gaji",
+                  function (amountDebtPaid) {
+                    if (amountDebtPaid > 0 && salary !== undefined) {
+                      return amountDebtPaid <= salary;
+                    }
+                    return true;
+                  }
+                )
+              ),
+              notes: yup.string().optional()
             })
           )
           .optional(),

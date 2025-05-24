@@ -9,9 +9,11 @@ const {
   Tm_Unexpected_Cost_Categories,
   Sales_Order,
   Master_Customer,
+  Trx_Employee_Debt
 } = require("../../models");
 const { Op } = require("sequelize");
 const moment = require("moment");
+const { throwValidation } = require("../../helpers/responses");
 
 class DailyCostService {
   static async create(data, user) {
@@ -78,13 +80,7 @@ class DailyCostService {
 
       // Create related cost employee records
       if (costEmployees && costEmployees.length > 0) {
-        const costEmployeeRecords = costEmployees.map((costEmployee) => ({
-          ...costEmployee,
-          dailyCostId: newDailyCost.id,
-        }));
-        await Daily_Cost_Employee.bulkCreate(costEmployeeRecords, {
-          transaction,
-        });
+        await this.createDailyCostEmployeeWithDebt(costEmployees, transaction, newDailyCost.id, localDate);
       }
 
       // Create related cost unexpected records
@@ -250,18 +246,47 @@ class DailyCostService {
         }
       }
 
+      // UPDATE EMPLOYEE DEBT
+      // RESTORE PREVIOUS EMPLOYEE DEBT
+      const previouseDailyCostEmployees = existingDailyCost.Daily_Cost_Employees || [];
+      for (const item of previouseDailyCostEmployees) {
+        const findEmployee = await Tm_Employee.findOne({
+          where: { id: item.employeeId },
+        });
+        let employeeDebt = Number(findEmployee.debt || 0);
+
+        if (item.amountDebt == 0 && item.amountDebtPaid == 0) {
+          continue; // Skip if no debt or payment
+          // Revert Previouse Amount Debt
+        }
+
+        if (item.amountDebt != 0) {
+          // Jika sebelumnya ada meminjam maka kembalikan ke saldo
+          employeeDebt -= Number(item.amountDebt);
+        } else if (item.amountDebtPaid != 0) {
+          // Jika sebelumnya ada pembayaran maka kembalikan ke salod
+          employeeDebt += Number(item.amountDebtPaid);
+        }
+
+        await findEmployee.update(
+          { debt: employeeDebt },
+          { transaction }
+        );
+
+        await Trx_Employee_Debt.destroy({
+          where: { dailyCostEmployeeId: item.id },
+          transaction
+        });
+      }
+
       // UPDATE EMPLOYEE COST
       await Daily_Cost_Employee.destroy({
         where: { dailyCostId: id },
         transaction,
       });
-      const costEmployeeRecords = costEmployees.map((costEmployee) => ({
-        ...costEmployee,
-        dailyCostId: id,
-      }));
-      await Daily_Cost_Employee.bulkCreate(costEmployeeRecords, {
-        transaction,
-      });
+
+      // Create new employee debt transactions
+      await this.createDailyCostEmployeeWithDebt(costEmployees, transaction, id, localDate);
 
       // UPDATE UNEXPECTED COST
       await Daily_Cost_Unexpected.destroy({
@@ -335,6 +360,38 @@ class DailyCostService {
           findCar.emoneyBalance = balanceEMoney + restoreEmoney;
           await findCar.save({ transaction });
         }
+      }
+
+      // RESTORE PREVIOUS EMPLOYEE DEBT
+      const previouseDailyCostEmployees = dailyCost.Daily_Cost_Employees || [];
+      for (const item of previouseDailyCostEmployees) {
+        const findEmployee = await Tm_Employee.findOne({
+          where: { id: item.employeeId },
+        });
+        let employeeDebt = Number(findEmployee.debt || 0);
+
+        if (item.amountDebt == 0 && item.amountDebtPaid == 0) {
+          continue; // Skip if no debt or payment
+          // Revert Previouse Amount Debt
+        }
+
+        if (item.amountDebt != 0) {
+          // Jika sebelumnya ada meminjam maka kembalikan ke saldo
+          employeeDebt -= Number(item.amountDebt);
+        } else if (item.amountDebtPaid != 0) {
+          // Jika sebelumnya ada pembayaran maka kembalikan ke salod
+          employeeDebt += Number(item.amountDebtPaid);
+        }
+        
+        await findEmployee.update(
+          { debt: employeeDebt },
+          { transaction }
+        );
+
+        await Trx_Employee_Debt.destroy({
+          where: { dailyCostEmployeeId: item.id },
+          transaction
+        });
       }
 
       // Delete related records first within the transaction
@@ -608,6 +665,73 @@ class DailyCostService {
       new Date(date1).setHours(0, 0, 0, 0),
       new Date(date2).setHours(23, 59, 59, 999),
     ];
+  }
+
+  /**
+   * This function create daily cost employee record and debt management
+   * 
+   */
+  static async createDailyCostEmployeeWithDebt(costEmployees = [], transaction, dailyCostId, localDate) {
+    try {
+      for (const costEmployee of costEmployees) {
+        const created = await Daily_Cost_Employee.create(
+          {
+            ...costEmployee,
+            dailyCostId: dailyCostId,
+          },
+          { transaction }
+        );
+
+        const findEmployee = await Tm_Employee.findOne({
+          where: { id: costEmployee.employeeId },
+        })
+        let employeeDebt = Number(findEmployee.debt || 0);
+
+        // Insert to Trx_Employee_Debt if there is amountDebt 
+        if (costEmployee.amountDebt != 0) {
+          await Trx_Employee_Debt.create(
+            {
+              date: localDate,
+              type: "PEMINJAMAN",
+              category: "DAILY COST",
+              amount: costEmployee.amountDebt,
+              dailyCostEmployeeId: created.id,
+              employeeId: costEmployee.employeeId,
+              notes: costEmployee.notes || "",
+            },
+            { transaction }
+          );
+          employeeDebt += Number(costEmployee.amountDebt);
+        }
+
+        // Insert to Trx_Employee_Debt if there is amountDebtPaid
+        if (costEmployee.amountDebtPaid != 0) {
+          await Trx_Employee_Debt.create(
+            {
+              date: localDate,
+              type: "PEMBAYARAN",
+              category: "DAILY COST",
+              amount: costEmployee.amountDebtPaid,
+              dailyCostEmployeeId: created.id,
+              employeeId: costEmployee.employeeId,
+              notes: costEmployee.notes || "",
+            },
+            { transaction }
+          );
+          employeeDebt -= Number(costEmployee.amountDebtPaid);
+        }
+
+        if (employeeDebt < 0) {
+          throwValidation(400, `Jumlah utang karyawan tidak boleh kecil dari 0`);
+        }
+        await findEmployee.update(
+          { debt: employeeDebt },
+          { transaction }
+        );
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

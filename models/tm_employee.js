@@ -31,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.STRING,
       salary: DataTypes.BIGINT,
       bonus: DataTypes.BIGINT,
+      debt: DataTypes.BIGINT, 
       is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

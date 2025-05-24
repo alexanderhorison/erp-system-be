@@ -116,6 +116,59 @@ class MasterEmployeeController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async createTrxEmployeeDebt(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id karyawan kosong");
+      const schemaBody = yup.object({
+        date: yup.date().required('Date is required'),
+        type: yup.string().required('Type is required')
+          .oneOf(['PEMBAYARAN', 'PEMINJAMAN'], 'Type harus PEMBAYARAN or PEMINJAMAN'),
+        category: yup.string().required('Category is required')
+          .oneOf(['MANUAL'], 'Category harus MANUAL'),
+        amount: yup.number().required('Amount is required').positive('Amount must be positive'),
+        dailyCostEmployeeId: yup.number().nullable(),
+        notes: yup.string().nullable()
+      })
+
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
+
+      const result = await MasterDataEmployeeService.createTransaction(body, id);
+
+      res.status(201).json(responses(true, "Berhasil membuat transaksi hutang/piutang", result));
+    } catch (err) {
+      res.status(err.code || 500).json(responses(false, err.message));
+    }
+  }
+
+  static async getAllTrxEmployeeDebt(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id karyawan harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const query = req.query
+
+      const result = await MasterDataEmployeeService.getAllTransactions(query, id);
+
+      res.json(responses(true, "Berhasil mendapatkan data hutang", result));
+    } catch (err) {
+      res.status(err.code || 500).json(responses(false, err.message));
+    }
+  }
+
+  static async deleteTrxEmployeeDebt(req, res) {
+    try {
+      const schemaParams = yup.number().required("Id Transaksi hutang/piutang harus diisi");
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const result = await MasterDataEmployeeService.deleteTransaction(id);
+
+      res.json(responses(true, "Berhasil menghapus transaksi hutang", result));
+    } catch (err) {
+      res.status(err.code || 500).json(responses(false, err.message));
+    }
+  }
 }
 
 module.exports = MasterEmployeeController;

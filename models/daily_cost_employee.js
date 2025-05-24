@@ -24,7 +24,10 @@ module.exports = (sequelize, DataTypes) => {
     employeeId: DataTypes.INTEGER,
     employeeName: DataTypes.STRING,
     salary: DataTypes.INTEGER,
-    bonus: DataTypes.INTEGER
+    bonus: DataTypes.INTEGER,
+    amountDebtPaid: DataTypes.BIGINT,
+    amountDebt: DataTypes.BIGINT,
+    notes: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'Daily_Cost_Employee',
