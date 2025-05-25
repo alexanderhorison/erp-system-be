@@ -48,8 +48,6 @@ class MasterDataEmployeeService {
         is_active: is_active !== undefined ? is_active : true,
       });
     } catch (error) {
-      console.log(error);
-      
       throw error;
     }
   }
@@ -182,14 +180,9 @@ class MasterDataEmployeeService {
     }
   }
 
-  static async getAllTransactions({ page = 1, pageSize = 10 }, employeeId) {
+  static async getAllTransactions({ page = 1, pageSize = 5 }, employeeId) {
     try {
       const { count, rows } = await Trx_Employee_Debt.findAndCountAll({
-        where: {
-          employeeId,
-        },
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
         include: [
           {
             model: Daily_Cost_Employee,
@@ -199,6 +192,11 @@ class MasterDataEmployeeService {
             model: Tm_Employee,
           }
         ],
+        where: {
+          employeeId,
+        },
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
         order: [['createdAt', 'DESC']],
       });
 
@@ -247,12 +245,19 @@ class MasterDataEmployeeService {
       // Calculate new debt (reverse the transaction)
       let newDebt = Number(employee.debt) || 0;
       if (trx.type === 'PEMBAYARAN') {
-        newDebt = newDebt + Number(trx.amount);
+        newDebt += Number(trx.amount);
       } else if (trx.type === 'PEMINJAMAN') {
-        newDebt = newDebt - Number(trx.amount);
+        newDebt -= Number(trx.amount);
       }
 
-      await employee.update({ debt: newDebt });
+      if (trx.dailyCostEmployeeId) {
+        await Daily_Cost_Employee.destroy({
+          where: { id: trx.dailyCostEmployeeId },
+          transaction
+        });
+      }
+
+      await employee.update({ debt: newDebt }, { transaction });
       await trx.destroy();
       await transaction.commit();
 

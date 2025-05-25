@@ -252,7 +252,7 @@ class DailyCostService {
       for (const item of previouseDailyCostEmployees) {
         const findEmployee = await Tm_Employee.findOne({
           where: { id: item.employeeId },
-        });
+        }, transaction);
         let employeeDebt = Number(findEmployee.debt || 0);
 
         if (item.amountDebt == 0 && item.amountDebtPaid == 0) {
@@ -268,9 +268,9 @@ class DailyCostService {
           employeeDebt += Number(item.amountDebtPaid);
         }
 
-        await findEmployee.update(
+        await Tm_Employee.update(
           { debt: employeeDebt },
-          { transaction }
+          { where: { id: item.employeeId }, transaction }
         );
 
         await Trx_Employee_Debt.destroy({
@@ -367,6 +367,7 @@ class DailyCostService {
       for (const item of previouseDailyCostEmployees) {
         const findEmployee = await Tm_Employee.findOne({
           where: { id: item.employeeId },
+          transaction
         });
         let employeeDebt = Number(findEmployee.debt || 0);
 
@@ -382,10 +383,10 @@ class DailyCostService {
           // Jika sebelumnya ada pembayaran maka kembalikan ke salod
           employeeDebt += Number(item.amountDebtPaid);
         }
-        
-        await findEmployee.update(
+
+        await Tm_Employee.update(
           { debt: employeeDebt },
-          { transaction }
+          { where: { id: item.employeeId }, transaction }
         );
 
         await Trx_Employee_Debt.destroy({
@@ -684,6 +685,7 @@ class DailyCostService {
 
         const findEmployee = await Tm_Employee.findOne({
           where: { id: costEmployee.employeeId },
+          transaction,
         })
         let employeeDebt = Number(findEmployee.debt || 0);
 
