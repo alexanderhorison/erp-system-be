@@ -6,6 +6,7 @@ module.exports = {
     await queryInterface.addColumn("Tm_Employees", "debt", {
       type: Sequelize.BIGINT,
       allowNull: true,
+      defaultValue: 0,
     });
 
     // 2. Create Trx_Employee_Debt table
@@ -70,6 +71,7 @@ module.exports = {
     await queryInterface.addColumn("Daily_Cost_Employees", "amountDebtPaid", {
       type: Sequelize.BIGINT,
       allowNull: true,
+      defaultValue: 0,
     });
     await queryInterface.addColumn("Daily_Cost_Employees", "notes", {
       type: Sequelize.TEXT,
@@ -78,6 +80,7 @@ module.exports = {
     await queryInterface.addColumn("Daily_Cost_Employees", "amountDebt", {
       type: Sequelize.BIGINT,
       allowNull: true,
+      defaultValue: 0,
     });
   },
 
