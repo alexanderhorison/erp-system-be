@@ -18,6 +18,7 @@ class MasterDataCustomerController {
         notes: yup.string().optional(),
         rankId: yup.number().required("Rank harus diisi"),
         isPosCustomer: yup.boolean().optional(),
+        alias: yup.string().optional(),
       });
 
       const body = await yupSchemaValidation(req.body, schema);
@@ -47,6 +48,7 @@ class MasterDataCustomerController {
         address: yup.string().optional(),
         gender: yup.string().optional(),
         notes: yup.string().optional(),
+        alias: yup.string().optional(),
         rankId: yup.number().required("Rank harus diisi"),
       });
 

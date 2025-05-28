@@ -23,7 +23,7 @@ class SalesOrderReportService {
         include: [
           {
             model: Master_Customer,
-            attributes: ["name"],
+            attributes: ["name", "alias"],
           },
           {
             model: Sales_Order_Detail,

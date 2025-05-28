@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       rankId: DataTypes.INTEGER,
       deletedAt: DataTypes.DATE,
       isPosCustomer: DataTypes.BOOLEAN,
+      alias: DataTypes.STRING,
     },
     {
       sequelize,

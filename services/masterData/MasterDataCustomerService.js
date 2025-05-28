@@ -14,6 +14,7 @@ class MasterDataCustomerService {
         notes,
         rankId,
         isPosCustomer,
+        alias,
       } = data;
 
       const existingCustomer = await Master_Customer.findOne({
@@ -33,6 +34,7 @@ class MasterDataCustomerService {
         notes: notes,
         rankId: rankId,
         isPosCustomer: isPosCustomer ? true : false,
+        alias: alias,
       });
     } catch (error) {
       throw error;
@@ -41,7 +43,7 @@ class MasterDataCustomerService {
 
   static async update(id, data) {
     try {
-      const { name, phoneNumber, email, address, gender, notes, rankId } = data;
+      const { name, phoneNumber, email, address, gender, notes, rankId, alias } = data;
 
       const existingCustomer = await Master_Customer.findByPk(id);
 
@@ -63,6 +65,7 @@ class MasterDataCustomerService {
         gender: gender,
         notes: notes,
         rankId: rankId,
+        alias: alias,
       });
 
       return updatedCustomer;
@@ -114,6 +117,7 @@ class MasterDataCustomerService {
         rankId: item.rankId,
         rankName: item.Master_Rank ? item.Master_Rank?.name : "",
         isPosCustomer: item.isPosCustomer,
+        alias: item.alias,
       }));
       return result;
     } catch (error) {
@@ -147,6 +151,7 @@ class MasterDataCustomerService {
         phoneNumber: customer.phoneNumber,
         rankId: customer.rankId,
         rankName: customer.Master_Rank ? customer.Master_Rank?.name : "",
+        alias: customer.alias,
       };
 
       return result;

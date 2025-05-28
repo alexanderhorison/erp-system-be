@@ -181,7 +181,7 @@ class ExportReportService {
           // Insert Data Row
           worksheet.addRow({
             tanggal: approvedAt,
-            pembeli: Master_Customer?.name || "",
+            pembeli: Master_Customer?.alias || Master_Customer?.name || "",
             namaBarang: Warehouse_Product?.Master_Product?.name || "",
             hargaBeli: priceFormatWIthCurrency(modal),
             hargaJual: priceFormatWIthCurrency(price),
@@ -249,7 +249,7 @@ class ExportReportService {
         // Insert Data For Sheet 2
         const sheetRow = worksheet2.addRow({
           tanggal: approvedAt,
-          transaksi: Master_Customer?.name || "",
+          transaksi: Master_Customer?.alias || Master_Customer?.name || "",
           nominalTransaksi: priceFormatWIthCurrency(grandTotalCustomer),
         });
 
