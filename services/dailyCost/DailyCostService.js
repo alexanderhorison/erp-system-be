@@ -429,7 +429,6 @@ class DailyCostService {
     try {
       const whereClause = {};
       let orderBy = query.orderBy.toUpperCase() === "ASC" ? "ASC" : "DESC";
-
       if (query.startDate && query.endDate) {
         whereClause.date = {
           [Op.between]: [

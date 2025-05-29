@@ -48,7 +48,7 @@ class ExportReportService {
         employeesMaster,
         unexpectedCostMaster
       } =
-        await ExportReportService.getDailyCostMasterData();
+        await ExportReportService.getDailyCostMasterData({ startDate, endDate });
 
       // Set the worksheet name dynamically
       const sheetName = `Sales_Order_Report_${monthName}_${query.year}`;
@@ -103,6 +103,7 @@ class ExportReportService {
       const employeeCols = employeesMaster.flatMap(emp => ([
         { header: `Gaji ${emp.nama}`, key: `emp_${emp.id}_gaji`, width: 15 },
         { header: `Bonus ${emp.nama}`, key: `emp_${emp.id}_bonus`, width: 15 },
+        { header: `Kasbon ${emp.nama}`, key: `emp_${emp.id}_kasbon`, width: 15 },
       ]));
 
       const unexpectedCostCols = unexpectedCostMaster.map(cost => ({
@@ -278,9 +279,13 @@ class ExportReportService {
             rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
               +e.bonus || 0
             );
+            rowObj[`emp_${e.employeeId}_kasbon`] = priceFormatWIthCurrency(
+              +e.amountDebt || 0
+            );
 
             addTo(grand, `emp_${e.employeeId}_gaji`, +e.salary || 0);
             addTo(grand, `emp_${e.employeeId}_bonus`, +e.bonus || 0);
+            addTo(grand, `emp_${e.employeeId}_kasbon`, +e.amountDebt || 0);
           });
 
           dailyCost.costUnexpecteds.forEach((u) => {
@@ -339,9 +344,13 @@ class ExportReportService {
                 rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
                   +e.bonus || 0
                 );
+                rowObj[`emp_${e.employeeId}_kasbon`] = priceFormatWIthCurrency(
+                  +e.amountDebt || 0
+                );
 
                 addTo(grand, `emp_${e.employeeId}_gaji`, +e.salary || 0);
                 addTo(grand, `emp_${e.employeeId}_bonus`, +e.bonus || 0);
+                addTo(grand, `emp_${e.employeeId}_kasbon`, +e.amountDebt || 0);
               });
 
               dailyCost.costUnexpecteds.forEach((u) => {
@@ -374,6 +383,7 @@ class ExportReportService {
               ...employeesMaster.flatMap((e) => [
                 `emp_${e.id}_gaji`,
                 `emp_${e.id}_bonus`,
+                `emp_${e.id}_kasbon`,
               ]),
               ...unexpectedCostMaster.map((u) => `unexpectedCost_${u.id}`),
             ];
@@ -449,11 +459,14 @@ class ExportReportService {
     }
   }
 
-  static async getDailyCostMasterData() {
+  static async getDailyCostMasterData(query) {
     try {
-      const getDataDailyCost = await DailyCostService.findAll({
+      const newQuery = {
+        startDate: query.startDate,
+        endDate: query.endDate,
         orderBy: "ASC"
-      })
+      }      
+      const getDataDailyCost = await DailyCostService.findAll(newQuery)
       const employeesMaster = await MasterDataEmployeeService.findAll({
         active: undefined
       })
