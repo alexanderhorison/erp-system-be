@@ -65,7 +65,7 @@ class DailyCostController {
               categoryId: yup
                 .number()
                 .required("ID kategori biaya tidak terduga harus diisi"),
-              description: yup.string().required("Deskripsi harus diisi"),
+              description: yup.string().optional(),
               price: yup.number().required("Jumlah harus diisi"),
             })
           )
@@ -148,7 +148,7 @@ class DailyCostController {
               categoryId: yup
                 .number()
                 .required("ID kategori biaya tidak terduga harus diisi"),
-              description: yup.string().required("Deskripsi harus diisi"),
+              description: yup.string().optional(),
               price: yup.number().required("Jumlah harus diisi"),
             })
           )
