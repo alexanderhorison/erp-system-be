@@ -41,9 +41,13 @@ class ExportService {
           message: "Data not found",
         };
       }
-
+      const shipDate = data?.shippingDate
+        ? new Date(data.shippingDate).toLocaleDateString('en-GB')
+        : data?.dueDate
+        
       let result = {
         ...data,
+        shipDate: shipDate,
         listProducts: data?.listProducts?.map((itemProduct) => ({
           ...itemProduct,
           price: priceFormatWIthCurrency(itemProduct.price),

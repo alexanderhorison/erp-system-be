@@ -124,6 +124,7 @@ class SalesOrderService {
           status: "PENDING",
           createdBy: user?.id,
           dueDate: data?.dueDate,
+          shippingDate: data?.shippingDate
         },
         { transaction }
       );
@@ -798,6 +799,7 @@ class SalesOrderService {
         dueDate: detail?.dueDate,
         amountPaid: detail?.amountPaid,
         amountDebt: detail?.amountDebt,
+        shippingDate: detail?.shippingDate,
       };
 
       return sendData;
@@ -879,6 +881,7 @@ class SalesOrderService {
         {
           dueDate: data?.dueDate,
           notes: data?.notes,
+          shippingDate: data?.shippingDate,
           grandTotal: data?.grandTotal,
           grandTotalBarter: data?.grandTotalBarter,
           grandTotalCustomer: data?.grandTotalCustomer,
@@ -958,6 +961,7 @@ class SalesOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
+          shippingDate: item?.shippingDate,
         };
       });
 

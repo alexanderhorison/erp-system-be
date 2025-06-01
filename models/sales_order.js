@@ -45,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       createdBy: DataTypes.INTEGER,
       approvedBy: DataTypes.INTEGER,
       approvedAt: DataTypes.DATE,
+      shippingDate: DataTypes.DATE,
       dueDate: DataTypes.STRING,
       amountPaid: DataTypes.BIGINT,
       amountDebt: DataTypes.BIGINT,

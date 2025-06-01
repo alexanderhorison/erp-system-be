@@ -595,17 +595,17 @@ class DailyCostService {
       const salesOrders = await Sales_Order.findAll({
         where: {
           status: "APPROVED",
-          approvedAt: {
+          shippingDate: {
             [Op.between]: [dateStart, dateEnd],
           },
         },
-        attributes: ["id", "approvedAt"],
+        attributes: ["id", "approvedAt", "shippingDate"],
       });
 
       // Group sales orders by date
       const salesOrdersByDate = {};
       salesOrders.forEach((so) => {
-        const dateKey = moment(so.approvedAt).format("YYYY-MM-DD");
+        const dateKey = moment(so.shippingDate).format("YYYY-MM-DD");
         if (!salesOrdersByDate[dateKey]) {
           salesOrdersByDate[dateKey] = 0;
         }
