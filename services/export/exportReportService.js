@@ -579,154 +579,140 @@ class ExportReportService {
       const worksheet4 = workbook.addWorksheet(`Laporan Laba Rugi ${monthName}`, {
         views: [{ showGridLines: false }]
       });
-      const { styleBorder, fontBold, centerMiddle } = styleExcel;
+      const { fontBold } = styleExcel;
 
       worksheet4.columns = [
-        { width: 40 }, // A
-        { width: 5 }, // B
-        { width: 20 }, // C
-        { width: 2 }, // D
+        { width: 3 }, // A (spacing)
+        { width: 40 }, // C
+        { width: 5 }, // D
+        { width: 20 }, // E
+        { width: 2 }, // F
       ];
-
       // --- Header Title ---
-      worksheet4.mergeCells('A1:C1');
-      worksheet4.getCell('A1').value = 'PT Tjahaya Berkat Abadi';
-      styleCell(worksheet4.getCell('A1'), { bold: true, alignmentHorizontal: 'left' });
+      worksheet4.mergeCells('B1:D1');
+      worksheet4.getCell('B1').value = 'PT Tjahaya Berkat Abadi';
+      styleCell(worksheet4.getCell('B1'), { fontSize: 16, bold: true, alignmentHorizontal: 'left' });
 
-      worksheet4.mergeCells('A2:C2');
-      worksheet4.getCell('A2').value = 'LAPORAN LABA RUGI KOMPREHENSIF';
-      styleCell(worksheet4.getCell('A2'), { bold: true, alignmentHorizontal: 'left' });
+      worksheet4.mergeCells('B2:D2');
+      worksheet4.getCell('B2').value = 'LAPORAN LABA RUGI KOMPREHENSIF';
+      styleCell(worksheet4.getCell('B2'), { bold: true, alignmentHorizontal: 'left' });
 
-      worksheet4.mergeCells('A3:C3');
-      worksheet4.getCell('A3').value = formatDate(new Date());
-      styleCell(worksheet4.getCell('A3'), { bold: true, alignmentHorizontal: 'left' });
+      worksheet4.mergeCells('B3:D3');
+      worksheet4.getCell('B3').value = formatDate(new Date());
+      styleCell(worksheet4.getCell('B3'), { bold: true, alignmentHorizontal: 'left' });
 
-      worksheet4.mergeCells('A4:C4');
-      worksheet4.getCell('A4').value = '(Disajikan dalam Rupiah)';
-      styleCell(worksheet4.getCell('A4'), { border: { bottom: { style: 'thick' } }, alignmentHorizontal: 'left' });
-
-      worksheet4.addRow([])
+      worksheet4.mergeCells('B4:D4');
+      worksheet4.getCell('B4').value = '(Disajikan dalam Rupiah)';
+      styleCell(worksheet4.getCell('B4'), { border: { bottom: { style: 'thick' } }, alignmentHorizontal: 'left' }); worksheet4.addRow([])
 
       let row;
 
-      row = worksheet4.addRow(['PENDAPATAN'])
+      row = worksheet4.addRow(['', 'PENDAPATAN'])
       row.font = fontBold
       // row 7
-      worksheet4.addRow(['  Pendapatan Usaha', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
-      styleCell(worksheet4.getCell('C7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Pendapatan Usaha', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
+      styleCell(worksheet4.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });
 
       // row 8
-      worksheet4.addRow(['TOTAL PENDAPATAN', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
-      styleCell(worksheet4.getCell('A8'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C8'), { bold: true, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', 'TOTAL PENDAPATAN', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
+      styleCell(worksheet4.getCell('B8'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D8'), { bold: true, alignmentHorizontal: 'right' });
+
+      worksheet4.addRow([])      // row 10
+      worksheet4.addRow(['', 'BEBAN POKOK PENJUALAN', '', priceFormatWIthCurrency(dataSheet4.bebanPenjualan)])
+      styleCell(worksheet4.getCell('B10'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D10'), { bold: true, alignmentHorizontal: 'right' });
+
+      worksheet4.addRow([])      // row 12
+      worksheet4.addRow(['', 'LABA BRUTO', '', priceFormatWIthCurrency(dataSheet4.labaBruto)])
+      styleCell(worksheet4.getCell('B12'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D12'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
-      // row 10
-      worksheet4.addRow(['BEBAN POKOK PENJUALAN', '', priceFormatWIthCurrency(dataSheet4.bebanPenjualan)])
-      styleCell(worksheet4.getCell('A10'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C10'), { bold: true, alignmentHorizontal: 'right' });
-
-      worksheet4.addRow([])
-
-      // row 12
-      worksheet4.addRow(['LABA BRUTO', '', priceFormatWIthCurrency(dataSheet4.labaBruto)])
-      styleCell(worksheet4.getCell('A12'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C12'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
-
-      worksheet4.addRow([])
-
-      row = worksheet4.addRow(['BEBAN USAHA'])
+      row = worksheet4.addRow(['', 'BEBAN USAHA'])
       row.font = fontBold
 
       // row 15
-      worksheet4.addRow(['  Beban Operasi', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
-      styleCell(worksheet4.getCell('C15'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });
-
-      // row 16
-      worksheet4.addRow(['JUMLAH BEBAN USAHA', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
-      styleCell(worksheet4.getCell('A16'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C16'), { bold: true, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Beban Operasi', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
+      styleCell(worksheet4.getCell('D15'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
+      worksheet4.addRow(['', 'JUMLAH BEBAN USAHA', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
+      styleCell(worksheet4.getCell('B16'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D16'), { bold: true, alignmentHorizontal: 'right' });
 
       worksheet4.addRow([])
 
       // row 18
-      worksheet4.addRow(['LABA USAHA', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
-      styleCell(worksheet4.getCell('A18'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C18'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      worksheet4.addRow(['', 'LABA USAHA', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      styleCell(worksheet4.getCell('B18'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D18'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
-      row = worksheet4.addRow(['PENDAPATAN/(BEBAN) LAINNYA'])
+      row = worksheet4.addRow(['', 'PENDAPATAN/(BEBAN) LAINNYA'])
       row.font = fontBold
-
       // row 21, 22, 23, 24, 25
-      worksheet4.addRow(['  Selisih Kurs', '', '-'])
-      styleCell(worksheet4.getCell('C21'), { alignmentHorizontal: 'right' });
-      worksheet4.addRow(['  Pendapatan Bunga', '', '-'])
-      styleCell(worksheet4.getCell('C22'), { alignmentHorizontal: 'right' });
-      worksheet4.addRow(['  Beban Bunga', '', '-'])
-      styleCell(worksheet4.getCell('C23'), { alignmentHorizontal: 'right' });
-      worksheet4.addRow(['  Penghasilan/(Beban) Lainnya', '', '-'])
-      styleCell(worksheet4.getCell('C24'), { alignmentHorizontal: 'right' });
-      worksheet4.addRow(['  Final Income Tax', '', '-'])
-      styleCell(worksheet4.getCell('C25'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });
-
-      // row 26
-      worksheet4.addRow(['JUMLAH PENDAPATAN/(BEBAN)', '', '-'])
-      styleCell(worksheet4.getCell('A26'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C26'), { bold: true, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Selisih Kurs', '', '-'])
+      styleCell(worksheet4.getCell('D21'), { alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Pendapatan Bunga', '', '-'])
+      styleCell(worksheet4.getCell('D22'), { alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Beban Bunga', '', '-'])
+      styleCell(worksheet4.getCell('D23'), { alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Penghasilan/(Beban) Lainnya', '', '-'])
+      styleCell(worksheet4.getCell('D24'), { alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Final Income Tax', '', '-'])
+      styleCell(worksheet4.getCell('D25'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 26
+      worksheet4.addRow(['', 'JUMLAH PENDAPATAN/(BEBAN)', '', '-'])
+      styleCell(worksheet4.getCell('B26'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D26'), { bold: true, alignmentHorizontal: 'right' });
 
       worksheet4.addRow([])
 
       // row 28
-      worksheet4.addRow(['LABA SEBELUM PAJAK', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
-      styleCell(worksheet4.getCell('A28'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C28'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      worksheet4.addRow(['', 'LABA SEBELUM PAJAK', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      styleCell(worksheet4.getCell('B28'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D28'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
       // row 29
-      row = worksheet4.addRow(['BEBAN PAJAK PENGHASILAN'])
+      row = worksheet4.addRow(['', 'BEBAN PAJAK PENGHASILAN'])
       row.font = fontBold
-
       // row 30, 31
-      worksheet4.addRow(['  Tahun Berjalan', '', '-'])
-      styleCell(worksheet4.getCell('C31'), { alignmentHorizontal: 'right' });
-      worksheet4.addRow(['  Tangguhan', '', '-'])
-      styleCell(worksheet4.getCell('C32'), { alignmentHorizontal: 'right', border: { bottom: { style: 'medium' } } });
+      worksheet4.addRow(['', '  Tahun Berjalan', '', '-'])
+      styleCell(worksheet4.getCell('D31'), { alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Tangguhan', '', '-'])
+      styleCell(worksheet4.getCell('D32'), { alignmentHorizontal: 'right', border: { bottom: { style: 'medium' } } });
 
 
       // row 32
-      worksheet4.addRow(['JUMLAH BEBAN PAJAK', '', '-'])
-      styleCell(worksheet4.getCell('A33'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('C33'), { bold: true, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', 'JUMLAH BEBAN PAJAK', '', '-'])
+      styleCell(worksheet4.getCell('B33'), { bold: true, alignmentHorizontal: 'left' });
+      styleCell(worksheet4.getCell('D33'), { bold: true, alignmentHorizontal: 'right' });
 
       worksheet4.addRow([])
 
       // row 35
-      worksheet4.addRow(['LABA NETO', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
-      styleCell(worksheet4.getCell('A35'), { bold: true, alignmentHorizontal: 'left', });
-      styleCell(worksheet4.getCell('C35'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });
-
-      // --- Outer Thick Border ---
+      worksheet4.addRow(['', 'LABA NETO', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      styleCell(worksheet4.getCell('B35'), { bold: true, alignmentHorizontal: 'left', });
+      styleCell(worksheet4.getCell('D35'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
       for (let r = 1; r <= 36; r++) {
-        for (let c = 1; c <= 4; c++) {
+        for (let c = 1; c <= 5; c++) {
           const cell = worksheet4.getCell(r, c);
           if (r === 1) cell.border = { ...cell.border, top: { style: 'thick' } };
           if (r === 36) cell.border = { ...cell.border, bottom: { style: 'thick' } };
           if (c === 1) cell.border = { ...cell.border, left: { style: 'thick' } };
-          if (c === 4) cell.border = { ...cell.border, right: { style: 'thick' } };
+          if (c === 5) cell.border = { ...cell.border, right: { style: 'thick' } };
         }
       }
 
       // add empty spaces
       worksheet4.addRow({})
-      worksheet4.addRow([`Jakarta, ${formatDate(new Date())}`])
+      worksheet4.addRow(['', `Jakarta, ${formatDate(new Date())}`])
       for (let i = 0; i < 4; i++) {
         worksheet4.addRow({});
       }
-      const michaelRow = worksheet4.addRow(['Michael']);
+      const michaelRow = worksheet4.addRow(['', 'Michael']);
       michaelRow.getCell(1).font = { bold: true };
 
       return 'success'
@@ -740,13 +726,14 @@ class ExportReportService {
       const worksheet5 = workbook.addWorksheet('Laba Komersial dan Fiskal', {
         views: [{ showGridLines: false }]
       });
-
       worksheet5.columns = [
-        { width: 40 }, // Uraian
-        { width: 20 }, // Komersial
-        { width: 20 }, // Koreksi Fiskal - Beda Waktu
-        { width: 20 }, // Koreksi Fiskal - Beda Tetap
-        { width: 20 }, // Fiskal
+        { width: 3 }, // A (spacing)
+        { width: 40 }, // B (Uraian)
+        { width: 20 }, // C (Komersial)
+        { width: 20 }, // D (Koreksi Fiskal - Beda Waktu)
+        { width: 20 }, // E (Koreksi Fiskal - Beda Tetap)
+        { width: 20 }, // F (Fiskal)
+        { width: 3 }, // G 
       ];
 
       const doubleBorder = {
@@ -754,87 +741,50 @@ class ExportReportService {
         left: { style: 'double' },
         bottom: { style: 'double' },
         right: { style: 'double' }
-      }
-
-      // --- Header Title ---
-      worksheet5.mergeCells('A1:E1');
-      worksheet5.getCell('A1').value = 'PT Tjahaya Berkat Abadi';
-      styleCell(worksheet5.getCell('A1'), { bold: true, alignmentHorizontal: 'left' })
-
-      worksheet5.mergeCells('A2:E2');
-      worksheet5.getCell('A2').value = 'PERHITUNGAN LABA RUGI';
-      styleCell(worksheet5.getCell('A2'), { bold: true, alignmentHorizontal: 'left' })
+      }// --- Header Title ---
 
 
-      worksheet5.mergeCells('A3:E3');
+      worksheet5.mergeCells('B1:F1');
+      styleCell(worksheet5.getCell('B1'), { value: 'PT Tjahaya Berkat Abadi', fontSize: 16, bold: true, alignmentHorizontal: 'left' })
+
+      worksheet5.mergeCells('B2:F2');
+      styleCell(worksheet5.getCell('B2'), { value: 'PERHITUNGAN LABA RUGI', bold: true, alignmentHorizontal: 'left' })
+
+
+      worksheet5.mergeCells('B3:F3');
       const dateNow = formatDate(new Date());
-      worksheet5.getCell('A3').value = dateNow;
-      styleCell(worksheet5.getCell('A3'), { bold: true, alignmentHorizontal: 'left' })
+      styleCell(worksheet5.getCell('B3'), { value: dateNow, bold: true, alignmentHorizontal: 'left' })
 
 
 
       // --- Blank row for spacing ---
-      worksheet5.getRow(4).height = 15;
+      worksheet5.getRow(4).height = 15;      // --- Subtitle Centered ---
 
-      // --- Subtitle Centered ---
-      worksheet5.mergeCells('A5:E5');
-      worksheet5.getCell('A5').value = 'Rekonsiliasi Perhitungan Rugi Laba Komersial dan Fiskal';
-      worksheet5.getCell('A5').alignment = { vertical: 'middle', horizontal: 'center', };
-      styleCell(worksheet5.getCell('A5'), { bold: true })
+      worksheet5.mergeCells('B5:F5');
+      styleCell(worksheet5.getCell('B5'), { value: 'Rekonsiliasi Perhitungan Rugi Laba Komersial dan Fiskal', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', })
 
 
       // --- Header Rows (3-row header) ---
-      worksheet5.mergeCells('A7:A9');
-      worksheet5.getCell('A7').value = 'Uraian';
-      worksheet5.getCell('A7').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('A7').font = { bold: true };
-      worksheet5.getCell('A7').border = doubleBorder;
+      worksheet5.mergeCells('B7:B9');
+      styleCell(worksheet5.getCell('B7'), { value: 'Uraian', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
 
-      worksheet5.mergeCells('B7:B8');
-      worksheet5.getCell('B7').value = 'Komersial';
-      worksheet5.getCell('B7').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('B7').font = { bold: true };
-      worksheet5.getCell('B7').border = doubleBorder;
+
+      worksheet5.mergeCells('C7:C8');
+      styleCell(worksheet5.getCell('C7'), { value: 'Komersial', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
+      styleCell(worksheet5.getCell('C9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
 
-      worksheet5.getCell('B9').value = 'Rp.';
-      worksheet5.getCell('B9').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('B9').font = { bold: true };
-      worksheet5.getCell('B9').border = doubleBorder;
+      worksheet5.mergeCells('D7:E7');
+      styleCell(worksheet5.getCell('D7'), { value : 'Koreksi Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('D8'), { value : 'Beda Waktu', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('D9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
+      styleCell(worksheet5.getCell('E8'), { value: 'Beda Tetap',border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('E9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
-      worksheet5.mergeCells('C7:D7');
-      worksheet5.getCell('C7').value = 'Koreksi Fiskal';
-      styleCell(worksheet5.getCell('C7'), { border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
-
-      worksheet5.getCell('C8').value = 'Beda Waktu';
-      styleCell(worksheet5.getCell('C8'), { border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
-
-      worksheet5.getCell('C9').value = 'Rp.';
-      worksheet5.getCell('C9').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('C9').font = { bold: true };
-      worksheet5.getCell('C9').border = doubleBorder;
-
-
-      worksheet5.getCell('D8').value = 'Beda Tetap';
-      styleCell(worksheet5.getCell('D8'), { border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
-
-      worksheet5.getCell('D9').value = 'Rp.';
-      worksheet5.getCell('D9').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('D9').font = { bold: true };
-      worksheet5.getCell('D9').border = doubleBorder;
-
-      worksheet5.mergeCells('E7:E8');
-      worksheet5.getCell('E7').value = 'Fiskal';
-      worksheet5.getCell('E7').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('E7').font = { bold: true };
-      worksheet5.getCell('E7').border = doubleBorder;
-
-
-      worksheet5.getCell('E9').value = 'Rp.';
-      worksheet5.getCell('E9').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      worksheet5.getCell('E9').font = { bold: true };
-      worksheet5.getCell('E9').border = doubleBorder;
+      worksheet5.mergeCells('F7:F8');
+      styleCell(worksheet5.getCell('F7'), { value : 'Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('F9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
       let gajiTunjangan = Number(dataSheet4.bebanOperasi) - Number(dataSheet4.biayaPengiriman);
 
@@ -843,6 +793,7 @@ class ExportReportService {
         const total = grandUnexpectedCost[key] || 0;
         gajiTunjangan -= total;
         return [
+          '',
           cost.name,
           total,
           0,
@@ -854,37 +805,37 @@ class ExportReportService {
       const labaBersih = Number(dataSheet4.labaBruto) - Number(dataSheet4.bebanOperasi)
       const biayaPengiriman = Number(dataSheet4.biayaPengiriman)
       const data = [
-        ['Pendapatan Bersih', dataSheet4.pendapatanUsaha, 0, 0, dataSheet4.pendapatanUsaha,],
-        ['Harga Pokok Penjualan', dataSheet4.bebanPenjualan, 0, 0, dataSheet4.bebanPenjualan],
-        ['  LABA KOTOR', dataSheet4.labaBruto, 0, 0, dataSheet4.labaBruto],
-        ['BEBAN USAHA', '', '', '', '', 'center'],
-        ['Gaji Upah dan Tunjangan lainnya', gajiTunjangan, 0, 0, gajiTunjangan],
-        ['Biaya Pengiriman', biayaPengiriman, 0, 0, biayaPengiriman],
+        ['', 'Pendapatan Bersih', dataSheet4.pendapatanUsaha, 0, 0, dataSheet4.pendapatanUsaha,],
+        ['', 'Harga Pokok Penjualan', dataSheet4.bebanPenjualan, 0, 0, dataSheet4.bebanPenjualan],
+        ['', '  LABA KOTOR', dataSheet4.labaBruto, 0, 0, dataSheet4.labaBruto],
+        ['', 'BEBAN USAHA', '', '', '', '', 'center'],
+        ['', 'Gaji Upah dan Tunjangan lainnya', gajiTunjangan, 0, 0, gajiTunjangan],
+        ['', 'Biaya Pengiriman', biayaPengiriman, 0, 0, biayaPengiriman],
         ...unexpectedCostTotalRows,
-        ['  JUMLAH BEBAN USAHA', dataSheet4.bebanOperasi, 0, 0, dataSheet4.bebanOperasi],
-        ['LABA (RUGI) USAHA', labaBersih, 0, 0, labaBersih],
-        ['  PENDAPATAN (BEBAN) LAIN-LAIN', '', '', '', '', 'center'],
-        ['Pendapatan lain-lain', 0, 0, 0, 0],
-        ['Pendapatan Bunga', 0, 0, 0, 0],
-        ['Komisi Penjualan', 0, 0, 0, 0],
-        ['  PENDAPATAN (BEBAN) LAIN-LAIN BERSIH', 0, 0, 0, 0, 'center'],
-        ['Laba Sebelum Taksiran Pajak Penghasilan', labaBersih, 0, 0, labaBersih],
-        ['Provision for Income Tax', 0, 0, 0, 0],
-        ['  TAKSIRAN PAJAK PENGHASILAN', 0, 0, 0, 0],
-        ['  LABA BERSIH', labaBersih, 0, 0, labaBersih],
+        ['', '  JUMLAH BEBAN USAHA', dataSheet4.bebanOperasi, 0, 0, dataSheet4.bebanOperasi],
+        ['', 'LABA (RUGI) USAHA', labaBersih, 0, 0, labaBersih],
+        ['', '  PENDAPATAN (BEBAN) LAIN-LAIN', '', '', '', '', 'center'],
+        ['', 'Pendapatan lain-lain', 0, 0, 0, 0],
+        ['', 'Pendapatan Bunga', 0, 0, 0, 0],
+        ['', 'Komisi Penjualan', 0, 0, 0, 0],
+        ['', '  PENDAPATAN (BEBAN) LAIN-LAIN BERSIH', 0, 0, 0, 0, 'center'],
+        ['', 'Laba Sebelum Taksiran Pajak Penghasilan', labaBersih, 0, 0, labaBersih],
+        ['', 'Provision for Income Tax', 0, 0, 0, 0],
+        ['', '  TAKSIRAN PAJAK PENGHASILAN', 0, 0, 0, 0],
+        ['', '  LABA BERSIH', labaBersih, 0, 0, labaBersih],
       ];
 
       let startRow = 10;
       data.forEach((row, idx) => {
         const rowIndex = startRow + idx;
-        const isCentered = row[5] === 'center';
+        const isCentered = row[6] === 'center';
         const displayRow = isCentered ? row.slice(0, -1) : row; // Remove 'center' if present
 
         const r = worksheet5.getRow(rowIndex);
 
         const isUppercase =
-          typeof displayRow[0] === 'string' &&
-          displayRow[0].trim().toUpperCase() === displayRow[0].trim();
+          typeof displayRow[1] === 'string' &&
+          displayRow[1].trim().toUpperCase() === displayRow[1].trim();
 
         const formattedRow = displayRow.map((val, colIdx) => {
           if (typeof val === 'number') {
@@ -896,7 +847,7 @@ class ExportReportService {
         r.values = formattedRow;
         r.height = 20;
 
-        for (let col = 1; col <= displayRow.length; col++) {
+        for (let col = 2; col <= displayRow.length; col++) {
           const cell = worksheet5.getCell(rowIndex, col);
 
           // Default alignment
@@ -922,22 +873,22 @@ class ExportReportService {
       const outerStartRow = 1;
       const outerEndRow = startRow + data.length;
       for (let r = outerStartRow; r <= outerEndRow; r++) {
-        for (let c = 1; c <= 6; c++) {
+        for (let c = 1; c <= 7; c++) {
           const cell = worksheet5.getCell(r, c);
           if (r === outerStartRow) cell.border = { ...cell.border, top: { style: 'thick' } };
           if (r === outerEndRow) cell.border = { ...cell.border, bottom: { style: 'thick' } };
           if (c === 1) cell.border = { ...cell.border, left: { style: 'thick' } };
-          if (c === 6) cell.border = { ...cell.border, right: { style: 'thick' } };
+          if (c === 7) cell.border = { ...cell.border, right: { style: 'thick' } };
         }
       }
 
       // add empty spaces
       worksheet5.addRow({})
-      worksheet5.addRow([`Jakarta, ${dateNow}`])
+      worksheet5.addRow(['', `Jakarta, ${dateNow}`])
       for (let i = 0; i < 4; i++) {
         worksheet5.addRow({});
       }
-      const michaelRow = worksheet5.addRow(['Michael']);
+      const michaelRow = worksheet5.addRow(['', 'Michael']);
       michaelRow.getCell(1).font = { bold: true };
 
 
@@ -950,9 +901,20 @@ class ExportReportService {
 }
 
 function styleCell(cell, options = {}) {
-  if (options.bold) cell.font = { bold: true };
-  if (options.alignmentHorizontal) cell.alignment = { horizontal: options.alignmentHorizontal };
-  if (options.alignmentVertical) cell.alignment = { vertical: options.alignmentVertical };
+  if (options.value) cell.value = options.value;
+  if (options.bold || options.fontSize) {
+    cell.font = {
+      ...(options.bold && { bold: true }),
+      ...(options.fontSize && { size: options.fontSize }),
+    };
+  }
+  if (options.alignmentHorizontal || options.alignmentVertical || options.wrapText) {
+    cell.alignment = {
+      ...(options.alignmentHorizontal && { horizontal: options.alignmentHorizontal }),
+      ...(options.alignmentVertical && { vertical: options.alignmentVertical }),
+      ...(options.wrapText && { wrapText: options.wrapText })
+    };
+  }
   if (options.border) cell.border = options.border;
 }
 
