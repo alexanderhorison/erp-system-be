@@ -34,7 +34,7 @@ class SalesOrderService {
           ...(query?.status && { status: query?.status }),
           ...(query?.customerId && { customerId: query?.customerId }),
           ...(query?.date && {
-            approvedAt: {
+            shippingDate: {
               [Op.gte]: moment(formattedDate).startOf("day").toDate(),
               [Op.lte]: moment(formattedDate).endOf("day").toDate(),
             },
