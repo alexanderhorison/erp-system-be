@@ -97,6 +97,8 @@ class SalesOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
+          shippingDate:  formatDate(item?.shippingDate),
+          shippingTime: item?.shippingDate,
           customer: item?.Master_Customer,
         };
       });
