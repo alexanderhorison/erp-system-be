@@ -172,8 +172,8 @@ class ExportReportService {
         { header: headers[3], key: "hargaBeli", width: 15 },
         { header: headers[4], key: "hargaJual", width: 15 },
         { header: headers[5], key: "quantity", width: 10 },
-        { header: headers[6], key: "totalHargaBeli", width: 15 },
-        { header: headers[7], key: "totalHargaJual", width: 15 },
+        { header: headers[6], key: "totalHargaBeli", width: 20 },
+        { header: headers[7], key: "totalHargaJual", width: 20 },
         { header: headers[8], key: "gainLoss", width: 15 },
       ];
 
@@ -220,8 +220,6 @@ class ExportReportService {
           Master_Customer,
           Sales_Order_Details,
           totalGainLoss,
-          totalModal,
-          grandTotalCustomer,
         } = order;
 
         const startMergeIndex = rowIndex; // Store merge start index
@@ -229,21 +227,24 @@ class ExportReportService {
         let sumTotalJual = 0;
         let sumTotalBeli = 0;
         for (const detail of Sales_Order_Details) {
-          const { Warehouse_Product, modal, price, quantity, gainLoss } =
+          const { Warehouse_Product, modal, price, quantity } =
             detail;
 
           // Insert Data Row
-          worksheet.addRow({
+          const dataRow = worksheet.addRow({
             tanggal: approvedAt,
             pembeli: Master_Customer?.alias || Master_Customer?.name || "",
             namaBarang: Warehouse_Product?.Master_Product?.name || "",
-            hargaBeli: priceFormatWIthCurrency(modal),
-            hargaJual: priceFormatWIthCurrency(price),
+            hargaBeli: Number(modal),
+            hargaJual: Number(price),
             quantity,
-            totalHargaBeli: priceFormatWIthCurrency(modal * quantity || ""),
-            totalHargaJual: priceFormatWIthCurrency(price * quantity || ""),
-            gainLoss: priceFormatWIthCurrency(gainLoss || ""), // Keep empty gain/loss but maintain border
           });
+
+          const rowNumber = dataRow.number;
+          worksheet.getCell(`G${rowNumber}`).value = { formula: `D${rowNumber}*F${rowNumber}` }; // totalHargaBeli
+          worksheet.getCell(`H${rowNumber}`).value = { formula: `E${rowNumber}*F${rowNumber}` }; // totalHargaJual
+          worksheet.getCell(`I${rowNumber}`).value = { formula: `H${rowNumber}-G${rowNumber}` }; // gainLoss
+
 
           sumTotalBeli += modal * quantity;
           sumTotalJual += price * quantity;
@@ -254,9 +255,15 @@ class ExportReportService {
             cell.border = styleBorder;
 
             // Center align numeric columns
-            if (colNumber >= 4 && colNumber <= 9) {
+            if (colNumber >= 4 && colNumber <= 9 && colNumber !== 6) {
+              cell.alignment = centerMiddle;
+              cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+            }
+
+            if(colNumber === 6) {
               cell.alignment = centerMiddle;
             }
+
           });
 
           rowIndex++;
@@ -271,10 +278,10 @@ class ExportReportService {
         // Add Total Row
         const totalRow = worksheet.addRow({
           namaBarang: "TOTAL",
-          hargaBeli: priceFormatWIthCurrency(totalModal),
-          gainLoss: priceFormatWIthCurrency(totalGainLoss),
-          totalHargaBeli: priceFormatWIthCurrency(sumTotalBeli),
-          totalHargaJual: priceFormatWIthCurrency(sumTotalJual),
+          hargaBeli: { formula: `SUM(D${startMergeIndex}:D${endMergeIndex})` },
+          gainLoss: { formula: `SUM(I${startMergeIndex}:I${endMergeIndex})` },
+          totalHargaBeli: { formula: `SUM(G${startMergeIndex}:G${endMergeIndex})` },
+          totalHargaJual: { formula: `SUM(H${startMergeIndex}:H${endMergeIndex})` },
         });
 
         // Add data for sheet 4
@@ -289,6 +296,12 @@ class ExportReportService {
           // Center align numeric total columns
           if (colNumber >= 4 && colNumber <= 9) {
             cell.alignment = centerMiddle;
+            /**
+             * Positive → "Rp." #,##0
+             * Negative → "Rp." -#,##0
+             * Zero → "Rp." 0
+             */
+            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
             applyCellFill(cell, "FFEE8C");
           }
 
@@ -309,7 +322,9 @@ class ExportReportService {
         const sheetRow = worksheet2.addRow({
           tanggal: approvedAt,
           transaksi: Master_Customer?.alias || Master_Customer?.name || "",
-          nominalTransaksi: priceFormatWIthCurrency(grandTotalCustomer),
+          nominalTransaksi: {
+            formula: `'Catatan Pembelian ${monthName}'!H${endMergeIndex + 1}`,
+          },
         });
 
         sheetRow.font = fontBold;
@@ -318,6 +333,10 @@ class ExportReportService {
           cell.alignment = centerMiddle;
           if (colNumber != 3) {
             applyCellFill(cell, "FFFFFF00");
+          }
+
+          if (colNumber == 3){
+            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
           }
         });
       }
