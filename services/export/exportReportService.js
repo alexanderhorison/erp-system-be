@@ -66,12 +66,25 @@ class ExportReportService {
         biayaPengiriman: 0
       }
 
+      // initialize data formula
+      let dataSheet4Formula = {
+        pendapatanUsaha: [],
+        bebanPenjualan: [],
+        labaBruto: [],
+        bebanOperasi: [],
+        labaUsaha: [],
+        biayaPengiriman: [],
+        gajiTunjangan: [],
+        unexpectedCost: []
+      }
+
       // Process Data For Sheet 1 & 2
       await ExportReportService.generateSheetReportDetailTransaction({
         workbook,
         monthName,
         getDataReportSo,
-        dataSheet4
+        dataSheet4,
+        dataSheet4Formula
       })
 
       // Process Data For Sheet 3
@@ -81,14 +94,16 @@ class ExportReportService {
         getDataDailyCost,
         employeesMaster,
         unexpectedCostMaster,
-        dataSheet4
+        dataSheet4,
+        dataSheet4Formula
       })
 
       // Process Data For Sheet 4
       await ExportReportService.generateSheetReportForLabaRugiKomprehensif({
         workbook,
         monthName,
-        dataSheet4
+        dataSheet4,
+        dataSheet4Formula
       })
 
       // Process Data For Sheet 5
@@ -97,7 +112,8 @@ class ExportReportService {
         monthName,
         dataSheet4,
         unexpectedCostMaster,
-        grandUnexpectedCost
+        grandUnexpectedCost,
+        dataSheet4Formula
       })
 
       // Save the file
@@ -139,7 +155,7 @@ class ExportReportService {
   }
 
   // Sheet SO 1 for Catatan Pembelian & Sheet 2 for Perincian
-  static async generateSheetReportDetailTransaction({ workbook, monthName, getDataReportSo, dataSheet4 }) {
+  static async generateSheetReportDetailTransaction({ workbook, monthName, getDataReportSo, dataSheet4, dataSheet4Formula }) {
     try {
       const { styleBorder, fontBold, centerMiddle } = styleExcel;
 
@@ -289,6 +305,10 @@ class ExportReportService {
         dataSheet4.bebanPenjualan += sumTotalBeli;
         dataSheet4.labaBruto += Number(totalGainLoss);
 
+        dataSheet4Formula.pendapatanUsaha.push(`'Catatan Pembelian ${monthName}'!H${totalRow.number}`);
+        dataSheet4Formula.bebanPenjualan.push(`'Catatan Pembelian ${monthName}'!G${totalRow.number}`);
+        dataSheet4Formula.labaBruto.push(`'Catatan Pembelian ${monthName}'!I${totalRow.number}`);
+
         totalRow.font = fontBold;
         totalRow.eachCell((cell, colNumber) => {
           cell.border = styleBorder;
@@ -347,7 +367,7 @@ class ExportReportService {
     }
   }
 
-  static async generateSheetReportForDailyCost({ workbook, monthName, getDataDailyCost, employeesMaster, unexpectedCostMaster, dataSheet4 }) {
+  static async generateSheetReportForDailyCost({ workbook, monthName, getDataDailyCost, employeesMaster, unexpectedCostMaster, dataSheet4, dataSheet4Formula }) {
     try {
       // Sheet 3 For Daily Cost Transaction
       const worksheet3 = workbook.addWorksheet(`Pengeluaran Transaksi ${monthName}`);
@@ -361,11 +381,16 @@ class ExportReportService {
         { header: `Kasbon ${emp.nama}`, key: `emp_${emp.id}_kasbon`, width: 15 },
       ]));
 
-      const unexpectedCostCols = unexpectedCostMaster.map(cost => ({
-        header: cost.name,
-        key: `unexpectedCost_${cost.id}`,
-        width: 17,
-      }));
+      const unexpectedKey = []
+
+      const unexpectedCostCols = unexpectedCostMaster.map(cost => {
+        unexpectedKey.push(`unexpectedCost_${cost.id}`);
+        return {
+          header: cost.name,
+          key: `unexpectedCost_${cost.id}`,
+          width: 17,
+        };
+      });
 
       worksheet3.columns = [
         { header: 'Tanggal', key: "tanggal", width: 15 },
@@ -395,13 +420,13 @@ class ExportReportService {
         if (dailyCost.costGenerals.length === 0) {
           const rowObj = { tanggal: dailyCost.date };
           dailyCost.costEmployees.forEach((e) => {
-            rowObj[`emp_${e.employeeId}_gaji`] = priceFormatWIthCurrency(
+            rowObj[`emp_${e.employeeId}_gaji`] = Number(
               +e.salary || 0
             );
-            rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
+            rowObj[`emp_${e.employeeId}_bonus`] = Number(
               +e.bonus || 0
             );
-            rowObj[`emp_${e.employeeId}_kasbon`] = priceFormatWIthCurrency(
+            rowObj[`emp_${e.employeeId}_kasbon`] = Number(
               +e.amountDebt || 0
             );
 
@@ -412,7 +437,7 @@ class ExportReportService {
 
           dailyCost.costUnexpecteds.forEach((u) => {
             const k = `unexpectedCost_${u.categoryId}`;
-            rowObj[k] = priceFormatWIthCurrency(+u.price || 0);
+            rowObj[k] = Number(+u.price || 0);
             addTo(grand, k, +u.price || 0);
 
             // For Cost Unexpected in Sheet 5
@@ -426,8 +451,10 @@ class ExportReportService {
 
           for (let col = 1; col <= colCount; col++) {
             const cell = r.getCell(col); // makes sure the cell is instantiated
-            if (cell.value === undefined) cell.value = ""; // keep it visually empty
-
+            if (!cell.value) cell.value = 0; // keep it visually empty
+            if (col != 1){
+              cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
+            }
             cell.border = styleBorder; // your existing border style
             cell.alignment = centerMiddle; // your alignment
           }
@@ -454,9 +481,9 @@ class ExportReportService {
               transport += +g.transportAllowance || 0;
             });
             Object.assign(rowObj, {
-              tollCost: priceFormatWIthCurrency(toll),
-              fuelCost: priceFormatWIthCurrency(fuel),
-              transportAllowance: priceFormatWIthCurrency(transport),
+              tollCost: Number(toll),
+              fuelCost: Number(fuel),
+              transportAllowance: Number(transport),
             });
 
             addTo(grand, "tollCost", toll);
@@ -467,13 +494,13 @@ class ExportReportService {
 
             if (idx === 0) {
               dailyCost.costEmployees.forEach((e) => {
-                rowObj[`emp_${e.employeeId}_gaji`] = priceFormatWIthCurrency(
+                rowObj[`emp_${e.employeeId}_gaji`] = Number(
                   +e.salary || 0
                 );
-                rowObj[`emp_${e.employeeId}_bonus`] = priceFormatWIthCurrency(
+                rowObj[`emp_${e.employeeId}_bonus`] = Number(
                   +e.bonus || 0
                 );
-                rowObj[`emp_${e.employeeId}_kasbon`] = priceFormatWIthCurrency(
+                rowObj[`emp_${e.employeeId}_kasbon`] = Number(
                   +e.amountDebt || 0
                 );
 
@@ -484,7 +511,7 @@ class ExportReportService {
 
               dailyCost.costUnexpecteds.forEach((u) => {
                 const k = `unexpectedCost_${u.categoryId}`;
-                rowObj[k] = priceFormatWIthCurrency(+u.price || 0);
+                rowObj[k] = Number(+u.price || 0);
                 addTo(grand, k, +u.price || 0);
 
 
@@ -501,8 +528,11 @@ class ExportReportService {
 
             for (let col = 1; col <= colCount; col++) {
               const cell = r.getCell(col); // makes sure the cell is instantiated
-              if (cell.value === undefined) cell.value = ""; // keep it visually empty
+              if (!cell.value) cell.value = 0; // keep it visually empty
 
+              if (col != 1){
+                cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
+              }
               cell.border = styleBorder; // your existing border style
               cell.alignment = centerMiddle; // your alignment
             }
@@ -536,15 +566,40 @@ class ExportReportService {
 
       /* ───────── TOTAL ROW ───────────────────────────────────────────── */
       const totalRowObj = { tanggal: 'TOTAL' };
-      let grandTotal = 0
-      Object.entries(grand).forEach(([k, v]) => {
-        if (k !== 'tanggal') {
-          totalRowObj[k] = priceFormatWIthCurrency(v)
-          grandTotal += v;
-        };
+      const startDataRow = 2; // Data starts at row 2 (after header)
+      const endDataRow = worksheet3.lastRow.number;
+      let grandTotal = 0;
+
+      worksheet3.columns.forEach((col) => {
+        const key = col.key;
+        if (key !== 'tanggal') {
+          totalRowObj[key] = {
+            formula: `SUM(${col.letter}${startDataRow}:${col.letter}${endDataRow})`,
+          };
+        }
       });
 
       const totalRow = worksheet3.addRow(totalRowObj);
+      // For Formula Grand Total
+      const totalRowNumber = totalRow.number;
+
+      worksheet3.columns.forEach((col) => {
+        const key = col.key;
+        const formula = 
+            `'Pengeluaran Transaksi ${monthName}'!${col.letter}${totalRowNumber}`
+
+        if (['tollCost', 'fuelCost', 'transportAllowance'].includes(key)) {
+          dataSheet4Formula.biayaPengiriman.push(formula);
+        }
+        if (/^emp_\d+_(gaji|bonus|kasbon)$/.test(key)) {
+          dataSheet4Formula.gajiTunjangan.push(formula);
+        }
+
+        if (unexpectedKey.includes(key)) {
+          const dataUnexpected = unexpectedCostCols.find(u => u.key === key);
+          dataSheet4Formula.unexpectedCost.push(['', dataUnexpected.header, {formula: formula}, 0, 0, {formula: formula}]);
+        }
+      });
 
       totalRow.eachCell((c, col) => {
         c.alignment = centerMiddle;
@@ -556,6 +611,9 @@ class ExportReportService {
           bottom: { style: 'medium' },
           right: { style: 'medium' }
         };
+        if (col !== 1){
+          c.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
+        }
 
         /* green background for every cell in the total row */
         applyCellFill(c, 'FF00B050');
@@ -566,11 +624,16 @@ class ExportReportService {
       const allTotalRowObj = { tanggal: 'GRAND TOTAL', };
 
       const allTotalRow = worksheet3.addRow(allTotalRowObj);
-      allTotalRow.getCell('B').value = priceFormatWIthCurrency(grandTotal);
+      const endColLetter = worksheet3.getColumn(worksheet3.columnCount).letter;
+
+      allTotalRow.getCell('B').value = {
+        formula: `SUM(B${totalRowNumber}:${endColLetter}${totalRowNumber})`
+      }
       allTotalRow.font = fontBold;  // bold text for emphasis
 
       // add data for sheet 4
       dataSheet4.bebanOperasi = grandTotal;
+      dataSheet4Formula.bebanOperasi.push(`'Pengeluaran Transaksi ${monthName}'!B${allTotalRow.number}`);
       dataSheet4.labaUsaha = Number(dataSheet4.labaBruto) - Number(dataSheet4.bebanOperasi);
 
       allTotalRow.eachCell((cell, col) => {
@@ -581,6 +644,7 @@ class ExportReportService {
           bottom: { style: 'medium' },
           right: { style: 'medium' }
         };
+        cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
 
         // Different fill color for ALL TOTAL (orange)
         applyCellFill(cell, 'FF00B050');
@@ -592,7 +656,7 @@ class ExportReportService {
     }
   }
 
-  static async generateSheetReportForLabaRugiKomprehensif({ workbook, monthName, dataSheet4 }) {
+  static async generateSheetReportForLabaRugiKomprehensif({ workbook, monthName, dataSheet4, dataSheet4Formula }) {
     try {
       // Worksheet 4 for Laporan Laba Rugi Komprehensif
       const worksheet4 = workbook.addWorksheet(`Laporan Laba Rugi ${monthName}`, {
@@ -629,23 +693,23 @@ class ExportReportService {
       row = worksheet4.addRow(['', 'PENDAPATAN'])
       row.font = fontBold
       // row 7
-      worksheet4.addRow(['', '  Pendapatan Usaha', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
-      styleCell(worksheet4.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });
+      worksheet4.addRow(['', '  Pendapatan Usaha', '', {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`}])
+      styleCell(worksheet4.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right', rupiahFormat: true });
 
       // row 8
-      worksheet4.addRow(['', 'TOTAL PENDAPATAN', '', priceFormatWIthCurrency(dataSheet4.pendapatanUsaha)])
+      worksheet4.addRow(['', 'TOTAL PENDAPATAN', '', {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`}])
       styleCell(worksheet4.getCell('B8'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D8'), { bold: true, alignmentHorizontal: 'right' });
+      styleCell(worksheet4.getCell('D8'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
 
       worksheet4.addRow([])      // row 10
-      worksheet4.addRow(['', 'BEBAN POKOK PENJUALAN', '', priceFormatWIthCurrency(dataSheet4.bebanPenjualan)])
+      worksheet4.addRow(['', 'BEBAN POKOK PENJUALAN', '', {formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})`}])
       styleCell(worksheet4.getCell('B10'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D10'), { bold: true, alignmentHorizontal: 'right' });
+      styleCell(worksheet4.getCell('D10'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
 
       worksheet4.addRow([])      // row 12
-      worksheet4.addRow(['', 'LABA BRUTO', '', priceFormatWIthCurrency(dataSheet4.labaBruto)])
+      worksheet4.addRow(['', 'LABA BRUTO', '', {formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})`}])
       styleCell(worksheet4.getCell('B12'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D12'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D12'), { bold: true, rupiahFormat: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -653,18 +717,19 @@ class ExportReportService {
       row.font = fontBold
 
       // row 15
-      worksheet4.addRow(['', '  Beban Operasi', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
-      styleCell(worksheet4.getCell('D15'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
-      worksheet4.addRow(['', 'JUMLAH BEBAN USAHA', '', priceFormatWIthCurrency(dataSheet4.bebanOperasi)])
+      worksheet4.addRow(['', '  Beban Operasi', '', {formula: dataSheet4Formula.bebanOperasi[0]}])
+      styleCell(worksheet4.getCell('D15'), { rupiahFormat: true, border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
+      worksheet4.addRow(['', 'JUMLAH BEBAN USAHA', '', {formula: dataSheet4Formula.bebanOperasi[0]}])
       styleCell(worksheet4.getCell('B16'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D16'), { bold: true, alignmentHorizontal: 'right' });
+      styleCell(worksheet4.getCell('D16'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
 
       worksheet4.addRow([])
 
       // row 18
-      worksheet4.addRow(['', 'LABA USAHA', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      worksheet4.addRow(['', 'LABA USAHA', '', {formula: `SUM(D12-D16)`}])
+      dataSheet4Formula.labaUsaha.push(`'Laporan Laba Rugi ${monthName}'!D18`);
       styleCell(worksheet4.getCell('B18'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D18'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D18'), { rupiahFormat : true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -688,9 +753,9 @@ class ExportReportService {
       worksheet4.addRow([])
 
       // row 28
-      worksheet4.addRow(['', 'LABA SEBELUM PAJAK', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      worksheet4.addRow(['', 'LABA SEBELUM PAJAK', '', {formula: `=D18`}])
       styleCell(worksheet4.getCell('B28'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D28'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D28'), { rupiahFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -712,9 +777,9 @@ class ExportReportService {
       worksheet4.addRow([])
 
       // row 35
-      worksheet4.addRow(['', 'LABA NETO', '', priceFormatWIthCurrency(dataSheet4.labaUsaha)])
+      worksheet4.addRow(['', 'LABA NETO', '', {formula: `=D28`}])
       styleCell(worksheet4.getCell('B35'), { bold: true, alignmentHorizontal: 'left', });
-      styleCell(worksheet4.getCell('D35'), { bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
+      styleCell(worksheet4.getCell('D35'), { rupiahFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
       for (let r = 1; r <= 36; r++) {
         for (let c = 1; c <= 5; c++) {
           const cell = worksheet4.getCell(r, c);
@@ -740,7 +805,7 @@ class ExportReportService {
     }
   }
 
-  static async generateSheetReportForLabaKomersial({ workbook, monthName, dataSheet4, unexpectedCostMaster, grandUnexpectedCost }) {
+  static async generateSheetReportForLabaKomersial({ workbook, monthName, dataSheet4, unexpectedCostMaster, grandUnexpectedCost, dataSheet4Formula }) {
     try {
       const worksheet5 = workbook.addWorksheet('Laba Komersial dan Fiskal', {
         views: [{ showGridLines: false }]
@@ -805,43 +870,33 @@ class ExportReportService {
       styleCell(worksheet5.getCell('F7'), { value : 'Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
       styleCell(worksheet5.getCell('F9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
-      let gajiTunjangan = Number(dataSheet4.bebanOperasi) - Number(dataSheet4.biayaPengiriman);
-
-      const unexpectedCostTotalRows = unexpectedCostMaster.map((cost) => {
-        const key = `unexpectedCost_${cost.id}`;
-        const total = grandUnexpectedCost[key] || 0;
-        gajiTunjangan -= total;
-        return [
-          '',
-          cost.name,
-          total,
-          0,
-          0,
-          total
-        ];
-      });
-
-      const labaBersih = Number(dataSheet4.labaBruto) - Number(dataSheet4.bebanOperasi)
-      const biayaPengiriman = Number(dataSheet4.biayaPengiriman)
+      const biayaPengiriman = {formula: `SUM(${dataSheet4Formula.biayaPengiriman.join(",")})`};
+      const pendapatanUsaha = {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`};
+      const bebanPenjualan = {formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})`};
+      const labaBruto = {formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})`};
+      const bebanOperasi = {formula: dataSheet4Formula.bebanOperasi[0]};
+      // C12 is laba kotor and C15 biaya pengiriman + length of unexpectedCostTotalRows + 1
+      const labaBersihFormula= {formula: `SUM(C12-C${15 + dataSheet4Formula.unexpectedCost.length + 1})`};
+      const gajiTunjanganFormula = {formula: `SUM(${dataSheet4Formula.gajiTunjangan.join(",")})`};
       const data = [
-        ['', 'Pendapatan Bersih', dataSheet4.pendapatanUsaha, 0, 0, dataSheet4.pendapatanUsaha,],
-        ['', 'Harga Pokok Penjualan', dataSheet4.bebanPenjualan, 0, 0, dataSheet4.bebanPenjualan],
-        ['', '  LABA KOTOR', dataSheet4.labaBruto, 0, 0, dataSheet4.labaBruto],
+        ['', 'Pendapatan Bersih', pendapatanUsaha, 0, 0, pendapatanUsaha],
+        ['', 'Harga Pokok Penjualan', bebanPenjualan, 0, 0, bebanPenjualan],
+        ['', '  LABA KOTOR', labaBruto, 0, 0, labaBruto],
         ['', 'BEBAN USAHA', '', '', '', '', 'center'],
-        ['', 'Gaji Upah dan Tunjangan lainnya', gajiTunjangan, 0, 0, gajiTunjangan],
+        ['', 'Gaji Upah dan Tunjangan lainnya', gajiTunjanganFormula, 0, 0, gajiTunjanganFormula],
         ['', 'Biaya Pengiriman', biayaPengiriman, 0, 0, biayaPengiriman],
-        ...unexpectedCostTotalRows,
-        ['', '  JUMLAH BEBAN USAHA', dataSheet4.bebanOperasi, 0, 0, dataSheet4.bebanOperasi],
-        ['', 'LABA (RUGI) USAHA', labaBersih, 0, 0, labaBersih],
+        ...dataSheet4Formula.unexpectedCost,
+        ['', '  JUMLAH BEBAN USAHA', bebanOperasi, 0, 0, bebanOperasi],
+        ['', 'LABA (RUGI) USAHA', labaBersihFormula, 0, 0, labaBersihFormula],
         ['', '  PENDAPATAN (BEBAN) LAIN-LAIN', '', '', '', '', 'center'],
         ['', 'Pendapatan lain-lain', 0, 0, 0, 0],
         ['', 'Pendapatan Bunga', 0, 0, 0, 0],
         ['', 'Komisi Penjualan', 0, 0, 0, 0],
         ['', '  PENDAPATAN (BEBAN) LAIN-LAIN BERSIH', 0, 0, 0, 0, 'center'],
-        ['', 'Laba Sebelum Taksiran Pajak Penghasilan', labaBersih, 0, 0, labaBersih],
+        ['', 'Laba Sebelum Taksiran Pajak Penghasilan', labaBersihFormula, 0, 0, labaBersihFormula],
         ['', 'Provision for Income Tax', 0, 0, 0, 0],
         ['', '  TAKSIRAN PAJAK PENGHASILAN', 0, 0, 0, 0],
-        ['', '  LABA BERSIH', labaBersih, 0, 0, labaBersih],
+        ['', '  LABA BERSIH', labaBersihFormula, 0, 0, labaBersihFormula],
       ];
 
       let startRow = 10;
@@ -857,9 +912,6 @@ class ExportReportService {
           displayRow[1].trim().toUpperCase() === displayRow[1].trim();
 
         const formattedRow = displayRow.map((val, colIdx) => {
-          if (typeof val === 'number') {
-            return priceFormatWIthCurrency(val); // Format number
-          }
           return val;
         });
 
@@ -875,8 +927,14 @@ class ExportReportService {
           // Right-align numbers (integer or float)
           if (typeof displayRow[col - 1] === 'number') {
             cell.alignment = { vertical: 'middle', horizontal: 'right' };
+            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
           } else if (isCentered && col === 1) {
             cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          }
+
+          if (displayRow[col - 1] || displayRow[col - 4]) {
+            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+            cell.alignment = { vertical: 'middle', horizontal: 'right' };
           }
           // if column is uppercase for column 1
           if (col === 1 && isUppercase) {
@@ -935,6 +993,7 @@ function styleCell(cell, options = {}) {
     };
   }
   if (options.border) cell.border = options.border;
+  if (options.rupiahFormat) cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
 }
 
 module.exports = ExportReportService;
