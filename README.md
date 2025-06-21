@@ -77,6 +77,7 @@ ID MENU : NAMA
 33  Daily Cost Calendar
 34  Asset Lancar
 35  Asset Tidak Lancar
+36. Transaksi Asset Tidak Lancar
 ```
 
 ### API Migration (15 Agustus 2024)

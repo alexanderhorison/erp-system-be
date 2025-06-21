@@ -18,6 +18,13 @@ module.exports = {
         updatedAt: new Date(),
         menuId: 35,
       },
+      {
+        name: "Transaksi Asset Tidak Lancar",
+        description: "Transaksi Asset Tidak Lancar",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        menuId: 36,
+      },
     ]);
   },
 
@@ -26,7 +33,7 @@ module.exports = {
       "Master_Menus",
       {
         name: {
-          [Sequelize.Op.in]: ["Asset Lancar", "Asset Tidak Lancar"],
+          [Sequelize.Op.in]: ["Asset Lancar", "Asset Tidak Lancar", "Transaksi Asset Tidak Lancar"],
         },
       },
       {}
