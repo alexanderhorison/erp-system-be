@@ -21,6 +21,7 @@ const multer = require('multer');
 const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
 const routerConfig = require("./config/index");
 const routerDailyCost = require("./dailyCost/index");
+const routerAsset = require("./asset/index")
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -70,8 +71,10 @@ router.use("/sales-order", routerSalesOrder);
 // Purchase Order
 router.use("/purchase-order", routerPurchaseOrder);
 
+// Point of Sales
 router.use("/point-of-sale", routerPointOfSale);
 
+// Export
 router.use("/export", routerExport);
 
 // Daily Cost
@@ -81,5 +84,8 @@ router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
 router.post("/send-email-pos", upload.single('pdf'), EmailController.sendEmailPos)
 
 router.use("/config", routerConfig)
+
+// Asset Management
+router.use("/asset", routerAsset);
 
 module.exports = router;
