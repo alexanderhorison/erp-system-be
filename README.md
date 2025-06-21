@@ -75,6 +75,8 @@ ID MENU : NAMA
 31  Master Mobil
 32  Master Karyawan
 33  Daily Cost Calendar
+34  Asset Lancar
+35  Asset Tidak Lancar
 ```
 
 ### API Migration (15 Agustus 2024)
