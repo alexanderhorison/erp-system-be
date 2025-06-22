@@ -2,43 +2,42 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Trx_Current_Assets", {
+    await queryInterface.createTable("Monthly_Current_Assets", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      date: {
-        type: Sequelize.DATEONLY,
+      period: {
+        type: Sequelize.STRING(7), // Format: YYYY-MM
         allowNull: false,
-        defaultValue: Sequelize.NOW,
       },
-      kasAndBank: {
+      cashAndBank: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      piutangUsaha: {
+      accountsReceivable: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      pihakKetiga: {
+      thirdPartyReceivable: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      piutangLain: {
+      otherReceivables: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      persediaan: {
+      inventory: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      uangMuka: {
+      advancePayments: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
-      pajak: {
+      tax: {
         type: Sequelize.BIGINT,
         allowNull: false,
       },
@@ -54,9 +53,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Trx_Current_Assets");
+    await queryInterface.dropTable("Monthly_Current_Assets");
   },
 };

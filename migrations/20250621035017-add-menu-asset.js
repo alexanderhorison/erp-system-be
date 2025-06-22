@@ -5,22 +5,22 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.bulkInsert("Master_Menus", [
       {
-        name: "Asset Lancar",
-        description: "Asset Lancar",
+        name: "Aset Lancar Bulanan",
+        description: "Aset Lancar Bulanan",
         createdAt: new Date(),
         updatedAt: new Date(),
         menuId: 34,
       },
       {
-        name: "Asset Tidak Lancar",
-        description: "Asset Tidak Lancar",
+        name: "Asset Tidak Lancar Bulanan",
+        description: "Asset Tidak Lancar Bulanan",
         createdAt: new Date(),
         updatedAt: new Date(),
         menuId: 35,
       },
       {
-        name: "Transaksi Asset Tidak Lancar",
-        description: "Transaksi Asset Tidak Lancar",
+        name: "Master Aset Tidak Lancar",
+        description: "Master Aset Tidak Lancar",
         createdAt: new Date(),
         updatedAt: new Date(),
         menuId: 36,
@@ -33,7 +33,7 @@ module.exports = {
       "Master_Menus",
       {
         name: {
-          [Sequelize.Op.in]: ["Asset Lancar", "Asset Tidak Lancar", "Transaksi Asset Tidak Lancar"],
+          [Sequelize.Op.in]: ["Aset Lancar Bulanan", "Asset Tidak Lancar Bulanan", "Master Aset Tidak Lancar"],
         },
       },
       {}

@@ -2,6 +2,7 @@ const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const { responses } = require("../../helpers/responses");
 const CurrentAssetService = require("../../services/asset/currentAssetService");
+
 class CurrentAssetController {
   static async getAll(req, res) {
     try {
@@ -17,14 +18,14 @@ class CurrentAssetController {
   static async createAsset(req, res) {
     try {
       const schema = yup.object().shape({
-        date: yup.string().required("Tanggal harus diisi"),
-        kasAndBank: yup.number().required("Kas dan Bank harus diisi"),
-        piutangUsaha: yup.number().required("Piutang Usaha harus diisi"),
-        pihakKetiga: yup.number().required("Pihak Ketiga harus diisi"),
-        piutangLain: yup.number().required("Piutang Lain harus diisi"),
-        persediaan: yup.number().required("Persediaan harus diisi"),
-        uangMuka: yup.number().required("Uang Muka harus diisi"),
-        pajak: yup.number().required("Pajak harus diisi"),
+        period: yup.string().required("Tanggal harus diisi"),
+        cashAndBank: yup.number().required("Kas dan Bank harus diisi"),
+        accountsReceivable: yup.number().required("Piutang Usaha harus diisi"),
+        thirdPartyReceivable: yup.number().required("Pihak Ketiga harus diisi"),
+        otherReceivables: yup.number().required("Piutang Lain harus diisi"),
+        inventory: yup.number().required("Persediaan harus diisi"),
+        advancePayments: yup.number().required("Uang Muka harus diisi"),
+        tax: yup.number().required("Pajak harus diisi"),
         grandTotal: yup.number().required("Grand Total harus diisi"),
       });
       const body = await yupSchemaValidation(req.body, schema);
@@ -43,14 +44,14 @@ class CurrentAssetController {
     try {
       const schemaParams = yup.number().required("Id Asset tidak boleh kosong");
       const schema = yup.object({
-        date: yup.date().required("Tanggal harus diisi"),
-        kasAndBank: yup.number().required("Kas dan Bank harus diisi"),
-        piutangUsaha: yup.number().required("Piutang Usaha harus diisi"),
-        pihakKetiga: yup.number().required("Pihak Ketiga harus diisi"),
-        piutangLain: yup.number().required("Piutang Lain harus diisi"),
-        persediaan: yup.number().required("Persediaan harus diisi"),
-        uangMuka: yup.number().required("Uang Muka harus diisi"),
-        pajak: yup.number().required("Pajak harus diisi"),
+        period: yup.string().required("Periode harus diisi"),
+        cashAndBank: yup.number().required("Kas dan Bank harus diisi"),
+        accountsReceivable: yup.number().required("Piutang Usaha harus diisi"),
+        thirdPartyReceivable: yup.number().required("Pihak Ketiga harus diisi"),
+        otherReceivables: yup.number().required("Piutang Lain harus diisi"),
+        inventory: yup.number().required("Persediaan harus diisi"),
+        advancePayments: yup.number().required("Uang Muka harus diisi"),
+        tax: yup.number().required("Pajak harus diisi"),
         grandTotal: yup.number().required("Grand Total harus diisi"),
       });
 
