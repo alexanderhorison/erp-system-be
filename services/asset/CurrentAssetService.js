@@ -1,6 +1,7 @@
 const moment = require("moment");
-const { sequelize: sq, Monthly_Current_Assets } = require("../../models");
+const { sequelize: sq, Monthly_Current_Assets, Sales_Order } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
+const { Op } = require("sequelize");
 
 class CurrentAssetService {
   static async findAllAsset(req) {
@@ -12,7 +13,7 @@ class CurrentAssetService {
         where.period = period; // Simple and clean
       }
 
-      const result = await Monthly_Current_Assets.findAll({ where });
+      const result = await Monthly_Current_Assets.findAll({ where, order: [['period', 'DESC']] });
 
       return result;
     } catch (error) {
@@ -80,6 +81,29 @@ class CurrentAssetService {
       }
 
       return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getPiutangSo(period) {
+    try {
+      const [year, month] = period.split("-").map(Number);
+      const result = await Sales_Order.findOne({
+        where: {
+          [Op.and]: [
+            sq.where(sq.literal(`date_part('year', "shippingDate")`), year),
+            sq.where(sq.literal(`date_part('month', "shippingDate")`), month),
+          ],
+          status: "APPROVED"
+        },
+        attributes: [
+          [sq.fn('SUM', sq.col('amountDebt')), 'totalAmountDebt']
+        ],
+        raw: true
+      })
+
+      return result?.totalAmountDebt || 0;
     } catch (error) {
       throw error;
     }

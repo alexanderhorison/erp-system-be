@@ -82,6 +82,18 @@ class CurrentAssetController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async getPiutangSo(req, res) {
+    try {
+      const data = await CurrentAssetService.getPiutangSo(req.query.period);
+
+      res.status(200).json(responses(true, "Success get piutang so", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = CurrentAssetController;
