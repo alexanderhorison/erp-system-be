@@ -29,7 +29,6 @@ class MasterNonCurrentAssetService {
         NON_CURENT_ASSETS_TYPE.BUILDING === assetType
           ? assetValue / depreciationMonths
           : 0;
-          
 
       const asset = await Tm_Non_Current_Assets.create({
         name,
@@ -106,6 +105,80 @@ class MasterNonCurrentAssetService {
       throw error;
     }
   }
+
+  static async checkDepreciationActive(date = null, transaction) {
+    try {
+      const assets = await Tm_Non_Current_Assets.findAll({
+        where: {
+          isDepreciable: true,
+          depreciationActive: true,
+        },
+      });
+
+      // Use provided date or current date
+      const checkDate = date ? new Date(date) : new Date();
+      const assetsShouldBeInactive = [];
+
+      assets.forEach((asset) => {
+        const acquisitionDate = new Date(asset.acquisitionDate);
+
+        // Calculate months passed based on year and month difference only
+        const acquisitionYear = acquisitionDate.getFullYear();
+        const acquisitionMonth = acquisitionDate.getMonth();
+        const checkYear = checkDate.getFullYear();
+        const checkMonth = checkDate.getMonth();
+
+        // Calculate total months passed (ignoring specific dates)
+        // From 2025-01-01 to 2025-02-01 = 1 month passed
+        const monthsPassed =
+          (checkYear - acquisitionYear) * 12 + (checkMonth - acquisitionMonth);
+
+        // Check if depreciation period has ended
+        // If monthsPassed + 1 >= depreciationMonths, then depreciation should be inactive
+        // Example: asset bought Jan 2025 with 2 months depreciation
+        // - In Jan 2025: monthsPassed = 0, monthsPassed + 1 = 1 < 2 (still active)
+        // - In Feb 2025: monthsPassed = 1, monthsPassed + 1 = 2 >= 2 (should be inactive, last month)
+        // - In Mar 2025: monthsPassed = 2, monthsPassed + 1 = 3 >= 2 (should be inactive)
+        const shouldBeInactive = monthsPassed + 1 >= asset.depreciationMonths;
+
+        if (shouldBeInactive) {
+          assetsShouldBeInactive.push({
+            id: asset.id,
+            name: asset.name,
+            assetValue: asset.assetValue,
+            assetType: asset.assetType,
+            isDepreciable: asset.isDepreciable,
+            depreciationActive: asset.depreciationActive, // Current status (still active)
+            shouldBeActive: false, // Should be inactive
+            acquisitionDate: asset.acquisitionDate,
+            depreciationMonths: asset.depreciationMonths,
+            depreciationValue: asset.depreciationValue,
+            monthsPassed: monthsPassed,
+            notes: asset.notes,
+          });
+        }
+      });
+
+      await Tm_Non_Current_Assets.update(
+        { depreciationActive: false },
+        {
+          where: {
+            id: assetsShouldBeInactive.map((asset) => asset.id),
+          },
+          transaction: transaction,
+        }
+      );
+
+      return {
+        totalAssetsChecked: assets.length,
+        assetsShouldBeInactive: assetsShouldBeInactive,
+        totalAssetsShouldBeInactive: assetsShouldBeInactive.length,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = MasterNonCurrentAssetService;

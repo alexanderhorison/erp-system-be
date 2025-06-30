@@ -21,7 +21,8 @@ module.exports = (sequelize, DataTypes) => {
     acquisitionDate: DataTypes.DATEONLY,
     depreciationMonths: DataTypes.INTEGER,
     depreciationValue: DataTypes.BIGINT,
-    notes: DataTypes.TEXT
+    notes: DataTypes.TEXT,
+    depreciationActive: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Tm_Non_Current_Assets',

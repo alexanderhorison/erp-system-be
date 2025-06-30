@@ -10,7 +10,6 @@ class MasterNonCurrentAssetController {
   static async getAll(req, res) {
     try {
       const data = await MasterNonCurrentAssetService.getAll();
-      // Logic to fetch all non-current assets
       res
         .status(200)
         .json(
@@ -34,7 +33,7 @@ class MasterNonCurrentAssetController {
         assetType: yup.string().required().oneOf(NON_CURENT_ASSETS_TYPE_LIST),
         acquisitionDate: yup.date().required(),
         depreciationMonths: yup.number().optional().nullable(),
-        notes: yup.string().optional(),
+        notes: yup.string().optional().nullable(),
       });
 
       const body = await yupSchemaValidation(req.body, schemaBody);
@@ -46,7 +45,6 @@ class MasterNonCurrentAssetController {
           true,
           "Berhasil membuat master data aset tidak lancar",
           data
-          // data
         )
       );
     } catch (error) {
@@ -81,11 +79,14 @@ class MasterNonCurrentAssetController {
         assetType: yup.string().required(),
         acquisitionDate: yup.date().required(),
         depreciationMonths: yup.number().optional().nullable(),
-        notes: yup.string().optional(),
+        notes: yup.string().optional().nullable(),
       });
+
       const id = await yupSchemaValidation(req.params.id, schemaParams);
       const body = await yupSchemaValidation(req.body, schemaBody);
-      const data = await MasterNonCurrentAssetService.update(id, body);
+
+      await MasterNonCurrentAssetService.update(id, body);
+
       res.status(200).json({ message: `Aset berhasil di update` });
     } catch (error) {
       res.status(500).json({ error: error.message });
