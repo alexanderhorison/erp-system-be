@@ -1,7 +1,7 @@
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const { responses } = require("../../helpers/responses");
-const CurrentAssetService = require("../../services/asset/currentAssetService");
+const CurrentAssetService = require("../../services/asset/CurrentAssetService");
 
 class CurrentAssetController {
   static async getAll(req, res) {
