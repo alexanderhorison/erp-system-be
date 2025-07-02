@@ -39,6 +39,28 @@ class NonCurrentAssetController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async deleteNonCurrentAsset(req, res) {
+    try {
+      const schemaParams = yup.object({
+        id: yup.string().required("ID harus diisi"),
+      });
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      await NonCurrentAssetService.deleteNonCurrentAsset(
+        params.id
+      );
+
+      res
+        .status(200)
+        .json(responses(true, "Berhasil menghapus Asset Tidak Lancar Bulanan", {}));
+
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = NonCurrentAssetController;

@@ -3,5 +3,6 @@ const NonCurrentAssetController = require("../../controllers/asset/NonCurrentAss
 
 router.get("/all", NonCurrentAssetController.getAll);
 router.post("/", NonCurrentAssetController.generateNonCurrentAsset);
+router.delete("/:id", NonCurrentAssetController.deleteNonCurrentAsset);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-function sumNonCurrentAsset(data, date) {
+function sumNonCurrentAsset({data, date}) {
   // Jika data kosong atau tidak valid, return 0
   if (!data || !Array.isArray(data) || data.length === 0) {
     return 0;

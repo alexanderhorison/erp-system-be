@@ -61,35 +61,41 @@ class NonCurrentAssetService {
 
       const masterNonCurrentAssets =
         await MasterNonCurrentAssetService.getAll();
+        
+      const vehicleValue = sumNonCurrentAsset({
+        data: masterNonCurrentAssets.filter(
+          (asset) => asset.assetType === "VEHICLE"
+        ),
+        date: date,
+      });
 
-      const vehicleValue = sumNonCurrentAsset(
-        masterNonCurrentAssets.filter((asset) => asset.assetType === "VEHICLE"),
-        date
-      );
-
-      const buildingValue = sumNonCurrentAsset(
-        masterNonCurrentAssets.filter(
+      const buildingValue = sumNonCurrentAsset({
+        data: masterNonCurrentAssets.filter(
           (asset) => asset.assetType === "BUILDING"
         ),
-        date
-      );
+        date: date,
+      });
 
-      const landValue = sumNonCurrentAsset(
-        masterNonCurrentAssets.filter((asset) => asset.assetType === "LAND"),
-        date
-      );
+      const landValue = sumNonCurrentAsset({
+        data: masterNonCurrentAssets.filter(
+          (asset) => asset.assetType === "LAND"
+        ),
+        date: date,
+      });
 
-      const longTermInvestment = sumNonCurrentAsset(
-        masterNonCurrentAssets.filter(
+      const longTermInvestment = sumNonCurrentAsset({
+        data: masterNonCurrentAssets.filter(
           (asset) => asset.assetType === "LONG_TERM_INVESTMENT"
         ),
-        date
-      );
+        date: date,
+      });
 
-      const othersValue = sumNonCurrentAsset(
-        masterNonCurrentAssets.filter((asset) => asset.assetType === "OTHERS"),
-        date
-      );
+      const othersValue = sumNonCurrentAsset({
+        data: masterNonCurrentAssets.filter(
+          (asset) => asset.assetType === "OTHERS"
+        ),
+        date: date,
+      });
 
       const currentYearDepreciation = calculateCurrentYearDepreciation(
         masterNonCurrentAssets.filter((asset) => asset.isDepreciable),
@@ -140,6 +146,22 @@ class NonCurrentAssetService {
       return newAsset;
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async deleteNonCurrentAsset(id) {
+    try {
+      const asset = await Monthly_Non_Current_Assets.findByPk(id);
+      if (!asset) {
+        throw {
+          code: 404,
+          message: "Asset Non-Keuangan tidak ditemukan",
+        };
+      }
+      await asset.destroy();
+      return true;
+    } catch (error) {
       throw error;
     }
   }

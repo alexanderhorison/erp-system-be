@@ -42,6 +42,8 @@ class MasterNonCurrentAssetService {
           assetType === NON_CURENT_ASSETS_TYPE.BUILDING, // Only vehicles and buildings are depreciable
         depreciationValue: Math.ceil(depreciationValue), // Calculate depreciation value if applicable
         notes,
+        depreciationActive: assetType === NON_CURENT_ASSETS_TYPE.VEHICLE ||
+          assetType === NON_CURENT_ASSETS_TYPE.BUILDING, // Only vehicles and buildings are depreciable
       });
 
       return asset;
