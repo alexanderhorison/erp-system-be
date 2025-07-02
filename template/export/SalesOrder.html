@@ -308,10 +308,19 @@
         /* Avoid breaking tables within a page */
         .no-page-break {
           page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: auto !important;
+          margin-bottom: 0;
         }
 
         .page-break-before {
           page-break-before: always !important;
+        }
+
+        /* Add top margin to the first element on a new page */
+        .page-top {
+          margin-top: 20mm !important; /* Margin atas untuk elemen di awal halaman */
+          padding-top: 5mm !important;
         }
 
         /* Remove unnecessary borders or shadows for print */
@@ -322,9 +331,7 @@
         /* Adjust padding for better fit on printed pages */
         .print-padding {
           padding: 16px !important;
-        }
-
-        /* Hide unnecessary interactive elements in print */
+        } /* Hide unnecessary interactive elements in print */
         .no-print {
           display: none !important;
         }
@@ -332,6 +339,12 @@
         /* Ensure text visibility */
         .text-secondary {
           color: black !important;
+        }
+
+        /* Custom style for Grand Total section */
+        .grand-total-section {
+          margin-top: 0 !important;
+          padding-top: 5px !important;
         }
       }
 
@@ -1787,7 +1800,7 @@
       .css-3941 {
         margin-top: 1rem !important;
       }
-      
+
       .css-738341 {
         margin-top: 0.5rem !important;
       }
@@ -2290,6 +2303,8 @@
         display: table-row;
         vertical-align: middle;
         outline: 0;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
 
       .css-18pt6fx-MuiTableRow-root.MuiTableRow-hover:hover {
@@ -2509,6 +2524,8 @@
         width: 100%;
         border-collapse: collapse;
         border-spacing: 0;
+        page-break-inside: auto;
+        break-inside: auto;
       }
 
       .css-x1bzil-MuiTable-root caption {
@@ -2608,7 +2625,10 @@
         -ms-flex-align: center;
         align-items: center;
         gap: 0.75rem;
-        padding: 0.75rem;
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
         margin-right: 0.25rem;
       }
 
@@ -2696,7 +2716,7 @@
       .css-1h239q7-MuiCardContent-root {
         padding: 16px;
         padding: 1.5rem;
-        margin-top: -2.5rem;
+        margin-top: 0;
       }
 
       .css-1h239q7-MuiCardContent-root:last-child {
@@ -3173,13 +3193,13 @@
 
       .css-jajx6k-MuiTableCell-root {
         font-size: 0.8125rem;
-        line-height: 1.53846154;
+        line-height: 1.7;
         font-family: Public Sans, sans-serif, -apple-system, BlinkMacSystemFont,
           "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
           "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         font-weight: 400;
         display: table-cell;
-        vertical-align: inherit;
+        vertical-align: top;
         border-bottom: 1px solid rgba(230, 229, 231, 1);
         text-align: left;
         padding: 16px;
@@ -3187,9 +3207,11 @@
         border-bottom: 1px solid rgba(47, 43, 61, 0.16);
         width: 320px;
         max-width: 320px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        word-wrap: break-word;
+        word-break: break-word;
+        white-space: normal;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
 
       .css-11memrj-MuiTableCell-root {
@@ -3676,9 +3698,13 @@
                   </p>
                 </div>
               </div>
+              <div style="margin-bottom: 10px"></div>
             </div>
             {{/if}}
-            <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
+            <div
+              style="margin-top: 5px; padding-top: 5px"
+              class="MuiCardContent-root css-1h239q7-MuiCardContent-root grand-total-section page-top"
+            >
               <div
                 class="MuiGrid-root MuiGrid-container css-9cyib4-MuiGrid-root"
               >
@@ -3711,19 +3737,22 @@
                 </div>
               </div>
             </div>
-            <div class="MuiCardContent-root css-1h239q7-MuiCardContent-root">
-              <p
-                class="MuiTypography-root MuiTypography-body1 css-1fyr8rp-MuiTypography-root css-3941"
+            <div class="no-page-break page-top">
+              <div
+                class="MuiCardContent-root css-1h239q7-MuiCardContent-root"
+                style="padding-top: 0px; margin-top: 0"
               >
-                Silahkan transfer ke rekening:
-              </p>
-              <p
-                class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
-              >
-                248 882 2298 BCA a/n PT TJAHAYA BERKAT ABADI
-              </p>
-            </div>
-            <div class="no-page-break">
+                <p
+                  class="MuiTypography-root MuiTypography-body1 css-1fyr8rp-MuiTypography-root css-3941"
+                >
+                  Silahkan transfer ke rekening:
+                </p>
+                <p
+                  class="MuiTypography-root MuiTypography-body1 css-tt4zth-MuiTypography-root"
+                >
+                  248 882 2298 BCA a/n PT TJAHAYA BERKAT ABADI
+                </p>
+              </div>
               <div class="MuiCardContent-root css-1ir3qa8-MuiCardContent-root">
                 <div
                   class="MuiGrid-root MuiGrid-container css-11lq3yg-MuiGrid-root"
