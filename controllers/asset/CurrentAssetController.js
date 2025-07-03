@@ -27,6 +27,7 @@ class CurrentAssetController {
         advancePayments: yup.number().required("Uang Muka harus diisi"),
         tax: yup.number().required("Pajak harus diisi"),
         grandTotal: yup.number().required("Grand Total harus diisi"),
+        notes: yup.string().optional(), // Optional notes field
       });
       const body = await yupSchemaValidation(req.body, schema);
 
@@ -53,6 +54,7 @@ class CurrentAssetController {
         advancePayments: yup.number().required("Uang Muka harus diisi"),
         tax: yup.number().required("Pajak harus diisi"),
         grandTotal: yup.number().required("Grand Total harus diisi"),
+        notes: yup.string().optional(), // Optional notes field
       });
 
       const id = await yupSchemaValidation(req.params.id, schemaParams);
@@ -88,6 +90,28 @@ class CurrentAssetController {
       const data = await CurrentAssetService.getPiutangSo(req.query.period);
 
       res.status(200).json(responses(true, "Success get piutang so", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async deleteCurrentAsset(req, res) {
+    try {
+      const schemaParams = yup.object({
+        id: yup.string().required("ID harus diisi"),
+      });
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      await CurrentAssetService.deleteCurrentAsset(
+        params.id
+      );
+
+      res
+        .status(200)
+        .json(responses(true, "Berhasil menghapus Asset Lancar"));
+
     } catch (error) {
       res
         .status(error.code || 500)

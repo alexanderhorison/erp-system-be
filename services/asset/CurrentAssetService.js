@@ -108,6 +108,19 @@ class CurrentAssetService {
       throw error;
     }
   }
+
+  static async deleteCurrentAsset(id) {
+    try {
+      const asset = await Monthly_Current_Assets.findByPk(id);
+      if (!asset) {
+        throwValidation(404, "Data Asset Tidak Ditemukan");
+      }
+      await asset.destroy();
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = CurrentAssetService;

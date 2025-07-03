@@ -7,5 +7,6 @@ router.get("/all", CurrentAssetController.getAll);
 
 router.get("/:id", CurrentAssetController.getDetailAsset);
 router.put("/:id", CurrentAssetController.updateAsset);
+router.delete("/:id", CurrentAssetController.deleteCurrentAsset);
 
 module.exports = router;

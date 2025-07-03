@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       advancePayments: DataTypes.BIGINT,
       tax: DataTypes.BIGINT,
       grandTotal: DataTypes.BIGINT,
+      notes: DataTypes.TEXT, // Optional notes field
     },
     {
       sequelize,
