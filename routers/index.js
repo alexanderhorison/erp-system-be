@@ -22,6 +22,7 @@ const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
 const routerConfig = require("./config/index");
 const routerDailyCost = require("./dailyCost/index");
 const routerAsset = require("./asset/index")
+const routerLiabilities = require("./liabilities/index");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -87,5 +88,8 @@ router.use("/config", routerConfig)
 
 // Asset Management
 router.use("/asset", routerAsset);
+
+// Liablilities
+router.use("/liabilities", routerLiabilities);
 
 module.exports = router;

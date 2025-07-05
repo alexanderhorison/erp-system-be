@@ -78,6 +78,9 @@ ID MENU : NAMA
 34  Asset Lancar Bulanan
 35  Asset Tidak Lancar Bulanan
 36. Master Asset Tidak Lancar
+37. Liabilitas Jangka Pendek Bulanan
+38. Liabilitas Jangka Panjang Bulanan
+39. Ekuitas Bulanan
 ```
 
 ### API Migration (15 Agustus 2024)
