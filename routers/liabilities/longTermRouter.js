@@ -2,6 +2,7 @@ const router = require("express").Router();
 const LongTermController = require("../../controllers/liabilities/LongTermController");
 
 router.post("/", LongTermController.createLongTermLiability);
+router.get("/piutang-po", LongTermController.getPiutangPo);
 router.get("/all", LongTermController.getAllLongTermLiabilities);
 
 router.get("/:id", LongTermController.getDetailLongTerm);

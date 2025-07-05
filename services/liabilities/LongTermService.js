@@ -1,7 +1,8 @@
 const moment = require("moment");
-const { sequelize: sq, Monthly_Longterm_Liabilities } = require("../../models");
+const { sequelize: sq, Monthly_Longterm_Liabilities, Purchase_Order } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const NotFoundError = "Data Liabilitas Jangka Panjang tidak ditemukan";
+const { Op } = require("sequelize");
 
 class LongTermService {
   static async create(data) {
@@ -75,6 +76,29 @@ class LongTermService {
       throw error;
     }
   }
+
+    static async getPiutangPo(date) {
+      try {
+        const [year, month] = date.split("-").map(Number);
+        const result = await Purchase_Order.findOne({
+          where: {
+            [Op.and]: [
+              sq.where(sq.literal(`date_part('year', "approvedAt")`), year),
+              sq.where(sq.literal(`date_part('month', "approvedAt")`), month),
+            ],
+            status: "APPROVED"
+          },
+          attributes: [
+            [sq.fn('SUM', sq.col('amountDebt')), 'totalAmountDebt']
+          ],
+          raw: true
+        })
+  
+        return result?.totalAmountDebt || 0;
+      } catch (error) {
+        throw error;
+      }
+    }
 }
 
 module.exports = LongTermService;
