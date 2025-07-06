@@ -3,6 +3,7 @@ const ShortTermController = require("../../controllers/liabilities/ShortTermCont
 
 router.post("/", ShortTermController.createShortTermLiability);
 router.get("/all", ShortTermController.getAllShortTermLiabilities);
+router.get("/piutang-po", ShortTermController.getPiutangPo);
 
 router.get("/:id", ShortTermController.getDetailShortTerm);
 router.put("/:id", ShortTermController.updateShortterm);

@@ -98,6 +98,18 @@ class ShortTermController {
         .json(responses(false, error.message || error));
     }
   }
+
+    static async getPiutangPo(req, res) {
+    try {
+      const data = await ShortTermLiabilityService.getPiutangPo(req.query.date);
+
+      res.status(200).json(responses(true, "Success get piutang po", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ShortTermController;
