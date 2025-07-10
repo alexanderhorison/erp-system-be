@@ -276,7 +276,7 @@ class ExportReportService {
               cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
             }
 
-            if(colNumber === 6) {
+            if (colNumber === 6) {
               cell.alignment = centerMiddle;
             }
 
@@ -355,7 +355,7 @@ class ExportReportService {
             applyCellFill(cell, "FFFFFF00");
           }
 
-          if (colNumber == 3){
+          if (colNumber == 3) {
             cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
           }
         });
@@ -452,7 +452,7 @@ class ExportReportService {
           for (let col = 1; col <= colCount; col++) {
             const cell = r.getCell(col); // makes sure the cell is instantiated
             if (!cell.value) cell.value = 0; // keep it visually empty
-            if (col != 1){
+            if (col != 1) {
               cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
             }
             cell.border = styleBorder; // your existing border style
@@ -530,7 +530,7 @@ class ExportReportService {
               const cell = r.getCell(col); // makes sure the cell is instantiated
               if (!cell.value) cell.value = 0; // keep it visually empty
 
-              if (col != 1){
+              if (col != 1) {
                 cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
               }
               cell.border = styleBorder; // your existing border style
@@ -585,8 +585,8 @@ class ExportReportService {
 
       worksheet3.columns.forEach((col) => {
         const key = col.key;
-        const formula = 
-            `'Pengeluaran Transaksi ${monthName}'!${col.letter}${totalRowNumber}`
+        const formula =
+          `'Pengeluaran Transaksi ${monthName}'!${col.letter}${totalRowNumber}`
 
         if (['tollCost', 'fuelCost', 'transportAllowance'].includes(key)) {
           dataSheet4Formula.biayaPengiriman.push(formula);
@@ -597,7 +597,7 @@ class ExportReportService {
 
         if (unexpectedKey.includes(key)) {
           const dataUnexpected = unexpectedCostCols.find(u => u.key === key);
-          dataSheet4Formula.unexpectedCost.push(['', dataUnexpected.header, {formula: formula}, 0, 0, {formula: formula}]);
+          dataSheet4Formula.unexpectedCost.push(['', dataUnexpected.header, { formula: formula }, 0, 0, { formula: formula }]);
         }
       });
 
@@ -611,7 +611,7 @@ class ExportReportService {
           bottom: { style: 'medium' },
           right: { style: 'medium' }
         };
-        if (col !== 1){
+        if (col !== 1) {
           c.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0'; // format currency
         }
 
@@ -693,23 +693,23 @@ class ExportReportService {
       row = worksheet4.addRow(['', 'PENDAPATAN'])
       row.font = fontBold
       // row 7
-      worksheet4.addRow(['', '  Pendapatan Usaha', '', {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`}])
-      styleCell(worksheet4.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right', rupiahFormat: true });
+      worksheet4.addRow(['', '  Pendapatan Usaha', '', { formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})` }])
+      styleCell(worksheet4.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right', numberFormat: true });
 
       // row 8
-      worksheet4.addRow(['', 'TOTAL PENDAPATAN', '', {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`}])
+      worksheet4.addRow(['', 'TOTAL PENDAPATAN', '', { formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})` }])
       styleCell(worksheet4.getCell('B8'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D8'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
+      styleCell(worksheet4.getCell('D8'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
 
       worksheet4.addRow([])      // row 10
-      worksheet4.addRow(['', 'BEBAN POKOK PENJUALAN', '', {formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})`}])
+      worksheet4.addRow(['', 'BEBAN POKOK PENJUALAN', '', { formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})` }])
       styleCell(worksheet4.getCell('B10'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D10'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
+      styleCell(worksheet4.getCell('D10'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
 
       worksheet4.addRow([])      // row 12
-      worksheet4.addRow(['', 'LABA BRUTO', '', {formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})`}])
+      worksheet4.addRow(['', 'LABA BRUTO', '', { formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})` }])
       styleCell(worksheet4.getCell('B12'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D12'), { bold: true, rupiahFormat: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D12'), { bold: true, numberFormat: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -717,19 +717,19 @@ class ExportReportService {
       row.font = fontBold
 
       // row 15
-      worksheet4.addRow(['', '  Beban Operasi', '', {formula: dataSheet4Formula.bebanOperasi[0]}])
-      styleCell(worksheet4.getCell('D15'), { rupiahFormat: true, border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
-      worksheet4.addRow(['', 'JUMLAH BEBAN USAHA', '', {formula: dataSheet4Formula.bebanOperasi[0]}])
+      worksheet4.addRow(['', '  Beban Operasi', '', { formula: dataSheet4Formula.bebanOperasi[0] }])
+      styleCell(worksheet4.getCell('D15'), { numberFormat: true, border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
+      worksheet4.addRow(['', 'JUMLAH BEBAN USAHA', '', { formula: dataSheet4Formula.bebanOperasi[0] }])
       styleCell(worksheet4.getCell('B16'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D16'), { bold: true, alignmentHorizontal: 'right', rupiahFormat: true });
+      styleCell(worksheet4.getCell('D16'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
 
       worksheet4.addRow([])
 
       // row 18
-      worksheet4.addRow(['', 'LABA USAHA', '', {formula: `SUM(D12-D16)`}])
+      worksheet4.addRow(['', 'LABA USAHA', '', { formula: `SUM(D12-D16)` }])
       dataSheet4Formula.labaUsaha.push(`'Laporan Laba Rugi ${monthName}'!D18`);
       styleCell(worksheet4.getCell('B18'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D18'), { rupiahFormat : true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D18'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -753,9 +753,9 @@ class ExportReportService {
       worksheet4.addRow([])
 
       // row 28
-      worksheet4.addRow(['', 'LABA SEBELUM PAJAK', '', {formula: `=D18`}])
+      worksheet4.addRow(['', 'LABA SEBELUM PAJAK', '', { formula: `=D18` }])
       styleCell(worksheet4.getCell('B28'), { bold: true, alignmentHorizontal: 'left' });
-      styleCell(worksheet4.getCell('D28'), { rupiahFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+      styleCell(worksheet4.getCell('D28'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
 
       worksheet4.addRow([])
 
@@ -777,9 +777,9 @@ class ExportReportService {
       worksheet4.addRow([])
 
       // row 35
-      worksheet4.addRow(['', 'LABA NETO', '', {formula: `=D28`}])
+      worksheet4.addRow(['', 'LABA NETO', '', { formula: `=D28` }])
       styleCell(worksheet4.getCell('B35'), { bold: true, alignmentHorizontal: 'left', });
-      styleCell(worksheet4.getCell('D35'), { rupiahFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
+      styleCell(worksheet4.getCell('D35'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
       for (let r = 1; r <= 36; r++) {
         for (let c = 1; c <= 5; c++) {
           const cell = worksheet4.getCell(r, c);
@@ -860,50 +860,51 @@ class ExportReportService {
 
 
       worksheet5.mergeCells('D7:E7');
-      styleCell(worksheet5.getCell('D7'), { value : 'Koreksi Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
-      styleCell(worksheet5.getCell('D8'), { value : 'Beda Waktu', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('D7'), { value: 'Koreksi Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('D8'), { value: 'Beda Waktu', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
       styleCell(worksheet5.getCell('D9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
-      styleCell(worksheet5.getCell('E8'), { value: 'Beda Tetap',border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('E8'), { value: 'Beda Tetap', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
       styleCell(worksheet5.getCell('E9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
       worksheet5.mergeCells('F7:F8');
-      styleCell(worksheet5.getCell('F7'), { value : 'Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
+      styleCell(worksheet5.getCell('F7'), { value: 'Fiskal', border: doubleBorder, bold: true, alignmentHorizontal: 'center' })
       styleCell(worksheet5.getCell('F9'), { value: 'Rp.', bold: true, alignmentVertical: 'middle', alignmentHorizontal: 'center', border: doubleBorder, wrapText: true })
 
-      const biayaPengiriman = {formula: `SUM(${dataSheet4Formula.biayaPengiriman.join(",")})`};
-      const pendapatanUsaha = {formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})`};
-      const bebanPenjualan = {formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})`};
-      const labaBruto = {formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})`};
-      const bebanOperasi = {formula: dataSheet4Formula.bebanOperasi[0]};
+      const biayaPengiriman = { formula: `SUM(${dataSheet4Formula.biayaPengiriman.join(",")})` };
+      const pendapatanUsaha = { formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})` };
+      const bebanPenjualan = { formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})` };
+      const labaBruto = { formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})` };
+      const bebanOperasi = { formula: dataSheet4Formula.bebanOperasi[0] };
       // C12 is laba kotor and C15 biaya pengiriman + length of unexpectedCostTotalRows + 1
-      const labaBersihFormula= {formula: `SUM(C12-C${15 + dataSheet4Formula.unexpectedCost.length + 1})`};
-      const gajiTunjanganFormula = {formula: `SUM(${dataSheet4Formula.gajiTunjangan.join(",")})`};
+      const labaBersihFormula = { formula: `SUM(C12-C${15 + dataSheet4Formula.unexpectedCost.length + 1})` };
+      const gajiTunjanganFormula = { formula: `SUM(${dataSheet4Formula.gajiTunjangan.join(",")})` };
       const data = [
         ['', 'Pendapatan Bersih', pendapatanUsaha, 0, 0, pendapatanUsaha],
         ['', 'Harga Pokok Penjualan', bebanPenjualan, 0, 0, bebanPenjualan],
-        ['', '  LABA KOTOR', labaBruto, 0, 0, labaBruto],
+        ['', '        LABA KOTOR', labaBruto, 0, 0, labaBruto, 'parentheses'],
         ['', 'BEBAN USAHA', '', '', '', '', 'center'],
         ['', 'Gaji Upah dan Tunjangan lainnya', gajiTunjanganFormula, 0, 0, gajiTunjanganFormula],
         ['', 'Biaya Pengiriman', biayaPengiriman, 0, 0, biayaPengiriman],
         ...dataSheet4Formula.unexpectedCost,
-        ['', '  JUMLAH BEBAN USAHA', bebanOperasi, 0, 0, bebanOperasi],
-        ['', 'LABA (RUGI) USAHA', labaBersihFormula, 0, 0, labaBersihFormula],
-        ['', '  PENDAPATAN (BEBAN) LAIN-LAIN', '', '', '', '', 'center'],
+        ['', '        JUMLAH BEBAN USAHA', bebanOperasi, 0, 0, bebanOperasi, 'parentheses'],
+        ['', 'LABA (RUGI) USAHA', labaBersihFormula, 0, 0, labaBersihFormula, 'parentheses'],
+        ['', 'PENDAPATAN (BEBAN) LAIN-LAIN', '', '', '', '', 'center'],
         ['', 'Pendapatan lain-lain', 0, 0, 0, 0],
         ['', 'Pendapatan Bunga', 0, 0, 0, 0],
         ['', 'Komisi Penjualan', 0, 0, 0, 0],
-        ['', '  PENDAPATAN (BEBAN) LAIN-LAIN BERSIH', 0, 0, 0, 0, 'center'],
-        ['', 'Laba Sebelum Taksiran Pajak Penghasilan', labaBersihFormula, 0, 0, labaBersihFormula],
+        ['', 'PENDAPATAN (BEBAN) LAIN-LAIN BERSIH', 0, 0, 0, 0, 'center'],
+        ['', 'Laba Sebelum Taksiran Pajak Penghasilan', labaBersihFormula, 0, 0, labaBersihFormula, 'parentheses'],
         ['', 'Provision for Income Tax', 0, 0, 0, 0],
-        ['', '  TAKSIRAN PAJAK PENGHASILAN', 0, 0, 0, 0],
-        ['', '  LABA BERSIH', labaBersihFormula, 0, 0, labaBersihFormula],
+        ['', '        TAKSIRAN PAJAK PENGHASILAN', 0, 0, 0, 0],
+        ['', '        LABA BERSIH', labaBersihFormula, 0, 0, labaBersihFormula, 'parentheses'],
       ];
 
       let startRow = 10;
       data.forEach((row, idx) => {
         const rowIndex = startRow + idx;
         const isCentered = row[6] === 'center';
-        const displayRow = isCentered ? row.slice(0, -1) : row; // Remove 'center' if present
+        const isParentheses = row[6] === 'parentheses'; // Check if the last element is 'parentheses'
+        const displayRow = isCentered || isParentheses ? row.slice(0, -1) : row; // Remove 'center' if present
 
         const r = worksheet5.getRow(rowIndex);
 
@@ -921,23 +922,28 @@ class ExportReportService {
         for (let col = 2; col <= displayRow.length; col++) {
           const cell = worksheet5.getCell(rowIndex, col);
 
-          // Default alignment
-          cell.alignment = { vertical: 'middle', horizontal: 'left' };
+          const isFormulaOrNumber =
+            typeof displayRow[col - 1] === 'number' ||
+            (typeof displayRow[col - 1] === 'object' && 'formula' in displayRow[col - 1]);
 
-          // Right-align numbers (integer or float)
-          if (typeof displayRow[col - 1] === 'number') {
+          if (isFormulaOrNumber) {
             cell.alignment = { vertical: 'middle', horizontal: 'right' };
-            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
-          } else if (isCentered && col === 1) {
+            if (isParentheses) {
+              cell.numFmt = '(#,##0); (-#,##0); 0';
+              cell.font = { bold: true }
+            } else {
+              cell.numFmt = '#,##0; -#,##0; 0';
+            }
+          } else if (isCentered && col === 2) {
             cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { bold: true };
+
+          } else {
+            cell.alignment = { vertical: 'middle', horizontal: 'left' };
           }
 
-          if (displayRow[col - 1] || displayRow[col - 4]) {
-            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
-            cell.alignment = { vertical: 'middle', horizontal: 'right' };
-          }
           // if column is uppercase for column 1
-          if (col === 1 && isUppercase) {
+          if (col === 2 && isUppercase) {
             cell.font = { bold: true };
           }
 
@@ -994,6 +1000,7 @@ function styleCell(cell, options = {}) {
   }
   if (options.border) cell.border = options.border;
   if (options.rupiahFormat) cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+  if (options.numberFormat) cell.numFmt = '#,##0; -#,##0; 0';
 }
 
 module.exports = ExportReportService;
