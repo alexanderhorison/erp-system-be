@@ -25,6 +25,8 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
+      console.log("Error generating PDF:", error);
+      
       res
         .status(500)
         .json({

@@ -23,6 +23,8 @@ const routerConfig = require("./config/index");
 const routerDailyCost = require("./dailyCost/index");
 const routerAsset = require("./asset/index")
 const routerLiabilities = require("./liabilities/index");
+const routerEquity = require("./equity/index");
+
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -91,5 +93,8 @@ router.use("/asset", routerAsset);
 
 // Liablilities
 router.use("/liabilities", routerLiabilities);
+
+// Equity
+router.use("/equity", routerEquity);
 
 module.exports = router;
