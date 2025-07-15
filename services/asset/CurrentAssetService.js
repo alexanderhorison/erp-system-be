@@ -39,7 +39,12 @@ class CurrentAssetService {
       });
 
       if (findExistData) {
-        throwValidation(400, `Data ${period} sudah ada`);
+        const d = new Date(period);
+        // Format as "Mon YYYY"
+        const month = d.toLocaleString("en-US", { month: "short" }); // "Mar"
+        const year = d.getFullYear(); // 2025
+        const formatted = `${month} ${year}`;
+        throwValidation(400, `Data ${formatted} sudah ada`);
       }
 
       // Insert data
