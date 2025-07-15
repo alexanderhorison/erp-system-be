@@ -28,11 +28,16 @@ class EquityService {
         await EquityService.getRetainedEarningsPerYear(lastYear);
 
       // Saldo Laba Tahun Berjalan → dari januari sampai bulan inputan user
+      const thisMonth = moment(date).month() + 1; // moment().month() returns 0-11, so add 1
       const retainedEarningsCurrentYear =
-        await EquityService.getRetainedEarningsPerYear(thisYear);
+        thisMonth === 1
+          ? 0 // Jika bulan Januari, tidak ada bulan sebelumnya di tahun yang sama
+          : await EquityService.getRetainedEarningsPerYear(
+              thisYear,
+              thisMonth - 1
+            ); // Hanya sampai bulan sebelumnya
 
       // Saldo Laba (Bulan {Juni}) = Laba Bruto (Sheet 4 SO) - Beban Usaha (Sheet 3 SO Grand Total)
-      const thisMonth = moment(date).month() + 1; // moment().month() returns 0-11, so add 1
       const retainedEarningsThisMonth =
         await EquityService.getRetainedEarningsThisMonth(thisYear, thisMonth);
 
@@ -50,7 +55,10 @@ class EquityService {
         retainedEarningsPreviousYear: retainedEarningsPreviousYear, // Saldo Laba Tahun Sebelum
         retainedEarningsCurrentYear: retainedEarningsCurrentYear, // Saldo Laba Tahun Berjalan → dari januari sampai bulan {Juni}
         retainedEarningsThisMonth: retainedEarningsThisMonth, // Saldo Laba (Bulan {Juni}) = Laba Bruto (Sheet 4 SO) - Beban Usaha (Sheet 3 SO Grand Total)
-        totalEquity: shareCapital || 0, //
+        totalEquity:
+          shareCapital -
+          retainedEarningsPreviousYear +
+          retainedEarningsCurrentYear, //!  apakah retainedEarningsThisMonth tetap masuk?
         notes: notes || null,
       };
 
@@ -131,7 +139,12 @@ class EquityService {
         await EquityService.getRetainedEarningsPerYear(lastYear);
 
       const retainedEarningsCurrentYear =
-        await EquityService.getRetainedEarningsPerYear(thisYear);
+        thisMonth === 1
+          ? 0 // Jika bulan Januari, tidak ada bulan sebelumnya di tahun yang sama
+          : await EquityService.getRetainedEarningsPerYear(
+              thisYear,
+              thisMonth - 1
+            ); // Hanya sampai bulan sebelumnya
 
       const retainedEarningsThisMonth =
         await EquityService.getRetainedEarningsThisMonth(thisYear, thisMonth);
@@ -209,13 +222,20 @@ class EquityService {
     }
   }
 
-  static async getRetainedEarningsPerYear(year) {
+  static async getRetainedEarningsPerYear(year, endMonth = 12) {
     try {
       // Generate start dan end date untuk tahun yang diminta
       const startDate = moment(`${year}-01-01`).format("YYYY-MM-DD");
-      const endDate = moment(`${year}-12-31`).format("YYYY-MM-DD");
+      const endDate = moment(
+        `${year}-${endMonth.toString().padStart(2, "0")}-01`
+      )
+        .endOf("month")
+        .format("YYYY-MM-DD");
+      console.log(startDate, endDate);
 
-      console.log(`=== Menghitung Retained Earnings untuk tahun ${year} ===`);
+      console.log(
+        `=== Menghitung Retained Earnings untuk tahun ${year} (sampai bulan ${endMonth}) ===`
+      );
       console.log(`Date range: ${startDate} to ${endDate}`);
 
       // Ambil data SO dan Daily Cost untuk tahun tersebut
@@ -251,9 +271,12 @@ class EquityService {
           sumTotalJual += price * quantity;
         }
 
+        // Hitung manual gain/loss untuk akurasi (totalGainLoss di DB sering tidak sinkron)
+        const manualGainLoss = sumTotalJual - sumTotalBeli;
+
         totalPendapatanUsaha += sumTotalJual;
         totalBebanPenjualan += sumTotalBeli;
-        totalLabaBruto += Number(totalGainLoss);
+        totalLabaBruto += manualGainLoss;
       }
 
       console.log(
@@ -287,7 +310,11 @@ class EquityService {
       // Hitung Laba Usaha (Retained Earnings) untuk tahun tersebut
       const retainedEarningsThisYear = totalLabaBruto - totalBebanOperasi;
 
-      console.log(`=== Hasil Perhitungan Tahun ${year} ===`);
+      console.log(
+        `=== Hasil Perhitungan Tahun ${year} (Jan-${endMonth
+          .toString()
+          .padStart(2, "0")}) ===`
+      );
       console.log(`Total Pendapatan: ${totalPendapatanUsaha}`);
       console.log(`Total Beban Penjualan: ${totalBebanPenjualan}`);
       console.log(`Total Laba Bruto: ${totalLabaBruto}`);
@@ -354,9 +381,12 @@ class EquityService {
           sumTotalJual += price * quantity;
         }
 
+        // Hitung manual gain/loss untuk akurasi (totalGainLoss di DB sering tidak sinkron)
+        const manualGainLoss = sumTotalJual - sumTotalBeli;
+
         totalPendapatanUsaha += sumTotalJual;
         totalBebanPenjualan += sumTotalBeli;
-        totalLabaBruto += Number(totalGainLoss);
+        totalLabaBruto += manualGainLoss;
       }
 
       console.log(
