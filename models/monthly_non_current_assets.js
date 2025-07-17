@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
     date: DataTypes.DATEONLY,
     vehicleValue: DataTypes.BIGINT,
     buildingValue: DataTypes.BIGINT,
-    buildingValue: DataTypes.BIGINT,
     landValue: DataTypes.BIGINT,
     longTermInvestment: DataTypes.BIGINT,
     othersValue: DataTypes.BIGINT,
