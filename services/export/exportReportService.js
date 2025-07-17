@@ -116,6 +116,16 @@ class ExportReportService {
         dataSheet4Formula
       })
 
+      // Process Data For Sheet 6
+      await ExportReportService.generateSheetReportForManagementAset({
+        workbook,
+        monthName,
+        dataSheet4,
+        unexpectedCostMaster,
+        grandUnexpectedCost,
+        dataSheet4Formula
+      })
+
       // Save the file
       const file = await workbook.xlsx.writeBuffer();
 
@@ -974,6 +984,188 @@ class ExportReportService {
       const michaelRow = worksheet5.addRow(['', 'Michael']);
       michaelRow.getCell(1).font = { bold: true };
 
+
+      return 'success'
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async generateSheetReportForManagementAset({ workbook, monthName, dataSheet4, unexpectedCostMaster, grandUnexpectedCost, dataSheet4Formula }) {
+    try {
+      // Worksheet 6 for Management Aset
+      const worksheet6 = workbook.addWorksheet(`Laporan Management Aset`, {
+        views: [{ showGridLines: false }]
+      });
+
+      worksheet6.columns = [
+        { width: 3 }, // A (spacing)
+        { width: 40 }, // B
+        { width: 5 }, // C
+        { width: 25 }, // D
+        { width: 2 }, // E
+        { width: 2 }, // F
+        { width: 40 }, // G
+        { width: 5 }, // H
+        { width: 25 }, // I
+        { width: 3 }, // J (spacing)
+      ];
+      // --- Header Title ---
+      worksheet6.mergeCells('B1:I1');
+      worksheet6.getCell('B1').value = 'PT Tjahaya Berkat Abadi';
+      styleCell(worksheet6.getCell('B1'), { fontSize: 16, bold: true, alignmentHorizontal: 'left' });
+
+      worksheet6.mergeCells('B2:I2');
+      worksheet6.getCell('B2').value = 'LAPORAN LABA RUGI KOMPREHENSIF';
+      styleCell(worksheet6.getCell('B2'), { bold: true, alignmentHorizontal: 'left' });
+
+      worksheet6.mergeCells('B3:I3');
+      worksheet6.getCell('B3').value = formatDate(new Date());
+      styleCell(worksheet6.getCell('B3'), { bold: true, alignmentHorizontal: 'left' });
+
+      worksheet6.mergeCells('B4:I4');
+      worksheet6.getCell('B4').value = '(Disajikan dalam Rupiah)';
+      styleCell(worksheet6.getCell('B4'), { border: { bottom: { style: 'thick' } }, alignmentHorizontal: 'left' });
+
+      // Styling for Thick Border (inside the table)
+      for (let row = 5; row <= 32; row++) {
+        const cell = worksheet6.getCell(`E${row}`);
+        styleCell(cell, {
+          border: {
+            right: { style: 'thick' }
+          }
+        });
+      }
+
+      // Styling for border Outside the table
+      worksheet6.mergeCells('B33:I33');
+      styleCell(worksheet6.getCell('B33'), { border: { top: { style: 'thick' }, bottom: { style: 'thin' } } });
+      styleCell(worksheet6.getCell('A33'), { border: { bottom: { style: 'thin' } } });
+      styleCell(worksheet6.getCell('J33'), { border: { bottom: { style: 'thin' }, right: { style: 'thin' } } });
+      // J1:J33
+      for (let row = 1; row <= 32; row++) {
+        const cell = worksheet6.getCell(`J${row}`);
+        styleCell(cell, {
+          border: {
+            right: { style: 'thin' }
+          }
+        });
+      }
+
+      worksheet6.getCell('B6').value = 'ASET';
+      styleCell(worksheet6.getCell('B6'), { bold: true, alignmentHorizontal: 'left' });
+      worksheet6.getCell('G6').value = 'LIABILITAS DAN EKUITAS';
+      styleCell(worksheet6.getCell('G6'), { bold: true, alignmentHorizontal: 'left' });
+
+      worksheet6.getCell('B8').value = 'ASET LANCAR';
+      styleCell(worksheet6.getCell('B8'), { bold: true, alignmentHorizontal: 'left' });
+      worksheet6.getCell('D8').value = "3.156.544.004";
+      styleCell(worksheet6.getCell('D8'), { alignmentHorizontal: 'right' });
+
+
+      // row = worksheet6.addRow(['', 'PENDAPATAN'])
+      // row.font = fontBold
+      // row 7
+      // worksheet6.addRow(['', '  Pendapatan Usaha', '', { formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})` }])
+      // styleCell(worksheet6.getCell('D7'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right', numberFormat: true });
+
+      // // row 8
+      // worksheet6.addRow(['', 'TOTAL PENDAPATAN', '', { formula: `SUM(${dataSheet4Formula.pendapatanUsaha.join(",")})` }])
+      // styleCell(worksheet6.getCell('B8'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D8'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
+
+      // worksheet6.addRow([])      // row 10
+      // worksheet6.addRow(['', 'BEBAN POKOK PENJUALAN', '', { formula: `SUM(${dataSheet4Formula.bebanPenjualan.join(",")})` }])
+      // styleCell(worksheet6.getCell('B10'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D10'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
+
+      // worksheet6.addRow([])      // row 12
+      // worksheet6.addRow(['', 'LABA BRUTO', '', { formula: `SUM(${dataSheet4Formula.labaBruto.join(",")})` }])
+      // styleCell(worksheet6.getCell('B12'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D12'), { bold: true, numberFormat: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+
+      // worksheet6.addRow([])
+
+      // row = worksheet6.addRow(['', 'BEBAN USAHA'])
+      // row.font = fontBold
+
+      // // row 15
+      // worksheet6.addRow(['', '  Beban Operasi', '', { formula: dataSheet4Formula.bebanOperasi[0] }])
+      // styleCell(worksheet6.getCell('D15'), { numberFormat: true, border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 16
+      // worksheet6.addRow(['', 'JUMLAH BEBAN USAHA', '', { formula: dataSheet4Formula.bebanOperasi[0] }])
+      // styleCell(worksheet6.getCell('B16'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D16'), { bold: true, alignmentHorizontal: 'right', numberFormat: true });
+
+      // worksheet6.addRow([])
+
+      // // row 18
+      // worksheet6.addRow(['', 'LABA USAHA', '', { formula: `SUM(D12-D16)` }])
+      // dataSheet4Formula.labaUsaha.push(`'Laporan Laba Rugi ${monthName}'!D18`);
+      // styleCell(worksheet6.getCell('B18'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D18'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+
+      // worksheet6.addRow([])
+
+      // row = worksheet6.addRow(['', 'PENDAPATAN/(BEBAN) LAINNYA'])
+      // row.font = fontBold
+      // // row 21, 22, 23, 24, 25
+      // worksheet6.addRow(['', '  Selisih Kurs', '', '-'])
+      // styleCell(worksheet6.getCell('D21'), { alignmentHorizontal: 'right' });
+      // worksheet6.addRow(['', '  Pendapatan Bunga', '', '-'])
+      // styleCell(worksheet6.getCell('D22'), { alignmentHorizontal: 'right' });
+      // worksheet6.addRow(['', '  Beban Bunga', '', '-'])
+      // styleCell(worksheet6.getCell('D23'), { alignmentHorizontal: 'right' });
+      // worksheet6.addRow(['', '  Penghasilan/(Beban) Lainnya', '', '-'])
+      // styleCell(worksheet6.getCell('D24'), { alignmentHorizontal: 'right' });
+      // worksheet6.addRow(['', '  Final Income Tax', '', '-'])
+      // styleCell(worksheet6.getCell('D25'), { border: { bottom: { style: 'medium' } }, alignmentHorizontal: 'right' });      // row 26
+      // worksheet6.addRow(['', 'JUMLAH PENDAPATAN/(BEBAN)', '', '-'])
+      // styleCell(worksheet6.getCell('B26'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D26'), { bold: true, alignmentHorizontal: 'right' });
+
+      // worksheet6.addRow([])
+
+      // // row 28
+      // worksheet6.addRow(['', 'LABA SEBELUM PAJAK', '', { formula: `=D18` }])
+      // styleCell(worksheet6.getCell('B28'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D28'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'medium' }, top: { style: 'medium' } } });
+
+      // worksheet6.addRow([])
+
+      // // row 29
+      // row = worksheet6.addRow(['', 'BEBAN PAJAK PENGHASILAN'])
+      // row.font = fontBold
+      // // row 30, 31
+      // worksheet6.addRow(['', '  Tahun Berjalan', '', '-'])
+      // styleCell(worksheet6.getCell('D31'), { alignmentHorizontal: 'right' });
+      // worksheet6.addRow(['', '  Tangguhan', '', '-'])
+      // styleCell(worksheet6.getCell('D32'), { alignmentHorizontal: 'right', border: { bottom: { style: 'medium' } } });
+
+
+      // // row 32
+      // worksheet6.addRow(['', 'JUMLAH BEBAN PAJAK', '', '-'])
+      // styleCell(worksheet6.getCell('B33'), { bold: true, alignmentHorizontal: 'left' });
+      // styleCell(worksheet6.getCell('D33'), { bold: true, alignmentHorizontal: 'right' });
+
+      // worksheet6.addRow([])
+
+      // // row 35
+      // worksheet6.addRow(['', 'LABA NETO', '', { formula: `=D28` }])
+      // styleCell(worksheet6.getCell('B35'), { bold: true, alignmentHorizontal: 'left', });
+      // styleCell(worksheet6.getCell('D35'), { numberFormat: true, bold: true, alignmentHorizontal: 'right', border: { bottom: { style: 'double' }, top: { style: 'double' } } });      // --- Outer Thick Border ---
+      // for (let r = 1; r <= 36; r++) {
+      //   for (let c = 1; c <= 5; c++) {
+      //     const cell = worksheet6.getCell(r, c);
+      //     if (r === 1) cell.border = { ...cell.border, top: { style: 'thick' } };
+      //     if (r === 36) cell.border = { ...cell.border, bottom: { style: 'thick' } };
+      //     if (c === 1) cell.border = { ...cell.border, left: { style: 'thick' } };
+      //     if (c === 5) cell.border = { ...cell.border, right: { style: 'thick' } };
+      //   }
+      // }
+
+      styleCell(worksheet6.getCell('B35'), { value: `Jakarta, ${formatDate(new Date())}` });
+      styleCell(worksheet6.getCell('B40'), { value: `Michael` });
 
       return 'success'
 
