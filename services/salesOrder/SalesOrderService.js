@@ -737,7 +737,7 @@ class SalesOrderService {
           quantity: item?.quantity,
           subTotal: item?.subTotal,
           unitName: item?.Warehouse_Product?.Master_Unit?.name,
-          productName: item?.Warehouse_Product?.Master_Product?.name + " EXTRA NAME HERE",
+          productName: item?.Warehouse_Product?.Master_Product?.name,
           companyName:
             item?.Warehouse_Product?.Master_Product?.Master_Company?.name,
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
