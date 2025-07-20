@@ -434,6 +434,34 @@ class EquityService {
       throw error;
     }
   }
+
+  static async getDetailByPeriod(date) {
+    try {
+      const equity = await Monthly_Equity.findOne({
+        where: {
+          date,
+        },
+      });
+      if (!equity) {
+        return {
+          shareCapital: 0, // Modal Saham
+          retainedEarningsPreviousYear: 0, // Saldo Laba Tahun Lalu
+          retainedEarningsCurrentYear: 0, // Saldo Laba Tahun Berjalan
+          retainedEarningsThisMonth: 0, // Saldo Laba
+          totalEquity: 0, // Ekuitas
+        };
+      }
+      return {
+        shareCapital: equity.shareCapital || 0, // Modal Saham
+        retainedEarningsPreviousYear: equity.retainedEarningsPreviousYear || 0, // Saldo Laba Tahun Lalu
+        retainedEarningsCurrentYear: equity.retainedEarningsCurrentYear || 0, // Saldo Laba Tahun Berjalan
+        retainedEarningsThisMonth: equity.retainedEarningsThisMonth || 0, // Saldo Laba
+        totalEquity: equity.totalEquity || 0, // Ekuitas
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = EquityService;

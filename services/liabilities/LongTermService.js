@@ -1,5 +1,9 @@
 const moment = require("moment");
-const { sequelize: sq, Monthly_Longterm_Liabilities, Purchase_Order } = require("../../models");
+const {
+  sequelize: sq,
+  Monthly_Longterm_Liabilities,
+  Purchase_Order,
+} = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const NotFoundError = "Data Liabilitas Jangka Panjang tidak ditemukan";
 
@@ -23,7 +27,10 @@ class LongTermService {
         where.date = date; // Simple and clean
       }
 
-      const result = await Monthly_Longterm_Liabilities.findAll({ where, order: [['date', 'DESC']] });
+      const result = await Monthly_Longterm_Liabilities.findAll({
+        where,
+        order: [["date", "DESC"]],
+      });
 
       return result;
     } catch (error) {
@@ -71,6 +78,30 @@ class LongTermService {
 
       await longTerm.destroy();
       return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailByPeriod(date) {
+    try {
+      const longTerm = await Monthly_Longterm_Liabilities.findOne({
+        where: { date },
+      });
+      if (!longTerm) {
+        return {
+          shareHolderLoans: 0, // Pinjaman kepada Pemegang Saham
+          longTermBankLoans: 0, // Hutang Bank Jangka Panjang
+          otherLongtermLiabilities: 0, // Kewajiban Jangka Panjang
+          totalLongtermLiabilities: 0, // Jumlah Liabilitas Jangka Panjang
+        };
+      }
+      return {
+        shareHolderLoans: longTerm.shareHolderLoans || 0, // Pinjaman kepada Pemegang Saham
+        longTermBankLoans: longTerm.longTermBankLoans || 0, // Hutang Bank Jangka Panjang
+        otherLongtermLiabilities: longTerm.otherLongtermLiabilities || 0, // Kewajiban Jangka Panjang
+        totalLongtermLiabilities: longTerm.totalLongtermLiabilities || 0, // Jumlah Liabilitas Jangka Panjang
+      };
     } catch (error) {
       throw error;
     }

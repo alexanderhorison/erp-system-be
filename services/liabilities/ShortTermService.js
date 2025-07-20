@@ -1,5 +1,9 @@
 const moment = require("moment");
-const { sequelize: sq, Monthly_Shortterm_Liabilities, Purchase_Order } = require("../../models");
+const {
+  sequelize: sq,
+  Monthly_Shortterm_Liabilities,
+  Purchase_Order,
+} = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const NotFoundError = "Data Liabilitas Jangka Pendek tidak ditemukan";
 const { Op } = require("sequelize");
@@ -49,7 +53,10 @@ class ShortTermService {
         where.date = date; // Simple and clean
       }
 
-      const result = await Monthly_Shortterm_Liabilities.findAll({ where, order: [['date', 'DESC']] });
+      const result = await Monthly_Shortterm_Liabilities.findAll({
+        where,
+        order: [["date", "DESC"]],
+      });
 
       return result;
     } catch (error) {
@@ -101,6 +108,7 @@ class ShortTermService {
       throw error;
     }
   }
+
   static async getPiutangPo(date) {
     try {
       const [year, month] = date.split("-").map(Number);
@@ -110,15 +118,39 @@ class ShortTermService {
             sq.where(sq.literal(`date_part('year', "approvedAt")`), year),
             sq.where(sq.literal(`date_part('month', "approvedAt")`), month),
           ],
-          status: "APPROVED"
+          status: "APPROVED",
         },
-        attributes: [
-          [sq.fn('SUM', sq.col('amountDebt')), 'totalAmountDebt']
-        ],
-        raw: true
-      })
+        attributes: [[sq.fn("SUM", sq.col("amountDebt")), "totalAmountDebt"]],
+        raw: true,
+      });
 
       return result?.totalAmountDebt || 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailByPeriod(date) {
+    try {
+      const ShortTerm = await Monthly_Shortterm_Liabilities.findOne({
+        where: { date },
+      });
+      if (!ShortTerm) {
+        return {
+          tradePayables: 0, // utang Usaha
+          nonTradePayables: 0, // utang bukan Usaha
+          accruedExpenses: 0, // Biaya Masih Harus Dibayar
+          taxPayables: 0, // Utang Pajak
+          totalShortTermLiabilities: 0, // Jumlah Liabilitas Jangka Pendek
+        };
+      }
+      return {
+        tradePayables: ShortTerm.tradePayables || 0, // utang Usaha
+        nonTradePayables: ShortTerm.nonTradePayables || 0, // utang bukan Usaha
+        accruedExpenses: ShortTerm.accruedExpenses || 0, // Biaya Masih Harus Dibayar
+        taxPayables: ShortTerm.taxPayables || 0, // Utang Pajak
+        totalShortTermLiabilities: ShortTerm.totalShortTermLiabilities || 0, // Jumlah Liabilitas Jangka Pendek
+      };
     } catch (error) {
       throw error;
     }
