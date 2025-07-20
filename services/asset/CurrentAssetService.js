@@ -1,5 +1,9 @@
 const moment = require("moment");
-const { sequelize: sq, Monthly_Current_Assets, Sales_Order } = require("../../models");
+const {
+  sequelize: sq,
+  Monthly_Current_Assets,
+  Sales_Order,
+} = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const { Op } = require("sequelize");
 
@@ -13,7 +17,10 @@ class CurrentAssetService {
         where.period = period; // Simple and clean
       }
 
-      const result = await Monthly_Current_Assets.findAll({ where, order: [['period', 'DESC']] });
+      const result = await Monthly_Current_Assets.findAll({
+        where,
+        order: [["period", "DESC"]],
+      });
 
       return result;
     } catch (error) {
@@ -100,13 +107,11 @@ class CurrentAssetService {
             sq.where(sq.literal(`date_part('year', "shippingDate")`), year),
             sq.where(sq.literal(`date_part('month', "shippingDate")`), month),
           ],
-          status: "APPROVED"
+          status: "APPROVED",
         },
-        attributes: [
-          [sq.fn('SUM', sq.col('amountDebt')), 'totalAmountDebt']
-        ],
-        raw: true
-      })
+        attributes: [[sq.fn("SUM", sq.col("amountDebt")), "totalAmountDebt"]],
+        raw: true,
+      });
 
       return result?.totalAmountDebt || 0;
     } catch (error) {
@@ -122,6 +127,39 @@ class CurrentAssetService {
       }
       await asset.destroy();
       return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getCurrentAssetByPeriod(period) {
+    try {
+      const asset = await Monthly_Current_Assets.findOne({
+        where: { period },
+      });
+      const result = {
+        cashAndBank: 0,
+        accountsReceivable: 0, // Piutang Usaha
+        thirdPartyReceivable: 0, // Pihak Ketiga - neto
+        otherReceivables: 0, // Piutang Lainnya
+        inventory: 0, // Persediaan
+        advancePayments: 0, // uang muka
+        tax: 0, // pajak dibayar muka
+        grandTotal: 0, // Jumlah Aset Lancar
+      };
+      if (!asset) {
+        return result; // Return empty object if no asset found
+      }
+      return {
+        cashAndBank: asset.cashAndBank || 0,
+        accountsReceivable: asset.accountsReceivable || 0, // Piutang Usaha
+        thirdPartyReceivable: asset.thirdPartyReceivable || 0, // Pihak Ketiga - neto
+        otherReceivables: asset.otherReceivables || 0, // Piutang Lainnya
+        inventory: asset.inventory || 0, // Persediaan
+        advancePayments: asset.advancePayments || 0, // uang muka
+        tax: asset.tax || 0, // pajak dibayar muka
+        grandTotal: asset.grandTotal || 0, // Jumlah Aset Lancar
+      };
     } catch (error) {
       throw error;
     }

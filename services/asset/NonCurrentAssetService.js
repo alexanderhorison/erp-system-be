@@ -61,7 +61,7 @@ class NonCurrentAssetService {
 
       const masterNonCurrentAssets =
         await MasterNonCurrentAssetService.getAll();
-        
+
       const vehicleValue = sumNonCurrentAsset({
         data: masterNonCurrentAssets.filter(
           (asset) => asset.assetType === "VEHICLE"
@@ -161,6 +161,38 @@ class NonCurrentAssetService {
       }
       await asset.destroy();
       return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getDetailByPeriod(date) {
+    try {
+      console.log(`Fetching non-current asset details for date: ${date}`);
+      
+      const asset = await Monthly_Non_Current_Assets.findOne({
+        where: { date },
+      });
+      if (!asset) {
+        return {
+          landValue: 0, // Tanah
+          totalAsetTetap: 0,
+          previousYearDepreciation: 0, // Penyusutan Tahun Lalu
+          currentYearDepreciation: 0, // Penyusutan Tahun Ini
+          othersValue: 0, // Aset Tidak Lancar Lain
+          longTermInvestment: 0, // Investasi Jangka Panjang
+          totalValue: 0, // Jumlah Aset Tidak Lancar
+        };
+      }
+      return {
+        landValue: asset.landValue || 0, // Tanah
+        totalAsetTetap: (asset.vehicleValue || 0) + (asset.buildingValue || 0), // Vehicle + Building
+        previousYearDepreciation: asset.previousYearDepreciation || 0, // Penyusutan Tahun Lalu
+        currentYearDepreciation: asset.currentYearDepreciation || 0, // Penyusutan Tahun Ini
+        othersValue: asset.othersValue || 0, // Aset Tidak Lancar Lain
+        longTermInvestment: asset.longTermInvestment || 0, // Investasi Jangka Panjang
+        totalValue: asset.totalValue || 0, // Jumlah Aset Tidak Lancar
+      };
     } catch (error) {
       throw error;
     }

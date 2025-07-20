@@ -12,6 +12,11 @@ const DailyCostService = require("../dailyCost/DailyCostService");
 const MasterDataEmployeeService = require("../masterData/MasterDataEmployeeService");
 const MasterDataUnexpectedCostCategoryService = require("../masterData/MasterDataUnexpectedCostCategoryService");
 const { formatDate } = require("../../helpers/formatDate");
+const CurrentAssetService = require("../asset/CurrentAssetService");
+const NonCurrentAssetService = require("../asset/NonCurrentAssetService");
+const ShortTermService = require("../liabilities/ShortTermService");
+const LongTermService = require("../liabilities/LongTermService");
+const EquityService = require("../equity/EquityService");
 
 class ExportReportService {
   static async getReport({ query }) {
@@ -46,6 +51,29 @@ class ExportReportService {
           startDate,
           endDate,
         });
+
+      // Data for sheet 6
+      // Format period as YYYY-MM (ensure month has leading zero)
+      const formattedMonth = query.month.toString().padStart(2, "0");
+      const period = `${query.year}-${formattedMonth}`;
+
+      const asetLancar = await CurrentAssetService.getCurrentAssetByPeriod(
+        period
+      );
+
+      const asetTidakLancar = await NonCurrentAssetService.getDetailByPeriod(
+        `${period}-01`
+      );
+
+      const liabilitasJangkaPendek = await ShortTermService.getDetailByPeriod(
+        `${period}-01`
+      );
+
+      const liabilitasJangkaPanjang = await LongTermService.getDetailByPeriod(
+        `${period}-01`
+      );
+
+      const ekuitas = await EquityService.getDetailByPeriod(`${period}-01`);
 
       const workbook = new ExcelJS.Workbook();
 
@@ -82,45 +110,11 @@ class ExportReportService {
       };
 
       let dataSheet6Formula = {
-        asetLancar: {
-          cashAndBank: 0,
-          accountsReceivable: 0, // Piutang Usaha
-          thirdPartyReceivable: 0, // Pihak Ketiga - neto
-          otherReceivables: 0, // Piutang Lainnya
-          inventory: 0, // Persediaan
-          advancePayments: 0, // uang muka
-          tax: 0, // pajak dibayar muka
-          grandTotal: 0, // Jumlah Aset Lancar
-        },
-        asetTidakLancar: {
-          landValue: 0, // Tanah
-          totalAsetTetap: 0,
-          previousYearDepreciation: 0, // Penyusutan Tahun Lalu
-          currentYearDepreciation: 0, // Penyusutan Tahun Ini
-          othersValue: 0, // Aset Tidak Lancar Lain
-          longTermInvestment: 0, // Investasi Jangka Panjang
-          totalValue: 0, // Jumlah Aset Tidak Lancar
-        },
-        liabilitasJangkaPendek: {
-          tradePayables: 0, // utang Usaha
-          nonTradePayables: 0, // utang bukan Usaha
-          accruedExpenses: 0, // Biaya Masih Harus Dibayar
-          taxPayables: 0, // Utang Pajak
-          totalShortTermLiabilities: 0, // Jumlah Liabilitas Jangka Pendek
-        },
-        liabilitasJangkaPanjang: {
-          shareHolderLoans: 0, // Pinjaman kepada Pemegang Saham
-          longTermBankLoans: 0, // Hutang Bank Jangka Panjang
-          otherLongtermLiabilities: 0, // Kewajiban Jangka Panjang
-          totalLongtermLiabilities: 0, // Jumlah Liabilitas Jangka Panjang
-        },
-        ekuitas: {
-          shareCapital: 0, // Modal Saham
-          retainedEarningsPreviousYear: 0, // Saldo Laba Tahun Lalu
-          retainedEarningsCurrentYear: 0, // Saldo Laba Tahun Berjalan
-          retainedEarningsThisMonth: 0, // Saldo Laba
-          totalEquity: 0, // Ekuitas
-        },
+        asetLancar: asetLancar,
+        asetTidakLancar: asetTidakLancar,
+        liabilitasJangkaPendek: liabilitasJangkaPendek,
+        liabilitasJangkaPanjang: liabilitasJangkaPanjang,
+        ekuitas: ekuitas,
       };
 
       // Process Data For Sheet 1 & 2
@@ -1446,9 +1440,10 @@ class ExportReportService {
         bold: true,
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D8").value = asetLancar.grandTotal;
-      styleCell(worksheet6.getCell("D8"), {
-        numberFormat: true,
+      const d8Cell = worksheet6.getCell("D8");
+      d8Cell.value = Number(asetLancar.grandTotal) || 0;
+      d8Cell.numFmt = "#,##0";
+      styleCell(d8Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1456,9 +1451,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B9"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D9").value = asetLancar.cashAndBank;
-      styleCell(worksheet6.getCell("D9"), {
-        numberFormat: true,
+      const d9Cell = worksheet6.getCell("D9");
+      d9Cell.value = Number(asetLancar.cashAndBank) || 0;
+      d9Cell.numFmt = "#,##0";
+      styleCell(d9Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1466,9 +1462,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B10"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D10").value = asetLancar.accountsReceivable;
-      styleCell(worksheet6.getCell("D10"), {
-        numberFormat: true,
+      const d10Cell = worksheet6.getCell("D10");
+      d10Cell.value = Number(asetLancar.accountsReceivable) || 0;
+      d10Cell.numFmt = "#,##0";
+      styleCell(d10Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1476,9 +1473,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B11"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D11").value = asetLancar.thirdPartyReceivable;
-      styleCell(worksheet6.getCell("D11"), {
-        numberFormat: true,
+      const d11Cell = worksheet6.getCell("D11");
+      d11Cell.value = Number(asetLancar.thirdPartyReceivable) || 0;
+      d11Cell.numFmt = "#,##0";
+      styleCell(d11Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1486,9 +1484,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B12"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D12").value = asetLancar.otherReceivables;
-      styleCell(worksheet6.getCell("D12"), {
-        numberFormat: true,
+      const d12Cell = worksheet6.getCell("D12");
+      d12Cell.value = Number(asetLancar.otherReceivables) || 0;
+      d12Cell.numFmt = "#,##0";
+      styleCell(d12Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1496,9 +1495,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B13"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D13").value = asetLancar.inventory;
-      styleCell(worksheet6.getCell("D13"), {
-        numberFormat: true,
+      const d13Cell = worksheet6.getCell("D13");
+      d13Cell.value = Number(asetLancar.inventory) || 0;
+      d13Cell.numFmt = "#,##0";
+      styleCell(d13Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1506,9 +1506,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B14"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D14").value = asetLancar.advancePayments;
-      styleCell(worksheet6.getCell("D14"), {
-        numberFormat: true,
+      const d14Cell = worksheet6.getCell("D14");
+      d14Cell.value = Number(asetLancar.advancePayments) || 0;
+      d14Cell.numFmt = "#,##0";
+      styleCell(d14Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1516,9 +1517,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B15"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D15").value = asetLancar.tax;
-      styleCell(worksheet6.getCell("D15"), {
-        numberFormat: true,
+      const d15Cell = worksheet6.getCell("D15");
+      d15Cell.value = Number(asetLancar.tax) || 0;
+      d15Cell.numFmt = "#,##0";
+      styleCell(d15Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1527,9 +1529,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("D16").value = asetLancar.grandTotal;
-      styleCell(worksheet6.getCell("D16"), {
-        numberFormat: true,
+      const d16Cell = worksheet6.getCell("D16");
+      d16Cell.value = { formula: "SUM(D9:D15)" };
+      d16Cell.numFmt = "#,##0";
+      styleCell(d16Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "medium" }, top: { style: "medium" } },
@@ -1546,9 +1549,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B20"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D20").value = asetTidakLancar.totalAsetTetap;
-      styleCell(worksheet6.getCell("D20"), {
-        numberFormat: true,
+      const d20Cell = worksheet6.getCell("D20");
+      d20Cell.value = { formula: "D22+D23+D24" };
+      d20Cell.numFmt = "#,##0";
+      styleCell(d20Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1556,9 +1560,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B21"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D21").value = asetTidakLancar.landValue;
-      styleCell(worksheet6.getCell("D21"), {
-        numberFormat: true,
+      const d21Cell = worksheet6.getCell("D21");
+      d21Cell.value = Number(asetTidakLancar.landValue) || 0;
+      d21Cell.numFmt = "#,##0";
+      styleCell(d21Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1566,9 +1571,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B22"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D22").value = asetTidakLancar.totalAsetTetap;
-      styleCell(worksheet6.getCell("D22"), {
-        numberFormat: true,
+      const d22Cell = worksheet6.getCell("D22");
+      d22Cell.value = Number(asetTidakLancar.totalAsetTetap) || 0;
+      d22Cell.numFmt = "#,##0";
+      styleCell(d22Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1576,10 +1582,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B23"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D23").value =
-        asetTidakLancar.previousYearDepreciation;
-      styleCell(worksheet6.getCell("D23"), {
-        numberFormat: true,
+      const d23Cell = worksheet6.getCell("D23");
+      d23Cell.value = Number(asetTidakLancar.previousYearDepreciation) || 0;
+      d23Cell.numFmt = "#,##0";
+      styleCell(d23Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1587,9 +1593,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B24"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D24").value = asetTidakLancar.currentYearDepreciation;
-      styleCell(worksheet6.getCell("D24"), {
-        numberFormat: true,
+      const d24Cell = worksheet6.getCell("D24");
+      d24Cell.value = Number(asetTidakLancar.currentYearDepreciation) || 0;
+      d24Cell.numFmt = "#,##0";
+      styleCell(d24Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1597,9 +1604,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B25"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D25").value = asetTidakLancar.othersValue;
-      styleCell(worksheet6.getCell("D25"), {
-        numberFormat: true,
+      const d25Cell = worksheet6.getCell("D25");
+      d25Cell.value = Number(asetTidakLancar.othersValue) || 0;
+      d25Cell.numFmt = "#,##0";
+      styleCell(d25Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1607,9 +1615,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("B26"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("D26").value = asetTidakLancar.longTermInvestment;
-      styleCell(worksheet6.getCell("D26"), {
-        numberFormat: true,
+      const d26Cell = worksheet6.getCell("D26");
+      d26Cell.value = Number(asetTidakLancar.longTermInvestment) || 0;
+      d26Cell.numFmt = "#,##0";
+      styleCell(d26Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1618,9 +1627,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("D27").value = asetTidakLancar.totalValue;
-      styleCell(worksheet6.getCell("D27"), {
-        numberFormat: true,
+      const d27Cell = worksheet6.getCell("D27");
+      d27Cell.value = { formula: "SUM(D20,D25,D26)" };
+      d27Cell.numFmt = "#,##0";
+      styleCell(d27Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "medium" }, top: { style: "medium" } },
@@ -1631,9 +1641,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("D31").value = "0"; // Total Value
-      styleCell(worksheet6.getCell("D31"), {
-        numberFormat: true,
+      const d31Cell = worksheet6.getCell("D31");
+      d31Cell.value = { formula: "D16+D27" };
+      d31Cell.numFmt = "#,##0";
+      styleCell(d31Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "thick" }, top: { style: "thick" } },
@@ -1645,10 +1656,11 @@ class ExportReportService {
         bold: true,
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I8").value =
-        liabilitasJangkaPendek.totalShortTermLiabilities;
-      styleCell(worksheet6.getCell("I8"), {
-        numberFormat: true,
+      const i8Cell = worksheet6.getCell("I8");
+      i8Cell.value =
+        Number(liabilitasJangkaPendek.totalShortTermLiabilities) || 0;
+      i8Cell.numFmt = "#,##0";
+      styleCell(i8Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1656,9 +1668,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G9"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I9").value = liabilitasJangkaPendek.tradePayables;
-      styleCell(worksheet6.getCell("I9"), {
-        numberFormat: true,
+      const i9Cell = worksheet6.getCell("I9");
+      i9Cell.value = Number(liabilitasJangkaPendek.tradePayables) || 0;
+      i9Cell.numFmt = "#,##0";
+      styleCell(i9Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1666,9 +1679,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G10"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I10").value = liabilitasJangkaPendek.nonTradePayables;
-      styleCell(worksheet6.getCell("I10"), {
-        numberFormat: true,
+      const i10Cell = worksheet6.getCell("I10");
+      i10Cell.value = Number(liabilitasJangkaPendek.nonTradePayables) || 0;
+      i10Cell.numFmt = "#,##0";
+      styleCell(i10Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1676,9 +1690,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G11"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I11").value = liabilitasJangkaPendek.accruedExpenses;
-      styleCell(worksheet6.getCell("I11"), {
-        numberFormat: true,
+      const i11Cell = worksheet6.getCell("I11");
+      i11Cell.value = Number(liabilitasJangkaPendek.accruedExpenses) || 0;
+      i11Cell.numFmt = "#,##0";
+      styleCell(i11Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1686,9 +1701,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G12"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I12").value = liabilitasJangkaPendek.taxPayables;
-      styleCell(worksheet6.getCell("I12"), {
-        numberFormat: true,
+      const i12Cell = worksheet6.getCell("I12");
+      i12Cell.value = Number(liabilitasJangkaPendek.taxPayables) || 0;
+      i12Cell.numFmt = "#,##0";
+      styleCell(i12Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1697,10 +1713,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("I13").value =
-        liabilitasJangkaPendek.totalShortTermLiabilities; // Total Value
-      styleCell(worksheet6.getCell("I13"), {
-        numberFormat: true,
+      const i13Cell = worksheet6.getCell("I13");
+      i13Cell.value = { formula: "SUM(I9:I12)" };
+      i13Cell.numFmt = "#,##0";
+      styleCell(i13Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "medium" }, top: { style: "medium" } },
@@ -1711,10 +1727,11 @@ class ExportReportService {
         bold: true,
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I15").value =
-        liabilitasJangkaPanjang.totalLongtermLiabilities;
-      styleCell(worksheet6.getCell("I15"), {
-        numberFormat: true,
+      const i15Cell = worksheet6.getCell("I15");
+      i15Cell.value =
+        Number(liabilitasJangkaPanjang.totalLongtermLiabilities) || 0;
+      i15Cell.numFmt = "#,##0";
+      styleCell(i15Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1722,10 +1739,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G16"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I16").value =
-        liabilitasJangkaPanjang.shareHolderLoans;
-      styleCell(worksheet6.getCell("I16"), {
-        numberFormat: true,
+      const i16Cell = worksheet6.getCell("I16");
+      i16Cell.value = Number(liabilitasJangkaPanjang.shareHolderLoans) || 0;
+      i16Cell.numFmt = "#,##0";
+      styleCell(i16Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1733,10 +1750,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G17"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I17").value =
-        liabilitasJangkaPanjang.longTermBankLoans;
-      styleCell(worksheet6.getCell("I17"), {
-        numberFormat: true,
+      const i17Cell = worksheet6.getCell("I17");
+      i17Cell.value = Number(liabilitasJangkaPanjang.longTermBankLoans) || 0;
+      i17Cell.numFmt = "#,##0";
+      styleCell(i17Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1744,10 +1761,11 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G18"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I18").value =
-        liabilitasJangkaPanjang.otherLongtermLiabilities;
-      styleCell(worksheet6.getCell("I18"), {
-        numberFormat: true,
+      const i18Cell = worksheet6.getCell("I18");
+      i18Cell.value =
+        Number(liabilitasJangkaPanjang.otherLongtermLiabilities) || 0;
+      i18Cell.numFmt = "#,##0";
+      styleCell(i18Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1756,10 +1774,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("I19").value =
-        liabilitasJangkaPanjang.totalLongtermLiabilities; // Total Value
-      styleCell(worksheet6.getCell("I19"), {
-        numberFormat: true,
+      const i19Cell = worksheet6.getCell("I19");
+      i19Cell.value = { formula: "SUM(I16:I18)" };
+      i19Cell.numFmt = "#,##0";
+      styleCell(i19Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "medium" }, top: { style: "medium" } },
@@ -1775,9 +1793,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G23"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I23").value = ekuitas.shareCapital;
-      styleCell(worksheet6.getCell("I23"), {
-        numberFormat: true,
+      const i23Cell = worksheet6.getCell("I23");
+      i23Cell.value = Number(ekuitas.shareCapital) || 0;
+      i23Cell.numFmt = "#,##0";
+      styleCell(i23Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1785,9 +1804,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G24"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I24").value = ekuitas.retainedEarningsPreviousYear;
-      styleCell(worksheet6.getCell("I24"), {
-        numberFormat: true,
+      const i24Cell = worksheet6.getCell("I24");
+      i24Cell.value = Number(ekuitas.retainedEarningsPreviousYear) || 0;
+      i24Cell.numFmt = "(#,##0);(#,##0)";
+      styleCell(i24Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1795,9 +1815,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G25"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I25").value = ekuitas.retainedEarningsCurrentYear;
-      styleCell(worksheet6.getCell("I25"), {
-        numberFormat: true,
+      const i25Cell = worksheet6.getCell("I25");
+      i25Cell.value = Number(ekuitas.retainedEarningsCurrentYear) || 0;
+      i25Cell.numFmt = "#,##0";
+      styleCell(i25Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1805,9 +1826,10 @@ class ExportReportService {
       styleCell(worksheet6.getCell("G26"), {
         alignmentHorizontal: "left",
       });
-      worksheet6.getCell("I26").value = ekuitas.retainedEarningsThisMonth;
-      styleCell(worksheet6.getCell("I26"), {
-        numberFormat: true,
+      const i26Cell = worksheet6.getCell("I26");
+      i26Cell.value = Number(ekuitas.retainedEarningsThisMonth) || 0;
+      i26Cell.numFmt = "#,##0";
+      styleCell(i26Cell, {
         alignmentHorizontal: "right",
       });
 
@@ -1816,9 +1838,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("I27").value = "0"; // Total Value
-      styleCell(worksheet6.getCell("I27"), {
-        numberFormat: true,
+      const i27Cell = worksheet6.getCell("I27");
+      i27Cell.value = { formula: "SUM(I23:I26)" };
+      i27Cell.numFmt = "#,##0";
+      styleCell(i27Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "medium" }, top: { style: "medium" } },
@@ -1829,9 +1852,10 @@ class ExportReportService {
         alignmentHorizontal: "left",
         bold: true,
       });
-      worksheet6.getCell("I31").value = "0"; // Total Value
-      styleCell(worksheet6.getCell("I31"), {
-        numberFormat: true,
+      const i31Cell = worksheet6.getCell("I31");
+      i31Cell.value = { formula: "I13+I19+I27" };
+      i31Cell.numFmt = "#,##0";
+      styleCell(i31Cell, {
         bold: true,
         alignmentHorizontal: "right",
         border: { bottom: { style: "thick" }, top: { style: "thick" } },
