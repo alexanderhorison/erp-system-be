@@ -2,6 +2,7 @@ const router = require("express").Router();
 const DashboardController = require("../../controllers/dashboard/DashboardController");
 const salesOrderDashboardRouter = require("./salesOrderDashboardRouter");
 const purchaseOrderDashboardRouter = require("./purchaseOrderDashboardRouter");
+const financeDashboardRouter = require("./financeDashboardRouter");
 
 // 1. DashboardBarangHabis.js
 router.get("/minimum-stock", DashboardController.minimumStock);
@@ -33,6 +34,7 @@ router.get('/summary-vendor/:id', DashboardController.vendorSummary)
 
 router.use('/sales-order', salesOrderDashboardRouter)
 router.use('/purchase-order', purchaseOrderDashboardRouter)
+router.use('/finance', financeDashboardRouter);
 
 module.exports = router;
 
