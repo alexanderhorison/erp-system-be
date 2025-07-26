@@ -209,14 +209,12 @@ class DashboardFinanceService {
         const jual = Number(order.grandTotalCustomer) || 0;
         const gainLoss = Number(order.totalGainLoss) || 0;
         const modal = jual - gainLoss;
-        const pendapatan = Number(order.grandTotal) || 0;
 
         if (!dataMap.has(yearKey)) {
           dataMap.set(yearKey, {
             hargaJual: 0,
             hargaModal: 0,
             gainLoss: 0,
-            pendapatan: 0
           });
         }
 
@@ -224,7 +222,6 @@ class DashboardFinanceService {
         yearData.hargaJual += jual;
         yearData.hargaModal += modal;
         yearData.gainLoss += gainLoss;
-        yearData.pendapatan += pendapatan;
       }
 
       const result = Array.from(dataMap.entries())
