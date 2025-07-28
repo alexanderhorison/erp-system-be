@@ -81,6 +81,10 @@ ID MENU : NAMA
 37. Liabilitas Jangka Pendek Bulanan
 38. Liabilitas Jangka Panjang Bulanan
 39. Ekuitas Bulanan
+40. Dashboard Inventory
+41. Dashboard Sales Order
+42. Dashboard Purchase Order
+43. Dashboard Finance
 ```
 
 ### API Migration (15 Agustus 2024)
