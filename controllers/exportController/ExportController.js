@@ -21,7 +21,7 @@ class ExportController {
       res.json({
         status: true,
         data: pdfBase64,
-        fileName: `Sales Order #${code}.pdf`,
+        fileName: `${code}.pdf`,
         mimeType: "application/pdf",
       });
     } catch (error) {
