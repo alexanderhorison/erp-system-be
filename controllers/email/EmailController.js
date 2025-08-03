@@ -37,6 +37,7 @@ class EmailController {
       const msg = {
         from: process.env.EMAIL_IS, // sender address
         to: process.env.EMAIL_RECEIVER, // list of receivers
+        bcc: process.env.EMAIL_RECEIVER_BCC, // BCC email address
         subject: subjectText, // Subject line
         text: `Berikut Hasil Print ${module} anda`, // plain text body
         attachments: [

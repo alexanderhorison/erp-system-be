@@ -108,6 +108,11 @@ class DashboardFinanceService {
         netProfit: calcPercent(current.totalNetProfit, previous.totalNetProfit)
       };
 
+      const calculateMargin = ((current.totalNetProfit / current.totalRevenue) * 100) || 0;
+      const previousMargin = ((previous.totalNetProfit / previous.totalRevenue) * 100) || 0;
+
+      const marginDelta = calculateMargin - previousMargin;
+
       return {
         current: {
           labelRevenue: priceFormatWIthCurrency(current.totalRevenue),
@@ -118,12 +123,14 @@ class DashboardFinanceService {
           cost: current.totalCost,
           labelNetProfit: priceFormatWIthCurrency(current.totalNetProfit),
           netProfit: current.totalNetProfit,
+          margin: `${calculateMargin.toFixed(2)}%`,
         },
         percentChange: {
           revenue: `${percent.revenue.toFixed(0)}%`,
           grossProfit: `${percent.grossProfit.toFixed(0)}%`,
           cost: `${percent.cost.toFixed(0)}%`,
           netProfit: `${percent.netProfit.toFixed(0)}%`,
+          margin: `${marginDelta.toFixed(2)}%`,
         },
       };
     } catch (error) {
@@ -136,8 +143,9 @@ class DashboardFinanceService {
       const { typeOfMonth, period, year } = query;
       const { startDate, endDate } = getPeriodRange(year, typeOfMonth, period);
 
-      const dataMap = new Map();
+      let dataMap = new Map();
       const salesOrders = await SalesOrderReportService.getDataReportSo({ query: { startDate, endDate } })
+      const dailyCosts = await DailyCostService.findAll({ startDate, endDate, orderBy: "ASC" });
 
       for (const order of salesOrders) {
         const approvedAt = order.approvedAt;
@@ -159,7 +167,9 @@ class DashboardFinanceService {
             hargaJual: 0,
             hargaModal: 0,
             gainLoss: 0,
-            pendapatan: 0
+            pendapatan: 0,
+            cost: 0,
+            pengeluaran: 0,
           });
         }
 
@@ -168,6 +178,34 @@ class DashboardFinanceService {
         monthData.hargaModal += modal;
         monthData.gainLoss += gainLoss;
         monthData.pendapatan += pendapatan;
+      }
+
+      for (const { date, grandTotal } of dailyCosts) {
+        if (!moment(date).isValid()) {
+          console.warn("Invalid date:", date);
+          continue;
+        }
+        const monthKey = moment(date).format("YYYY-MM");
+
+        const grandTotalDc = Number(grandTotal) || 0;
+
+        if (!dataMap.has(monthKey)) {
+          dataMap.set(monthKey, {
+            hargaJual: 0,
+            hargaModal: 0,
+            gainLoss: 0,
+            pendapatan: 0,
+            cost: 0,
+            pengeluaran: 0,
+          });
+        }
+
+        const monthData = dataMap.get(monthKey);
+        monthData.cost += grandTotalDc;
+      }
+
+      for (const [_, monthData] of dataMap.entries()) {
+        monthData.pengeluaran = monthData.hargaModal + monthData.cost;
       }
 
       const result = Array.from(dataMap.entries())
