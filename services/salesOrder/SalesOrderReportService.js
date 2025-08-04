@@ -35,7 +35,7 @@ class SalesOrderReportService {
                 include: [
                   {
                     model: Master_Product,
-                    attributes: ["id", "name"], // Fetch product details
+                    attributes: ["id", "name", "companyId"], // Fetch product details
                     include: [
                       {
                         model: Master_Company,
