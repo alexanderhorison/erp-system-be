@@ -40,7 +40,7 @@ class ExportReportService {
         query.year
       );
 
-      // Data for Sheet 1 & 2
+      // Data for Sheet 1 & 2   
       const getDataReportSo = await SalesOrderReportService.getDataReportSo({
         query: { startDate, endDate },
       });
