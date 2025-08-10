@@ -1,9 +1,19 @@
-const ExportService = require("../../services/export/exportService");
-const { responses } = require("../../helpers/responses");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 
+const ExportSalesOrderService = require("../../services/export/exportSalesOrderService");
+const ExportPurchaseOrderService = require("../../services/export/exportPurchaseOrderService");
+const ExportGoodsOutService = require("../../services/export/exportGoodsOutService");
+const ExportDeliveryOrderService = require("../../services/export/ExportDeliveryOrderService");
+const ExportDeliveryOrderReceiveService = require("../../services/export/ExportDeliveryOrderReceiveService");
+const ExportDeliveryOrderReceiveOutstandingService = require("../../services/export/ExportDeliveryOrderReceiveOutstandingService");
+const ExportStockOpnameService = require("../../services/export/ExportStockOpnameService");
+const ExportInternalTransferService = require("../../services/export/ExportInternalTransferService");
+const ExportAllStockService = require("../../services/export/ExportAllStockService");
+
 class ExportController {
+
+  // DONE
   static async salesOrder(req, res) {
     try {
       const schemaParams = yup.object({
@@ -14,7 +24,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.salesOrder(code);
+      const pdfBuffer = await ExportSalesOrderService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -25,18 +35,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      console.log("Error generating PDF:", error);
-      
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async purchaseOrder(req, res) {
     try {
       const schemaParams = yup.object({
@@ -47,7 +54,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.purchaseOrder(code);
+      const pdfBuffer = await ExportPurchaseOrderService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -58,16 +65,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async deliveryOrder(req, res) {
     try {
       const schemaParams = yup.object({
@@ -78,7 +84,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.deliveryOrder(code);
+      const pdfBuffer = await ExportDeliveryOrderService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -88,17 +94,17 @@ class ExportController {
         fileName: `Delivery Order #${code}.pdf`,
         mimeType: "application/pdf",
       });
+
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async deliveryOrderReceive(req, res) {
     try {
       const schemaParams = yup.object({
@@ -109,7 +115,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.deliveryOrderReceive(code);
+      const pdfBuffer = await ExportDeliveryOrderReceiveService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -120,16 +126,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async deliveryOrderReceiveOutstanding(req, res) {
     try {
       const schemaParams = yup.object({
@@ -142,7 +147,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.deliveryOrderReceiveOutstanding(
+      const pdfBuffer = await ExportDeliveryOrderReceiveOutstandingService.export(
         code
       );
 
@@ -155,16 +160,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async stockOpname(req, res) {
     try {
       const schemaParams = yup.object({
@@ -175,7 +179,7 @@ class ExportController {
 
       const code = params.code;
 
-      const excelFile = await ExportService.stockOpnameExcel(code);
+      const excelFile = await ExportStockOpnameService.export(code);
 
       const fileName = `Stock Opname #${code}.xlsx`;
 
@@ -189,16 +193,15 @@ class ExportController {
 
       res.end(excelFile);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async adjustmentGoodsIn(req, res) {
     try {
       const schemaParams = yup.object({
@@ -209,7 +212,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.adjustmentGoodsIn(code);
+      const pdfBuffer = await ExportGoodsInService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -220,16 +223,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async adjustmentGoodsOut(req, res) {
     try {
       const schemaParams = yup.object({
@@ -240,7 +242,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.adjustmentGoodsOut(code);
+      const pdfBuffer = await ExportGoodsOutService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -251,16 +253,15 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async internalTransfer(req, res) {
     try {
       const schemaParams = yup.object({
@@ -271,7 +272,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportService.internalTransfer(code);
+      const pdfBuffer = await ExportInternalTransferService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
@@ -282,33 +283,48 @@ class ExportController {
         mimeType: "application/pdf",
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error generating PDF",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
+        error: error.message,
+      });
     }
   }
 
+  // DONE
   static async allStock(req, res) {
     try {
       const schemaParams = yup
         .number()
         .required("Id gudang tidak boleh kosong");
 
-      const id = await yupSchemaValidation(req.params.warehouseId, schemaParams);
+      const id = await yupSchemaValidation(
+        req.params.warehouseId,
+        schemaParams
+      );
 
-      await ExportService.allStock({ res, warehouseId: id });
+      const excelFile = await ExportAllStockService.export({ warehouseId: id })
+
+      const currentDate = new Date();
+      const formattedDate = currentDate
+        .toISOString()
+        .split("T")[0]
+        .replace(/-/g, "");
+      const fileName = `Current Stock - ${formattedDate}.xlsx`;
+
+      res.set({
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Access-Control-Expose-Headers": "Content-Disposition",
+      });
+      res.end(excelFile);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          status: false,
-          message: "Error export all stock",
-          error: error.message,
-        });
+      res.status(500).json({
+        status: false,
+        message: "Error export all stock",
+        error: error.message,
+      });
     }
   }
 }
