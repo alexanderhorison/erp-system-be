@@ -1,9 +1,7 @@
 const transporter = require("../../helpers/emailConfig");
 const { responses } = require("../../helpers/responses");
-
-const ExportPurchaseOrderService = require("../../services/export/exportPurchaseOrderService");
-const ExportSalesOrderService = require("../../services/export/exportSalesOrderService");
-
+const ExportPurchaseOrderService = require("../../services/export/ExportPurchaseOrderService");
+const ExportSalesOrderService = require("../../services/export/ExportSalesOrderService");
 class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
