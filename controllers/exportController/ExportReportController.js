@@ -1,8 +1,7 @@
 const { responses } = require("../../helpers/responses");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
-const ExportReportService = require("../../services/export/exportReportService");
+const ExportReportService = require("../../services/export/ExportReportService");
 const yup = require("yup");
-
 
 class ExportReportController {
   static async exportReport(req, res) {
