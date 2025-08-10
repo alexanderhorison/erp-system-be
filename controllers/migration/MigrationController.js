@@ -11,14 +11,14 @@ class MigrationController {
       });
       const body = await yupSchemaValidation(req.body, schemaBody);
 
-      await MigrationService.apiMigration(
+      const result = await MigrationService.apiMigration(
         body.migrationName
       );
 
       res
         .status(200)
         .json(
-          responses(true, `Migrasi ${body.migrationName} berhasil dilakukan`)
+          responses(true, `Migrasi ${body.migrationName} berhasil dilakukan`, result)
         );
     } catch (error) {
       res
