@@ -86,6 +86,7 @@ class MigrationService {
           const resultDataPo = [];
           const resultDataSo = [];
           console.log("masuk migrasi update payment so&po");
+          const endDate = new Date("2025-07-31T23:59:59.999Z");
 
           const getPoData = await Purchase_Order.findAll({
             where: {
@@ -94,7 +95,7 @@ class MigrationService {
                 [Op.gt]: 0,
               },
               approvedAt: {
-                [Op.lte]: new Date("2025-07-31"),
+                [Op.lte]: endDate,
               },
             },
             include: [{ model: Master_Vendor, attributes: ["id", "name"] }],
@@ -187,7 +188,7 @@ class MigrationService {
                 [Op.gt]: 0,
               },
               approvedAt: {
-                [Op.lte]: new Date("2025-07-31"),
+                [Op.lte]: endDate,
               },
             },
             include: [{ model: Master_Customer, attributes: ["id", "name"] }],
