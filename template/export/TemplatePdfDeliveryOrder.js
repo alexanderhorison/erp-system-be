@@ -396,7 +396,7 @@ const TemplatePdfDeliveryOrder = async ({ data }) => {
       if (createdTime) {
         const createdTimeWidth = font.widthOfTextAtSize(createdTime, fontSize);
         page.drawText(createdTime, {
-          x: settingPdf.xLeftSignature - createdTimeWidth / 2,
+          x: settingPdf.xRightSignature - createdTimeWidth / 2,
           y: creatorY,
           size: fontSize,
           color: grayColor,
