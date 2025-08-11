@@ -1,7 +1,7 @@
 const moment = require("moment");
 const { formatTimeSecond } = require("../../helpers/formatDate");
 const GoodsOutService = require("../adjustmentGoods/GoodsOutService");
-const { generateGoodsOutPDF } = require("../../template/export/TemplatePdfGoodsOut");
+const { TemplatePdfGoodsOut } = require("../../template/export/TemplatePdfGoodsOut");
 
 class ExportReportGoodsOutService {
   static async export(code) {
@@ -16,7 +16,7 @@ class ExportReportGoodsOutService {
         approvedTime: formatTimeSecond(data.approvedAt),
       };
 
-      const pdfBuffer = await generateGoodsOutPDF({
+      const pdfBuffer = await TemplatePdfGoodsOut({
         data: result,
       });
 

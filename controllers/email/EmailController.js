@@ -10,13 +10,16 @@ class EmailController {
       // const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
       let pdfBuffer = {};
+      let name = ''
 
       if (filename.includes("PO")) {
         pdfBuffer = await ExportPurchaseOrderService.export(filename);
+        name = 'Purchase Order';
       }
 
       if (filename.includes("SO")) {
         pdfBuffer = await ExportSalesOrderService.export(filename);
+        name = 'Sales Order';
       }
 
       if (!pdfBuffer) {
@@ -34,6 +37,7 @@ class EmailController {
       if (["Sales Order", "Purchase Order"].includes(module)) {
         subjectText += additionSubjectText;
       }
+
       const msg = {
         from: process.env.EMAIL_IS, // sender address
         to: process.env.EMAIL_RECEIVER, // list of receivers
@@ -42,7 +46,7 @@ class EmailController {
         text: `Berikut Hasil Print ${module} anda`, // plain text body
         attachments: [
           {
-            filename: `${filename}.pdf` || "sales-order.pdf", // Use the filename from the request or a default
+            filename: `${name} #${filename}.pdf`, // Use the filename from the request or a default
             content: pdfBuffer, // Attach the PDF buffer
           },
         ],

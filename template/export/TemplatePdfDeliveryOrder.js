@@ -358,7 +358,7 @@ const TemplatePdfDeliveryOrder = async ({ data }) => {
 
       // Only "Dibuat Oleh" section (centered like in GoodsIn)
       page.drawText("Dibuat Oleh", {
-        x: settingPdf.xLeftSignature - font.widthOfTextAtSize("Dibuat Oleh", fontSize) / 2,
+        x: settingPdf.xRightSignature - font.widthOfTextAtSize("Dibuat Oleh", fontSize) / 2,
         y: yBody,
         size: fontSize,
         color: grayColor,
@@ -372,7 +372,7 @@ const TemplatePdfDeliveryOrder = async ({ data }) => {
       if (creatorBy?.name) {
         const createdByWidth = font.widthOfTextAtSize(creatorBy.name, fontSize);
         page.drawText(creatorBy.name, {
-          x: settingPdf.xLeftSignature - createdByWidth / 2,
+          x: settingPdf.xRightSignature - createdByWidth / 2,
           y: creatorY,
           size: fontSize,
           color: grayColor,
@@ -384,7 +384,7 @@ const TemplatePdfDeliveryOrder = async ({ data }) => {
       if (createdAt) {
         const createdAtWidth = font.widthOfTextAtSize(createdAt, fontSize);
         page.drawText(createdAt, {
-          x: settingPdf.xLeftSignature - createdAtWidth / 2,
+          x: settingPdf.xRightSignature - createdAtWidth / 2,
           y: creatorY,
           size: fontSize,
           color: grayColor,

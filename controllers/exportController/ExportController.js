@@ -10,6 +10,7 @@ const ExportDeliveryOrderReceiveOutstandingService = require("../../services/exp
 const ExportStockOpnameService = require("../../services/export/ExportStockOpnameService");
 const ExportInternalTransferService = require("../../services/export/ExportInternalTransferService");
 const ExportAllStockService = require("../../services/export/ExportAllStockService");
+const ExportReportGoodsInService = require("../../services/export/ExportGoodsInService");
 
 class ExportController {
 
@@ -31,7 +32,7 @@ class ExportController {
       res.json({
         status: true,
         data: pdfBase64,
-        fileName: `${code}.pdf`,
+        fileName: `Sales Order #${code}.pdf`,
         mimeType: "application/pdf",
       });
     } catch (error) {
@@ -212,7 +213,7 @@ class ExportController {
 
       const code = params.code;
 
-      const pdfBuffer = await ExportGoodsInService.export(code);
+      const pdfBuffer = await ExportReportGoodsInService.export(code);
 
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
