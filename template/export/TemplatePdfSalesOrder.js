@@ -408,7 +408,7 @@ const TemplatePdfSalesOrder = async ({ data }) => {
 
       const grandTotalWidth = fontBold.widthOfTextAtSize(grandTotal, fontSize);
       page.drawText(grandTotal, {
-        x: 555 - grandTotalWidth,
+        x: settingPdf.marginRight - grandTotalWidth,
         y: yBody,
         size: fontSize,
         color: grayColor,
@@ -430,9 +430,10 @@ const TemplatePdfSalesOrder = async ({ data }) => {
         yBody = settingPdf.startYAfterNewPage;
       }
 
-      const xFooterLeft = marginLeft;
-      const xFooterRight = settingPdf.xFooterRight;
-      const spaceSign = 60;
+      const xLeftSignature = settingPdf.xLeftSignature;
+      const xRightSignature = settingPdf.xRightSignature;
+      const spaceSign = settingPdf.spaceSign;
+      let xFooterLeft = marginLeft;
 
       // Bank transfer information
       yBody -= spacing3;
@@ -457,8 +458,9 @@ const TemplatePdfSalesOrder = async ({ data }) => {
       yBody -= spacing2;
 
       // Receiver signature (left side)
+      const penerimaWidth = font.widthOfTextAtSize("Penerima", fontSize);
       page.drawText("Penerima", {
-        x: xFooterLeft + 50,
+        x: xLeftSignature - (penerimaWidth / 2),
         y: yBody,
         size: fontSize,
         color: grayColor,
@@ -466,8 +468,9 @@ const TemplatePdfSalesOrder = async ({ data }) => {
       });
 
       const receiverSignatureY = yBody - spaceSign;
+      const signatureWidth = font.widthOfTextAtSize("( ................... )", fontSize);
       page.drawText("( ................... )", {
-        x: xFooterLeft + 41,
+        x: xLeftSignature - (signatureWidth / 2),
         y: receiverSignatureY,
         size: fontSize,
         color: grayColor,
@@ -475,17 +478,30 @@ const TemplatePdfSalesOrder = async ({ data }) => {
       });
 
       // Sender signature (right side)
+      const denganHormatWidth = font.widthOfTextAtSize("Dengan Hormat,", fontSize);
       page.drawText("Dengan Hormat,", {
-        x: xFooterRight - 95,
+        x: xRightSignature - (denganHormatWidth / 2),
         y: yBody,
         size: fontSize,
         color: grayColor,
         font: font,
       });
 
-      page.drawText("( ................... )", {
-        x: xFooterRight - 90,
+      // Michael Santoso signature
+      const michaelSantosoWidth = font.widthOfTextAtSize("Michael Santoso", fontSize);
+      page.drawText("Michael Santoso", {
+        x: xRightSignature - (michaelSantosoWidth / 2),
         y: receiverSignatureY,
+        size: fontSize,
+        color: grayColor,
+        font: font,
+      });
+
+      // Finance Dept
+      const financeDeptWidth = font.widthOfTextAtSize("Finance Dept", fontSize);
+      page.drawText("Finance Dept", {
+        x: xRightSignature - (financeDeptWidth / 2),
+        y: receiverSignatureY - spacing1,
         size: fontSize,
         color: grayColor,
         font: font,
