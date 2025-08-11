@@ -1,7 +1,7 @@
 const transporter = require("../../helpers/emailConfig");
 const { responses } = require("../../helpers/responses");
-const ExportService = require("../../services/export/exportService");
-
+const ExportPurchaseOrderService = require("../../services/export/ExportPurchaseOrderService");
+const ExportSalesOrderService = require("../../services/export/ExportSalesOrderService");
 class EmailController {
   static async sendEmail(req, res) {
     // code to send email goes here
@@ -9,14 +9,17 @@ class EmailController {
       const { filename, module, additionSubjectText } = req.body; // Get filename from body
       // const pdfBuffer = req.file.buffer; // Get the uploaded file buffer
 
-      let pdfBuffer = {}
+      let pdfBuffer = {};
+      let name = ''
 
-      if (filename.includes('PO')) {
-        pdfBuffer = await ExportService.purchaseOrder(filename);
+      if (filename.includes("PO")) {
+        pdfBuffer = await ExportPurchaseOrderService.export(filename);
+        name = 'Purchase Order';
       }
 
-      if (filename.includes('SO')) {
-        pdfBuffer = await ExportService.salesOrder(filename);
+      if (filename.includes("SO")) {
+        pdfBuffer = await ExportSalesOrderService.export(filename);
+        name = 'Sales Order';
       }
 
       if (!pdfBuffer) {
@@ -34,6 +37,7 @@ class EmailController {
       if (["Sales Order", "Purchase Order"].includes(module)) {
         subjectText += additionSubjectText;
       }
+
       const msg = {
         from: process.env.EMAIL_IS, // sender address
         to: process.env.EMAIL_RECEIVER, // list of receivers
@@ -42,7 +46,7 @@ class EmailController {
         text: `Berikut Hasil Print ${module} anda`, // plain text body
         attachments: [
           {
-            filename: `${filename}.pdf` || "sales-order.pdf", // Use the filename from the request or a default
+            filename: `${name} #${filename}.pdf`, // Use the filename from the request or a default
             content: pdfBuffer, // Attach the PDF buffer
           },
         ],

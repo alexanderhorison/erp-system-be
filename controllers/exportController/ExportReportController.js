@@ -1,8 +1,8 @@
 const { responses } = require("../../helpers/responses");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
-const ExportReportService = require("../../services/export/exportReportService");
 const yup = require("yup");
 
+const ExportReportService = require("../../services/export/ExportReportService");
 
 class ExportReportController {
   static async exportReport(req, res) {
@@ -36,6 +36,7 @@ class ExportReportController {
 
       res.end(file);
     } catch (error) {
+      console.error("Error generating report:", error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));

@@ -40,7 +40,7 @@ class ExportReportService {
         query.year
       );
 
-      // Data for Sheet 1 & 2
+      // Data for Sheet 1 & 2   
       const getDataReportSo = await SalesOrderReportService.getDataReportSo({
         query: { startDate, endDate },
       });
@@ -1180,7 +1180,7 @@ class ExportReportService {
       const labaBersihFormula = {
         formula: `SUM(C12-C${
           15 + dataSheet4Formula.unexpectedCost.length + 1
-        })`,
+          })`,
       };
       const gajiTunjanganFormula = {
         formula: `SUM(${dataSheet4Formula.gajiTunjangan.join(",")})`,

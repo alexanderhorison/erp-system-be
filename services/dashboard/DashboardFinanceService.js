@@ -4,23 +4,97 @@ const SalesOrderReportService = require("../salesOrder/SalesOrderReportService")
 const DailyCostService = require("../dailyCost/DailyCostService");
 const { priceFormatWIthCurrency } = require("../../helpers/priceFormat");
 const moment = require('moment');
+const MasterDataCompanyService = require("../masterData/MasterDataCompanyService");
+const { CACHE_KEYS, getOrSetCache } = require('../../helpers/cacheHelper');
 
-function calculateRevenue(salesOrders, dailyCosts) {
+function calculateRevenue(salesOrders, dailyCosts, calculateTop5 = false, company = []) {
   let totalRevenue = 0;
   let totalGrossProfit = 0;
   let totalCost = 0;
 
-  for (const { grandTotal, totalGainLoss } of salesOrders) {
+  const productMap = new Map();
+  const companyMap = new Map();
+
+  for (const { grandTotal, totalGainLoss, Sales_Order_Details } of salesOrders) {
     totalGrossProfit += Number(totalGainLoss) || 0;
     totalRevenue += Number(grandTotal) || 0;
+
+    // Calculate for top 5
+    /**
+     * 1. Loop sales order details, access warehouseProduct Id, get the product id
+     * 2. Calculate for same ProductId Assign value for sum gross profit and keep  sum value for harga jual (each same ProductId)
+     * 3. sort by sum gross profit
+     */
+    if (calculateTop5) {
+      for (const detail of Sales_Order_Details) {
+        const product = detail.Warehouse_Product?.Master_Product;
+        if (!product) continue;
+
+        const productId = product.id;
+        const productName = product.name;
+
+        const gainLoss = Number(detail.gainLoss || 0);
+        const sellingPrice = Number(detail.subTotal || 0);
+        const buyingPrice = Number((detail.modal * detail.quantity) || 0);
+
+        if (!productMap.has(productId)) {
+          productMap.set(productId, {
+            productId,
+            productName,
+            totalGainLoss: 0,
+            totalHargaJual: 0,
+            totalHargaBeli: 0,
+          });
+        }
+
+        if (!companyMap.has(product.companyId)) {
+
+          companyMap.set(product.companyId, {
+            companyId: product.companyId,
+            companyName: company.find(c => c.id === product.companyId)?.name || "Unknown",
+            totalGainLoss: 0,
+            totalHargaJual: 0,
+            totalHargaBeli: 0,
+          });
+        }
+        const companyEntry = companyMap.get(product.companyId);
+        companyEntry.totalGainLoss += gainLoss;
+        companyEntry.totalHargaJual += sellingPrice;
+        companyEntry.totalHargaBeli += buyingPrice;
+
+        const entry = productMap.get(productId);
+        entry.totalGainLoss += gainLoss;
+        entry.totalHargaJual += sellingPrice;
+        entry.totalHargaBeli += buyingPrice;
+      }
+    }
   }
 
   for (const { grandTotal } of dailyCosts) {
     totalCost += Number(grandTotal) || 0;
   }
 
+  // Convert Map to Array and calculate percentage
+  const grossProfitByProduct = mapTop5(productMap.values());
+  const grossProfitByCompany = mapTop5(companyMap.values());
+
   const totalNetProfit = totalGrossProfit - totalCost;
-  return { totalRevenue, totalGrossProfit, totalCost, totalNetProfit };
+  return { totalRevenue, totalGrossProfit, totalCost, totalNetProfit, grossProfitByProduct, grossProfitByCompany };
+}
+
+function mapTop5(data) {
+  return Array.from(data)
+    .map(entry => {
+      const percent = entry.totalHargaJual > 0
+        ? (entry.totalGainLoss / entry.totalHargaJual) * 100
+        : 0;
+      return {
+        ...entry,
+        totalGainLossPercent: `${Number(percent.toFixed(2))}%`, // 2 decimal places
+      };
+    })
+    .sort((a, b) => b.totalGainLoss - a.totalGainLoss) // sort by GP value descending
+    .slice(0, 5); // top 5
 }
 
 // Helper function to calculate percentage difference
@@ -72,6 +146,10 @@ class DashboardFinanceService {
         query.month,
         query.year
       )
+      const monthKey = moment(startDate).format("YYYY-MM");
+      const month = Number(monthKey.split("-")[1])
+      const year = Number(monthKey.split("-")[0]);
+      const cacheKey = CACHE_KEYS.FINANCE_REVENUE(month, year);
 
       // 1. Calculate previous month and year
       let prevMonth = Number(query.month) - 1;
@@ -83,6 +161,22 @@ class DashboardFinanceService {
 
       const { startDate: prevStartDate, endDate: prevEndDate } = generateFilterDate(prevMonth, prevYear);
 
+      return await getOrSetCache(cacheKey, "RevenueFetch", async () => {
+        return DashboardFinanceService.getFinanceRevenueFn({
+          prevStartDate,
+          prevEndDate,
+          startDate,
+          endDate
+        });
+      })
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  static async getFinanceRevenueFn({ prevStartDate, prevEndDate, startDate, endDate }) {
+    try {
       // 2. Fetch current and previous data
       const [currentSO, prevSO] = await Promise.all([
         SalesOrderReportService.getDataReportSo({ query: { startDate, endDate } }),
@@ -95,8 +189,10 @@ class DashboardFinanceService {
         DailyCostService.findAll({ startDate: prevStartDate, endDate: prevEndDate, orderBy: "ASC" })
       ]);
 
+      const companies = await MasterDataCompanyService.findAll();
+
       // 3. Calculate for current
-      const current = calculateRevenue(currentSO, currentDailyCost);
+      const current = calculateRevenue(currentSO, currentDailyCost, true, companies);
       // 4. Calculate for previous
       const previous = calculateRevenue(prevSO, prevDailyCost);
 
@@ -132,9 +228,11 @@ class DashboardFinanceService {
           netProfit: `${percent.netProfit.toFixed(0)}%`,
           margin: `${marginDelta.toFixed(2)}%`,
         },
+        grossProfitByProduct: current.grossProfitByProduct,
+        grossProfitByCompany: current.grossProfitByCompany,
       };
     } catch (error) {
-      throw error
+      throw error;
     }
   }
 

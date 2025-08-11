@@ -2,12 +2,22 @@ const {
   sequelize: sq,
   Stock_Adjustment_History,
   Warehouse_Product,
+  Purchase_Order,
+  Purchase_Order_Payment,
+  Dashboard_Summary_Vendor,
+  Master_Vendor,
+  Sales_Order,
+  Sales_Order_Payment,
+  Dashboard_Summary_Customer,
+  Master_Customer
 } = require("../../models");
+const { Op } = require("sequelize");
 
 class MigrationService {
   static async apiMigration(migrationName) {
     const transaction = await sq.transaction();
     try {
+      const result = []
       switch (migrationName) {
         case "MIGRATION LAST QUANTITY":
           /**
@@ -64,12 +74,208 @@ class MigrationService {
             }
           }
           break;
+        case "MIGRATION UPDATE PAYMENT":
+          // Update all PO and SO payment to full status paid 31 july
+          /**
+           * 1. PO Payment
+           *   - Find all Purchase Order with (status approved, according to date, amount debt > 0)
+           *   - Create Payment in Purchase_Order_Payment with type cash
+           *   - update purchase order paid and debt
+           *   - update dashboard vendor
+           */
+          const resultDataPo = [];
+          const resultDataSo = [];
+          console.log("masuk migrasi update payment so&po");
+          const endDate = new Date("2025-07-31T23:59:59.999Z");
+
+          const getPoData = await Purchase_Order.findAll({
+            where: {
+              status: "APPROVED",
+              amountDebt: {
+                [Op.gt]: 0,
+              },
+              approvedAt: {
+                [Op.lte]: endDate,
+              },
+            },
+            include: [{ model: Master_Vendor, attributes: ["id", "name"] }],
+            transaction,
+          });
+          console.log("getPoData", getPoData.length);
+
+          for (const po of getPoData) {
+            const summary = {};
+            const amountToPay = Number(po.amountDebt);
+
+
+            // 2. Create payment record
+            const dataPayment = await Purchase_Order_Payment.create(
+              {
+                typePayment: "CASH",
+                amount: amountToPay,
+                notes: "Migration payment - full settlement as of 31 July 2025",
+                purchaseOrderId: po.id,
+                createdBy: 1, // change to system/admin ID if needed
+              },
+              { transaction }
+            );
+
+            // 3. Update PO paid/debt values
+            await Purchase_Order.update(
+              {
+                amountPaid: Number(po.amountPaid) + amountToPay,
+                amountDebt: 0,
+              },
+              {
+                where: { id: po.id },
+                transaction,
+              }
+            );
+
+            // 4. Update vendor dashboard summary
+            const vendorSummary = await Dashboard_Summary_Vendor.findOne({
+              where: { vendorId: po.vendorId },
+              transaction,
+              lock: transaction.LOCK.UPDATE,
+            });
+
+            if (!vendorSummary) {
+              console.warn(`Vendor Summary not found for vendorId: ${po.vendorId}`);
+              continue;
+            }
+
+            await Dashboard_Summary_Vendor.update(
+              {
+                totalAmountDebtPurchaseOrder:
+                  Number(vendorSummary.totalAmountDebtPurchaseOrder) - amountToPay,
+                totalAmountPaidPurchaseOrder:
+                  Number(vendorSummary.totalAmountPaidPurchaseOrder) + amountToPay,
+              },
+              {
+                where: { id: vendorSummary.id },
+                transaction,
+              }
+            );
+
+            summary.code = po.code;
+            summary.Vendor = {
+              id: po.vendorId,
+              name: po?.Master_Vendor?.name ?? "",
+              dashboardVendor: {
+                beforeUpdate: vendorSummary.toJSON(),
+                afterUpdate: {
+                  totalAmountDebtPurchaseOrder: Number(vendorSummary.totalAmountDebtPurchaseOrder) - amountToPay,
+                  totalAmountPaidPurchaseOrder: Number(vendorSummary.totalAmountPaidPurchaseOrder) + amountToPay,
+                }
+              }
+            };
+            summary.amountDebt = amountToPay;
+            summary.paymentData = dataPayment.toJSON();
+            resultDataPo.push(summary);
+          }
+
+          /**
+           * 2. SO Payment
+           *   - Find all Sales Order with (status approved, according to date, amount debt > 0)
+           *   - Create Payment in PSales_Order_Payment with type cash
+           *   - update sales order paid and debt
+           *   - update dashboard customer
+           */
+          const getSoData = await Sales_Order.findAll({
+            where: {
+              status: "APPROVED",
+              amountDebt: {
+                [Op.gt]: 0,
+              },
+              approvedAt: {
+                [Op.lte]: endDate,
+              },
+            },
+            include: [{ model: Master_Customer, attributes: ["id", "name"] }],
+            order: [["id", "ASC"]],
+            transaction,
+          });
+          console.log("getSoData", getSoData.length);
+
+          for (const so of getSoData) {
+            const summary = {};
+            const amountToPay = Number(so.amountDebt);
+
+            // 2. Create payment record
+            const dataPayment = await Sales_Order_Payment.create(
+              {
+                typePayment: "CASH",
+                amount: amountToPay,
+                notes: "Migration payment - full settlement as of 31 July 2025",
+                salesOrderId: so.id,
+                createdBy: 1, // change to system/admin ID if needed
+              },
+              { transaction }
+            );
+
+            // 3. Update so paid/debt values
+            await Sales_Order.update(
+              {
+                amountPaid: Number(so.amountPaid) + amountToPay,
+                amountDebt: 0,
+              },
+              {
+                where: { id: so.id },
+                transaction,
+              }
+            );
+
+            // 4. Update customer dashboard summary
+            const customerSummary = await Dashboard_Summary_Customer.findOne({
+              where: { customerId: so.customerId },
+              transaction,
+              lock: transaction.LOCK.UPDATE,
+            });
+
+            if (!customerSummary) {
+              console.warn(`Customer Summary not found for customerId: ${so.customerId}`);
+              continue;
+            }
+
+            await Dashboard_Summary_Customer.update(
+              {
+                totalAmountDebtSalesOrder:
+                  Number(customerSummary.totalAmountDebtSalesOrder) - amountToPay,
+                totalAmountPaidSalesOrder:
+                  Number(customerSummary.totalAmountPaidSalesOrder) + amountToPay,
+              },
+              {
+                where: { id: customerSummary.id },
+                transaction,
+              }
+            );
+
+            summary.code = so.code;
+            summary.Customer = {
+              id: so.customerId,
+              name: so?.Master_Customer?.name ?? "",
+              dashboardCustomer: {
+                beforeUpdate: customerSummary.toJSON(),
+                afterUpdate: {
+                  totalAmountDebtSalesOrder: Number(customerSummary.totalAmountDebtSalesOrder) - amountToPay,
+                  totalAmountPaidSalesOrder: Number(customerSummary.totalAmountPaidSalesOrder) + amountToPay,
+                }
+              }
+            };
+            summary.amountDebt = amountToPay;
+            summary.paymentData = dataPayment.toJSON();
+            resultDataSo.push(summary);
+          }
+          result.push({
+            DataPo: resultDataPo,
+            DataSo: resultDataSo,
+          })
 
         default:
           break;
       }
       await transaction.commit();
-      return "success";
+      return result;
     } catch (error) {
       await transaction.rollback();
       throw error;
