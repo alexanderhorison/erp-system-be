@@ -1,0 +1,11 @@
+// DEFINE STATUS ON PROCESS
+const STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  COMPLETED: "COMPLETED",
+};
+
+module.exports = {
+  STATUS,
+};

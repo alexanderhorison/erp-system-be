@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       Delivery_Order.belongsTo(models.Master_User, { foreignKey: "createdBy", as: "creatorBy" });
 
       Delivery_Order.belongsTo(models.Master_User, { foreignKey: "receivedBy", as: "receiverBy" });
+      Delivery_Order.belongsTo(models.Pr_Orders, { foreignKey: "productRequestOrderId"});
     }
   }
 
@@ -36,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       code: DataTypes.STRING,
       receivedAt: DataTypes.DATE,
       receivedBy: DataTypes.INTEGER,
+      productRequestOrderId: DataTypes.INTEGER,
     },
     {
       sequelize,

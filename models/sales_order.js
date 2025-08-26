@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Sales_Order.init(
     {
-      code: DataTypes.INTEGER,
+      code: DataTypes.STRING,
       warehouseId: DataTypes.INTEGER,
       customerId: DataTypes.INTEGER,
       grandTotal: DataTypes.BIGINT,
