@@ -5,6 +5,7 @@ const ProductWarehouseController = require("../../controllers/productWarehouse/P
 
 
 router.get("/", ProductWarehouseController.getAllWarehouse);
+router.get("/find", ProductWarehouseController.findProductByFilters);
 router.use("/transformation", routerTransformation)
 router.get("/list", ProductWarehouseController.getListProduct)
 router.get("/deleted", ProductWarehouseController.getDeletedProduct)

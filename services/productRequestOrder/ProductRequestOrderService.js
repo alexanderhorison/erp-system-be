@@ -6,6 +6,7 @@ const {
   Master_Role,
   Master_Product,
   Master_Unit,
+  Delivery_Order
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
@@ -13,6 +14,7 @@ const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAd
 const { formatDate } = require("../../helpers/formatDate");
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { STATUS } = require("../../helpers/statusHelper");
+const DeliveryOrderService = require("../deliveryOrder/DeliveryOrderService");
 
 class ProductRequestOrderService {
   static async createProductRequest(payload) {
@@ -228,7 +230,9 @@ class ProductRequestOrderService {
             productName: item.Master_Product.name,
             unitName: item.Master_Unit.name,
           };
-        })
+        }),
+        warehouseDestination: "GUDANG DEPAN", // hardcode gudang depan
+        warehouseDestinationId: 6, // hardcode id gudang depan
       };
 
       return result;
@@ -286,6 +290,90 @@ class ProductRequestOrderService {
       return;
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async processProductRequestOrder({ data, user }) {
+    const transaction = await sq.transaction();
+    try {
+      const exsistingData = await Pr_Orders.findOne({
+        where: {
+          code: data.code,
+        },
+      });
+
+      // validate status product request
+      switch (exsistingData?.status) {
+        case STATUS.APPROVED:
+          throwValidation(400, "Data sudah di approve");
+        case STATUS.REJECTED:
+          throwValidation(400, "Data sudah di reject");
+        default:
+          if (!exsistingData) {
+            throwValidation(400, "Data tidak ditemukan");
+          }
+      }
+
+      // 2. Group items by warehouseId
+      const groupedByWarehouse = {};
+      for (const item of data.data) {
+        if (!groupedByWarehouse[item.warehouseId]) {
+          groupedByWarehouse[item.warehouseId] = [];
+        }
+        groupedByWarehouse[item.warehouseId].push(item);
+      }
+
+      // 3. Create Delivery Orders for each warehouse
+      for (const [warehouseId, products] of Object.entries(groupedByWarehouse)) {
+        const deliveryOrderPayload = {
+          warehouseOriginId: Number(warehouseId),
+          warehouseDestinationId: data.warehouseDestinationId,
+          notes: data.notes,
+          productRequestOrderId: exsistingData.id,
+          data: products.map((p) => ({
+            productWarehouseId: p.productWarehouseId,
+            qty: p.qtyGive, // ✅ use qtyGive here
+          })),
+        };
+
+        await DeliveryOrderService.createDeliveryOrder({
+          data: deliveryOrderPayload,
+          user,
+        }, transaction);
+      }
+
+      // UPDATE STATUS PRODUCT REQUEST ORDER
+      await exsistingData.update(
+        {
+          status: STATUS.APPROVED,
+          approvedBy: user?.id,
+          approvedAt: new Date(),
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+      return;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async getProcessProductRequestOrder(code) {
+    try {
+      const getDetail = await this.getDetailByCode(code);
+
+      // find delivery orders related to this product request order
+      const deliveryOrders = await Delivery_Order.findAll({
+        where: {
+          productRequestOrderId: getDetail.id,
+        },
+      });
+      console.log(deliveryOrders);
+      return { ...getDetail, deliveryOrderCode: deliveryOrders.map(d => d.code) };
+    } catch (error) {
       throw error;
     }
   }
