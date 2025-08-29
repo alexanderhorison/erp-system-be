@@ -9,6 +9,20 @@ function formatDate(dateString) {
   return moment(dateString).locale("id").format("DD MMMM YYYY");
 }
 
+function formatDateMonth(dateString) {
+  if (!dateString) {
+    return "";
+  }
+  return moment(dateString).locale("id").format("DD-MMM-YY");
+}
+
+function formatDateMonthTime(dateString) {
+  if (!dateString) {
+    return "";
+  }
+  return moment(dateString).locale("id").format("DD-MMM-YY HH:mm");
+}
+
 function formatDateWithTime(dateString) {
   if (!dateString) {
     return "";
@@ -79,4 +93,6 @@ module.exports = {
   formatDateWithSlash,
   formatStartDateDatabase,
   formatEndDateDatabase,
+  formatDateMonth,
+  formatDateMonthTime,
 };

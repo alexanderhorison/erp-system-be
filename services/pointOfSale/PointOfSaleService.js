@@ -543,7 +543,9 @@ class PointOfSaleService {
       const printerSetting = configPrinter.value_json;
 
       // COMPANY INFO 
-      const configCompany = await ConfigService.get({ key: "COMPANY_INFO" });
+      const configCompany = await ConfigService.get({
+        query: { key: "COMPANY_INFO" }
+      });
       const companyInfo = configCompany.value_json;
 
       // DATA
