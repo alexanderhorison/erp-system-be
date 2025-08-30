@@ -10,6 +10,7 @@ const {
   Delivery_Order,
   Delivery_Order_Product,
   Master_Warehouse_Rack,
+  Pr_Orders
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
@@ -261,6 +262,10 @@ class DeliveryOrderService {
             attributes: ["name"],
             as: "receiverBy",
           },
+          {
+            model: Pr_Orders,
+            attributes: ["code"],
+          }
         ],
       });
 
@@ -323,6 +328,7 @@ class DeliveryOrderService {
         createdAt: data?.createdAt,
         receivedAt: data?.receivedAt,
         id: data?.id,
+        productRequestCode: data?.Pr_Order?.code || null,
       }
 
       return sendData;

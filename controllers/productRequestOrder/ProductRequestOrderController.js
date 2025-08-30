@@ -14,7 +14,9 @@ class ProductRequestOrderController {
             unitId: yup.number().required("Unit harus diisi"),
             quantityRequested: yup.number().typeError("Kuantiti Request harus diisi"),
           })
-        ),
+        )
+          .required('Data Produk Request tidak boleh kosong')
+          .min(1, "Data minimal 1 item"),
         notes: yup.string().optional(),
       });
 
@@ -111,7 +113,8 @@ class ProductRequestOrderController {
             unitId: yup.number().required("Unit harus diisi"),
             quantityRequested: yup.number().typeError("Kuantiti Request harus diisi"),
           })
-        ),
+        ).required('Data Produk Request tidak boleh kosong')
+          .min(1, "Data minimal 1 item"),
         notes: yup.string().optional(),
       });
       const code = await yupSchemaValidation(req.params.code, schemaParams);
@@ -138,7 +141,6 @@ class ProductRequestOrderController {
         notes: yup.string().optional(),
         data: yup.array().of(
           yup.object().shape({
-            productWarehouseId: yup.number().required("Produk warehouse id harus diisi"),
             productId: yup.number().required("Produk harus diisi"),
             warehouseId: yup.number().required("Gudang harus diisi"),
             unitId: yup.number().required("Unit harus diisi"),

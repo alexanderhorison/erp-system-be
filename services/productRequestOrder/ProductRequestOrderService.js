@@ -318,6 +318,8 @@ class ProductRequestOrderService {
       // 2. Group items by warehouseId
       const groupedByWarehouse = {};
       for (const item of data.data) {
+        // skip the item if quantity give is 0 or dont have productWarehouseId
+        if (item.qtyGive < 0 || !item.productWarehouseId) continue;
         if (!groupedByWarehouse[item.warehouseId]) {
           groupedByWarehouse[item.warehouseId] = [];
         }

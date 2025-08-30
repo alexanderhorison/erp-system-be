@@ -793,7 +793,6 @@ class ProductWarehouseService {
         }
       })
 
-      console.log("findProduct: ", findProduct);
       return findProduct ?? null;
     } catch (error) {
       throw error;
