@@ -10,6 +10,7 @@ const {
   Delivery_Order,
   Delivery_Order_Product,
   Master_Warehouse_Rack,
+  Pr_Orders
 } = require("../../models");
 
 const { throwValidation } = require("../../helpers/responses");
@@ -18,8 +19,10 @@ const { formatDate } = require("../../helpers/formatDate");
 const { codeGenerator } = require("../../helpers/codeGenerator");
 
 class DeliveryOrderService {
-  static async createDeliveryOrder(payload) {
-    const transaction = await sq.transaction();
+  static async createDeliveryOrder(payload, t = null) {
+    // If no transaction is passed, start a new one
+    const transaction = t || await sq.transaction();
+    let isExternalTransaction = !!t;
     try {
       const { data, user } = payload;
 
@@ -32,6 +35,7 @@ class DeliveryOrderService {
         notes: data.notes || "",
         createdBy: user.id,
         code: code,
+        productRequestOrderId: data.productRequestOrderId || null,
       };
 
       // BUAT SURAT JALAN
@@ -94,10 +98,11 @@ class DeliveryOrderService {
         transaction: transaction,
       });
 
-      await transaction.commit();
+      // If createDeliveryOrder started its own transaction, commit it
+      if (!isExternalTransaction) await transaction.commit();
       return;
     } catch (error) {
-      await transaction.rollback();
+      if (!isExternalTransaction) await transaction.rollback();
       throwValidation(error.code, error.message);
     }
   }
@@ -257,6 +262,10 @@ class DeliveryOrderService {
             attributes: ["name"],
             as: "receiverBy",
           },
+          {
+            model: Pr_Orders,
+            attributes: ["code"],
+          }
         ],
       });
 
@@ -319,6 +328,7 @@ class DeliveryOrderService {
         createdAt: data?.createdAt,
         receivedAt: data?.receivedAt,
         id: data?.id,
+        productRequestCode: data?.Pr_Order?.code || null,
       }
 
       return sendData;

@@ -12,6 +12,9 @@ router.use("/payment", routerPayment)
 router.post("/approve/:code", SalesOrderController.approveSalesOrder);
 router.post("/reject/:code", SalesOrderController.rejectSalesOrder);
 
+// FOR PRINT SO
+router.post("/print/:code", SalesOrderController.printSalesOrder);
+
 // GET SALES ORDER BY CUSTOMERID
 router.get("/customer/:id", SalesOrderController.getSalesOrderByCustomerId);
 

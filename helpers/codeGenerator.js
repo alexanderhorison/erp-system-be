@@ -9,6 +9,7 @@ const {
   Sales_Order,
   Purchase_Order,
   Pos_Transaction,
+  Pr_Orders
 } = require("../models");
 
 async function codeGenerator(digits = 8, prefix = "TBA") {
@@ -70,6 +71,11 @@ async function codeGenerator(digits = 8, prefix = "TBA") {
       }
       if (prefix === "POS") {
         exsisting = await Pos_Transaction.findOne({
+          where: { code: generatedCode },
+        });
+      }
+      if (prefix === "PRO") {
+        exsisting = await Pr_Orders.findOne({
           where: { code: generatedCode },
         });
       }

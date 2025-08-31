@@ -257,6 +257,15 @@ class ProductWarehouseController {
       res.status(error.code || 500).json(responses(false, error.message || error));
     }
   }
+
+  static async findProductByFilters(req, res) {
+    try {
+      const data = await ProductWarehouseService.findProductByFilters(req.query);
+      res.status(200).json(responses(true, "Success get productwarehouse", data));
+    } catch (error) {
+      res.status(error.code || 500).json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ProductWarehouseController;

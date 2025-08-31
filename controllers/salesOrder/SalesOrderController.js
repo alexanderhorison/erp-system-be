@@ -2,6 +2,7 @@ const { responses } = require("../../helpers/responses");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
+const PrintSalesOrderService = require("../../services/salesOrder/PrintSalesOrderService");
 
 class SalesOrderController {
   static async getAllSalesOrder(req, res) {
@@ -9,12 +10,12 @@ class SalesOrderController {
       const user = req.userData;
       const schemaQuery = yup.object({
         date: yup.string().optional(),
-      })
+      });
       const query = await yupSchemaValidation(req.query, schemaQuery);
 
       const getAllSalesOrder = await SalesOrderService.getAll({
         user,
-        query
+        query,
       });
 
       res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
@@ -301,12 +302,43 @@ class SalesOrderController {
 
       const date = await yupSchemaValidation(params.date, schemaParams);
 
-      const getAllSalesOrder =
-        await SalesOrderService.getSalesOrderByDate({
-          date,
-        });
+      const getAllSalesOrder = await SalesOrderService.getSalesOrderByDate({
+        date,
+      });
 
       res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async printSalesOrder(req, res) {
+    try {
+      const params = req.params;
+
+      const schemaParams = yup.string().required("Sales Order code harus diisi");
+
+      const code = await yupSchemaValidation(params.code, schemaParams);
+      
+      const salesOrder = await SalesOrderService.getDetailByCode(code);
+
+      if (!salesOrder) {
+        throw {
+          code: 404,
+          message: "Sales Order tidak ditemukan",
+        };
+      }
+
+      const printService = await PrintSalesOrderService.print(salesOrder);
+
+      res.status(200).json(
+        responses(true, "Success Print", {
+          buffer: printService.string,
+          printerSetting: printService.printerSetting,
+        })
+      );
     } catch (error) {
       res
         .status(error.code || 500)

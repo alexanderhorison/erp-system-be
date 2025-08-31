@@ -5,6 +5,7 @@ const {
   infoType,
 } = require("../../helpers/producWarehouse/wordingHistory");
 const { generateFilter } = require("../../helpers/queryGenerator");
+const { throwValidation } = require("../../helpers/responses");
 const {
   sequelize: sq,
   Master_Product,
@@ -771,6 +772,28 @@ class ProductWarehouseService {
       });
 
       return temp || [];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async findProductByFilters(query) {
+    try {
+      if (!query.productId || !query.warehouseId || !query.unitId) {
+        throwValidation(400, "productId, warehouseId, dan unitId harus diisi");
+      }
+      const findProduct = await Warehouse_Product.findOne({
+        where: {
+          productId: query.productId,
+          warehouseId: query.warehouseId,
+          unitId: query.unitId,
+          // ...(query.productId && { productId: query.productId }),
+          // ...(query.warehouseId && { warehouseId: query.warehouseId }),
+          // ...(query.unitId && { unitId: query.unitId }),
+        }
+      })
+
+      return findProduct ?? null;
     } catch (error) {
       throw error;
     }

@@ -24,6 +24,7 @@ const routerDailyCost = require("./dailyCost/index");
 const routerAsset = require("./asset/index")
 const routerLiabilities = require("./liabilities/index");
 const routerEquity = require("./equity/index");
+const routerProductRequestOrder = require("./productRequestOrder/index");
 
 
 router.get("/", (req, res) => {
@@ -96,5 +97,8 @@ router.use("/liabilities", routerLiabilities);
 
 // Equity
 router.use("/equity", routerEquity);
+
+// Product Request Order
+router.use("/product-request-order", routerProductRequestOrder);
 
 module.exports = router;
