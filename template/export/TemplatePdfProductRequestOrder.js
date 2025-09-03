@@ -1,7 +1,6 @@
-const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+const { PDFDocument, StandardFonts } = require("pdf-lib");
 const {
   GenerateHeader,
-  drawDebugGrid,
   wrapText,
   separator,
 } = require("./HelperExport");
@@ -14,8 +13,6 @@ const TemplatePdfProductRequestOrder = async ({ data }) => {
       status,
       notes,
       code,
-      warehouseOrigin,
-      warehouseDestination,
       createdBy,
       createdAt,
       createdTime,
@@ -59,74 +56,6 @@ const TemplatePdfProductRequestOrder = async ({ data }) => {
       title = "Informasi Gudang",
       showTitle = false
     ) => {
-      // Draw section title only if showTitle is true
-      // if (showTitle) {
-      //   // Draw warehouse information side by side
-      //   const leftColumnX = marginLeft;
-      //   const rightColumnX = 400; // Position for right column (moved further right)
-
-      //   // Left side - Gudang Asal
-      //   let leftY = yPosition;
-      //   page.drawText("Gudang Asal:", {
-      //     x: leftColumnX,
-      //     y: leftY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: fontBold,
-      //   });
-      //   leftY -= spacing1;
-
-      //   page.drawText(warehouseOrigin?.name || "-", {
-      //     x: leftColumnX,
-      //     y: leftY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: font,
-      //   });
-      //   leftY -= spacing1;
-
-      //   page.drawText(warehouseOrigin?.location || "-", {
-      //     x: leftColumnX,
-      //     y: leftY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: font,
-      //   });
-
-      //   // Right side - Gudang Tujuan
-      //   let rightY = yPosition;
-      //   page.drawText("Gudang Tujuan:", {
-      //     x: rightColumnX,
-      //     y: rightY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: fontBold,
-      //   });
-      //   rightY -= spacing1;
-
-      //   page.drawText(warehouseDestination?.name || "-", {
-      //     x: rightColumnX,
-      //     y: rightY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: font,
-      //   });
-      //   rightY -= spacing1;
-
-      //   page.drawText(warehouseDestination?.location || "-", {
-      //     x: rightColumnX,
-      //     y: rightY,
-      //     size: fontSize,
-      //     color: grayColor,
-      //     font: font,
-      //   });
-
-      //   // Update yPosition to the lowest point
-      //   yPosition = Math.min(leftY, rightY) - spacing1;
-      // }
-      // separator(page, yPosition);
-      // yPosition -= spacing2;
-
       // Draw table header columns (PRODUK, RAK, UNIT, TOTAL)
       page.drawText("PRODUK", {
         x: marginLeft,
