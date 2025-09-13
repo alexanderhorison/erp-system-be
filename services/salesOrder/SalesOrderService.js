@@ -19,6 +19,7 @@ const {
   Dashboard_Summary_Customer,
   Sales_Order_Barter_Details,
   Master_Modal,
+  Sales_Order_Payment,
 } = require("../../models");
 const moment = require("moment");
 const { Op } = require("sequelize");
@@ -97,7 +98,7 @@ class SalesOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
-          shippingDate:  formatDate(item?.shippingDate),
+          shippingDate: formatDate(item?.shippingDate),
           shippingTime: item?.shippingDate,
           customer: item?.Master_Customer,
         };
@@ -126,7 +127,7 @@ class SalesOrderService {
           status: "PENDING",
           createdBy: user?.id,
           dueDate: data?.dueDate,
-          shippingDate: data?.shippingDate
+          shippingDate: data?.shippingDate,
         },
         { transaction }
       );
@@ -204,7 +205,7 @@ class SalesOrderService {
     }
   }
 
-  static async approve({ code, user }) {
+  static async approve({ code, user, fullPayment }) {
     const transaction = await sq.transaction();
     try {
       const exsistingData = await Sales_Order.findOne({
@@ -520,6 +521,24 @@ class SalesOrderService {
             Number(exsistingData?.grandTotalBarter)
           : exsistingData?.grandTotal;
 
+      // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
+      const finalAmountDebt = fullPayment ? 0 : amountDebt;
+      const finalAmountPaid = fullPayment ? amountDebt : 0;
+
+      // JIKA LUNAS DAN ADA PEMBAYARAN
+      if (fullPayment && finalAmountPaid !== 0) {
+        await Sales_Order_Payment.create(
+          {
+            typePayment: "CASH",
+            amount: finalAmountPaid,
+            notes: "Dibayar Lunas saat approve sales order ",
+            salesOrderId: exsistingData?.id,
+            createdBy: user?.id,
+          },
+          { transaction }
+        );
+      }
+
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
         {
@@ -527,8 +546,8 @@ class SalesOrderService {
           approvedBy: user?.id,
           approvedAt: new Date(),
           // update value amount paid to 0 and debt to grandTotal
-          amountPaid: 0,
-          amountDebt: amountDebt,
+          amountPaid: finalAmountPaid,
+          amountDebt: finalAmountDebt,
         },
         {
           where: {
@@ -560,7 +579,10 @@ class SalesOrderService {
               Number(exsistingData?.grandTotalCustomer),
             totalAmountDebtSalesOrder:
               Number(findCustomerSummary.totalAmountDebtSalesOrder) +
-              Number(amountDebt),
+              Number(finalAmountDebt),
+            totalAmountPaidSalesOrder:
+              Number(findCustomerSummary.totalAmountPaidSalesOrder) +
+              Number(finalAmountPaid),
             totalAmountBarterSalesOrder:
               Number(findCustomerSummary.totalAmountBarterSalesOrder) +
               Number(exsistingData?.grandTotalBarter),
@@ -579,8 +601,8 @@ class SalesOrderService {
             customerId: exsistingData?.customerId,
             totalSalesOrder: 1,
             totalAmountSalesOrder: Number(exsistingData?.grandTotalCustomer),
-            totalAmountDebtSalesOrder: Number(amountDebt),
-            totalAmountPaidSalesOrder: 0,
+            totalAmountDebtSalesOrder: Number(finalAmountDebt),
+            totalAmountPaidSalesOrder: Number(finalAmountPaid),
             totalAmountBarterSalesOrder: Number(
               exsistingData?.grandTotalBarter
             ),

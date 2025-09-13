@@ -118,6 +118,11 @@ class SalesOrderController {
         })
         .required("Code sales order harus ada");
 
+      const schemaBody = yup.object({
+        fullPayment: yup.boolean().required("Payment status harus diisi"),
+      });
+      const body = await yupSchemaValidation(req.body, schemaBody);
+
       const params = await yupSchemaValidation(req.params, schemaParams);
 
       const user = req.userData;
@@ -125,6 +130,7 @@ class SalesOrderController {
       const approveSalesOrder = await SalesOrderService.approve({
         code: params.code,
         user,
+        fullPayment: body.fullPayment,
       });
 
       res
