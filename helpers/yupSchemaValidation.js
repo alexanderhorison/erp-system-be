@@ -21,7 +21,20 @@ async function yupSchemaValidationAll(data, schema) {
   }
 }
 
+// Strict mode: will not allow unknown keys that are not defined in schema
+async function yupSchemaValidationStrict(data, schema) {
+  try {
+    return await schema.validate(data, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+  } catch (error) {
+    throw throwValidation(400, error.errors.join(", "));
+  }
+}
+
 module.exports = {
   yupSchemaValidation,
   yupSchemaValidationAll,
+  yupSchemaValidationStrict,
 };

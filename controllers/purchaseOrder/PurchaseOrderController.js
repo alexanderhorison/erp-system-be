@@ -1,5 +1,5 @@
 const { responses } = require("../../helpers/responses");
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const PurchaseOrderService = require("../../services/purchaseOrder/PurchaseOrderService");
 
@@ -8,11 +8,25 @@ class PurchaseOrderController {
     try {
       const user = req.userData;
 
-      const getAllPurchaseOrder = await PurchaseOrderService.getAll({
-        user,
+      const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        status: yup.string().optional(),
+        orderBy: yup.string().default("createdAt").oneOf(["createdAt", "approvedAt"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+        dateFrom: yup.string().optional(),
+        dateTo: yup.string().optional(),
       });
 
-      res.status(200).json(responses(true, "Berhasil", getAllPurchaseOrder));
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
+      const data = await PurchaseOrderService.getAll({
+        user,
+        query,
+      });
+
+      res.status(200).json(responses(true, "Berhasil", data.data, data.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)

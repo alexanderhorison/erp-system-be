@@ -1,6 +1,8 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
+const { Op } = require("sequelize");
 const {
   sequelize: sq,
   Master_Product,
@@ -21,32 +23,36 @@ const {
   Master_Modal,
   Sales_Order_Payment,
 } = require("../../models");
-const moment = require("moment");
-const { Op } = require("sequelize");
 class SalesOrderService {
   static async getAll({ user, query }) {
     try {
-      const formattedDate = query?.date
-        ? moment(query?.date, "DD-MM-YYYY").format("YYYY-MM-DD")
-        : null;
+      // Gunakan helper untuk membangun options query dinamis
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ['code', '$Master_Customer.name$'],
+        statusField: 'status',
+        dateField: 'createdAt',
+        enableDate: true,
+      });
 
-      const allData = await Sales_Order.findAll({
-        where: {
-          ...(query?.status && { status: query?.status }),
-          ...(query?.customerId && { customerId: query?.customerId }),
-          ...(query?.date && {
-            shippingDate: {
-              [Op.gte]: moment(formattedDate).startOf("day").toDate(),
-              [Op.lte]: moment(formattedDate).endOf("day").toDate(),
-            },
-          }),
-        },
+      // Override date filtering jika ada dateFrom/dateTo
+      if (query?.dateFrom || query?.dateTo) {
+        const dateCondition = {};
+
+        if (query?.dateFrom) {
+          dateCondition[Op.gte] = new Date(query.dateFrom + 'T00:00:00.000Z');
+        }
+
+        if (query?.dateTo) {
+          dateCondition[Op.lte] = new Date(query.dateTo + 'T23:59:59.999Z');
+        }
+
+        queryOptions.where = queryOptions.where || {};
+        queryOptions.where.createdAt = dateCondition;
+      }
+
+      const allData = await Sales_Order.findAndCountAll({
+        ...queryOptions, // Spread options dari helper
         include: [
-          // {
-          //   model: Master_Warehouse,
-          //   paranoid: false,
-          //   attributes: ["name"],
-          // },
           {
             model: Master_User,
             as: "creator",
@@ -73,10 +79,9 @@ class SalesOrderService {
             model: Master_Customer,
           },
         ],
-        order: [["createdAt", query?.sort || "DESC"]],
       });
 
-      const sendData = allData.map((item) => {
+      const sendData = allData.rows.map((item) => {
         return {
           id: item.id,
           code: item.code,
@@ -104,7 +109,10 @@ class SalesOrderService {
         };
       });
 
-      return sendData;
+      return {
+        data: sendData,
+        pagination: buildPaginationResponse(allData, query),
+      };
     } catch (error) {
       throw error;
     }
@@ -517,9 +525,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalCustomer) -
+            ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
       const finalAmountDebt = fullPayment ? 0 : amountDebt;
@@ -925,6 +933,7 @@ class SalesOrderService {
       throw error;
     }
   }
+
   static async getSalesOrderByCustomerId({ customerId }) {
     try {
       const allData = await Sales_Order.findAll({
@@ -994,6 +1003,7 @@ class SalesOrderService {
       throw error;
     }
   }
+
 }
 
 module.exports = SalesOrderService;
