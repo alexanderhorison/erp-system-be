@@ -1,5 +1,5 @@
 const { responses } = require("../../helpers/responses");
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const MasterDataWarehouseService = require("../../services/masterData/MasterDataWarehouseService");
 const yup = require("yup");
 
@@ -178,10 +178,20 @@ class MasterDataWarehouseController {
         schemaParams
       );
 
-      const getAllWarehouseRack =
-        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId, req.query);
+      const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        orderBy: yup.string().default("id").oneOf(["id", "name", "createdAt"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+      });
 
-      res.status(200).json(responses(true, `Berhasil`, getAllWarehouseRack));
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
+      const getAllWarehouseRack =
+        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId, query);
+
+      res.status(200).json(responses(true, `Berhasil`, getAllWarehouseRack.data, getAllWarehouseRack.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)

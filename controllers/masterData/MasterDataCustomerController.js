@@ -1,4 +1,4 @@
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const { responses } = require("../../helpers/responses");
 const MasterDataCustomerService = require("../../services/masterData/MasterDataCustomerService");
@@ -85,15 +85,22 @@ class MasterDataCustomerController {
 
   static async getAllCustomer(req, res) {
     try {
-      const query = req.query;
-      // By Default is pos customer false
-      if (!query?.isPosCustomer) {
-        query.isPosCustomer = false;
-      }
+      const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        isPosCustomer: yup.boolean().default(false),
+        orderBy: yup.string().default("id").oneOf(["id", "name", "createdAt"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+      });
+
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
       const customer = await MasterDataCustomerService.findAll(query);
+      
       res
         .status(200)
-        .json(responses(true, "Success get all customer", customer));
+        .json(responses(true, "Success get all customer", customer.data, customer.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)

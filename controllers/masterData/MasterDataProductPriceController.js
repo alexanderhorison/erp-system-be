@@ -1,4 +1,4 @@
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const { responses } = require("../../helpers/responses");
 const MasterDataProductPriceService = require("../../services/masterData/MasterDataProductPriceService");
@@ -28,16 +28,36 @@ class MasterDataProductPriceController {
 
   static async getAll(req, res) {
     try {
-      const schemaParams = yup.number().required("Product id harus diisi");
+      // Check if this is for a specific product (legacy usage)
+      if (req.params.productId) {
+        const schemaParams = yup.number().required("Product id harus diisi");
+        const id = await yupSchemaValidation(req.params.productId, schemaParams);
 
-      const id = await yupSchemaValidation(req.params.productId, schemaParams);
+        const productPrice = await MasterDataProductPriceService.findAll({
+          productId: id,
+        });
+        
+        res
+          .status(200)
+          .json(responses(true, "Success get Product Price", productPrice));
+      } else {
+        // New pagination usage
+        const schemaQuery = yup.object({
+          page: yup.string().default("1"),
+          limit: yup.string().default("10"),
+          search: yup.string().optional(),
+          orderBy: yup.string().default("id").oneOf(["id", "createdAt"]),
+          orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+        });
 
-      const productPrice = await MasterDataProductPriceService.findAll({
-        productId: id,
-      });
-      res
-        .status(200)
-        .json(responses(true, "Success get Product Price", productPrice));
+        const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
+        const productPrice = await MasterDataProductPriceService.findAll(query);
+        
+        res
+          .status(200)
+          .json(responses(true, "Success get Product Price", productPrice.data, productPrice.pagination, query));
+      }
     } catch (error) {
       res
         .status(error.code || 500)

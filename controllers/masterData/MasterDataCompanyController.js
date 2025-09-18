@@ -1,4 +1,4 @@
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const { responses } = require("../../helpers/responses");
 const MasterDataCompanyService = require("../../services/masterData/MasterDataCompanyService");
@@ -68,8 +68,19 @@ class MasterDataCompanyController {
 
   static async getAllCompany(req, res) {
     try {
-      const company = await MasterDataCompanyService.findAll(req.query);
-      res.status(200).json(responses(true, "Success get all company", company));
+      const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        orderBy: yup.string().default("id").oneOf(["id", "name", "createdAt"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+      });
+
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
+      const company = await MasterDataCompanyService.findAll(query);
+      
+      res.status(200).json(responses(true, "Success get all company", company.data, company.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)
