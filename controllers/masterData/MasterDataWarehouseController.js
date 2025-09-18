@@ -179,7 +179,7 @@ class MasterDataWarehouseController {
       );
 
       const getAllWarehouseRack =
-        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId);
+        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId, req.query);
 
       res.status(200).json(responses(true, `Berhasil`, getAllWarehouseRack));
     } catch (error) {

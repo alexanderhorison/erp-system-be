@@ -68,7 +68,7 @@ class MasterDataCompanyController {
 
   static async getAllCompany(req, res) {
     try {
-      const company = await MasterDataCompanyService.findAll();
+      const company = await MasterDataCompanyService.findAll(req.query);
       res.status(200).json(responses(true, "Success get all company", company));
     } catch (error) {
       res
