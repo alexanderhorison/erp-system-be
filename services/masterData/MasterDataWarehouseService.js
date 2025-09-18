@@ -7,6 +7,7 @@ const {
   sequelize: sq,
 } = require("../../models");
 const { Op } = require("sequelize");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 
 class MasterDataWarehouseService {
   static async create(data, user) {
@@ -308,20 +309,46 @@ class MasterDataWarehouseService {
     }
   }
 
-  static async findAllWarehouseRack(warehouseId) {
+  static async findAllWarehouseRack(warehouseId, query = {}) {
     try {
-      const data = await Master_Warehouse_Rack.findAll({
+      // Build query options using helper
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ['name', 'description'],
+        additionalWhere: { warehouseId: warehouseId },
+        enableDate: false,
+      });
+
+      const data = await Master_Warehouse_Rack.findAndCountAll({
         attributes: ["id", "name", "description", "warehouseId"],
         include: [
           {
             model: Master_Warehouse_Rack_Attribute,
             attributes: ["id", "warehouseRackId", "key", "value"],
           },
+          {
+            model: Master_Warehouse,
+            attributes: ["id", "name"],
+          },
         ],
-        where: { warehouseId: warehouseId },
+        where: queryOptions.where,
+        order: queryOptions.order,
+        limit: queryOptions.limit,
+        offset: queryOptions.offset,
       });
 
-      return data;
+      const result = data.rows.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        warehouseId: item.warehouseId,
+        warehouseName: item.Master_Warehouse ? item.Master_Warehouse.name : "",
+        attributes: item.Master_Warehouse_Rack_Attributes,
+      }));
+
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, query),
+      };
     } catch (error) {
       throw error;
     }

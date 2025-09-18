@@ -1,6 +1,7 @@
 const { Master_Rank, Master_Customer } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const { Op } = require("sequelize");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 
 class MasterDataCustomerService {
   static async create(data) {
@@ -94,18 +95,29 @@ class MasterDataCustomerService {
 
   static async findAll(query) {
     try {
-      const data = await Master_Customer.findAll({
+      // Build query options using helper
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ['name', 'phoneNumber', 'email', 'address', 'alias'],
+        additionalWhere: {
+          ...(query.isPosCustomer && { isPosCustomer: query.isPosCustomer }),
+        },
+        enableDate: false,
+      });
+
+      const data = await Master_Customer.findAndCountAll({
         include: [
           {
             model: Master_Rank,
             attributes: ["name"],
           },
         ],
-        where: {
-          ...(query.isPosCustomer && { isPosCustomer: query.isPosCustomer }),
-        },
+        where: queryOptions.where,
+        order: queryOptions.order,
+        limit: queryOptions.limit,
+        offset: queryOptions.offset,
       });
-      const result = data.map((item) => ({
+
+      const result = data.rows.map((item) => ({
         id: item.id,
         name: item.name,
         phoneNumber: item.phoneNumber,
@@ -113,13 +125,16 @@ class MasterDataCustomerService {
         address: item.address,
         email: item.email,
         notes: item.notes,
-        phoneNumber: item.phoneNumber,
         rankId: item.rankId,
         rankName: item.Master_Rank ? item.Master_Rank?.name : "",
         isPosCustomer: item.isPosCustomer,
         alias: item.alias,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, query),
+      };
     } catch (error) {
       throw error;
     }

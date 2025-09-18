@@ -1,4 +1,5 @@
 const { Master_Company, Master_Product } = require("../../models");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 
 class MasterDataCompanyService {
   static async create(data) {
@@ -84,15 +85,31 @@ class MasterDataCompanyService {
     }
   }
 
-  static async findAll() {
+  static async findAll(query = {}) {
     try {
-      const data = await Master_Company.findAll();
-      const result = data.map((item) => ({
+      // Build query options using helper
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ['name', 'description'],
+        enableDate: false,
+      });
+
+      const data = await Master_Company.findAndCountAll({
+        where: queryOptions.where,
+        order: queryOptions.order,
+        limit: queryOptions.limit,
+        offset: queryOptions.offset,
+      });
+
+      const result = data.rows.map((item) => ({
         id: item.id,
         name: item.name,
         description: item.description,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, query),
+      };
     } catch (error) {
       throw error;
     }

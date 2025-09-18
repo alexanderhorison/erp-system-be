@@ -13,6 +13,7 @@ const {
 } = require("../../helpers/transformationIdGenerator");
 const { Op } = require("sequelize");
 const { generateFilter } = require("../../helpers/queryGenerator");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 
 class MasterDataProductService {
   static async create(data, user) {
@@ -146,8 +147,15 @@ class MasterDataProductService {
     try {
       const { categoryId, typeId, companyId } = req.query;
 
-      let queryFilter = {};
+      // Build query options using helper
+      const queryOptions = buildQueryOptions(req.query, {
+        searchFields: ['name', 'description'],
+        additionalWhere: {},
+        enableDate: false,
+      });
 
+      // Generate filters for category, type, and company
+      let queryFilter = {};
       if (req.query != {}) {
         const filters = [
           {
@@ -172,7 +180,13 @@ class MasterDataProductService {
         queryFilter = generateFilter(filters);
       }
 
-      const data = await Master_Product.findAll({
+      // Merge query options with additional filters
+      const whereCondition = {
+        ...queryOptions.where,
+        ...(queryFilter.Master_Product || {}),
+      };
+
+      const data = await Master_Product.findAndCountAll({
         include: [
           {
             model: Master_Type,
@@ -189,10 +203,13 @@ class MasterDataProductService {
             attributes: ["name"],
           },
         ],
-        where: queryFilter.Master_Product,
+        where: whereCondition,
+        order: queryOptions.order,
+        limit: queryOptions.limit,
+        offset: queryOptions.offset,
       });
 
-      const result = data.map((item) => ({
+      const result = data.rows.map((item) => ({
         id: item.id,
         name: item.name,
         description: item.description,
@@ -201,7 +218,10 @@ class MasterDataProductService {
         company: item.Master_Company ? item.Master_Company.name : "",
       }));
 
-      return result;
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, req.query),
+      };
     } catch (error) {
       throw error;
     }
