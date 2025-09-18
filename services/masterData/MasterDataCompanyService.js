@@ -1,4 +1,5 @@
 const { Master_Company, Master_Product } = require("../../models");
+const { Op } = require("sequelize");
 
 class MasterDataCompanyService {
   static async create(data) {
@@ -84,15 +85,55 @@ class MasterDataCompanyService {
     }
   }
 
-  static async findAll() {
+  static async findAll(query = {}) {
     try {
-      const data = await Master_Company.findAll();
-      const result = data.map((item) => ({
+      const { 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "name",
+        sortOrder = "ASC"
+      } = query;
+
+      let whereConditions = {};
+
+      // Add search functionality
+      if (search) {
+        whereConditions[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['name', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Master_Company.findAndCountAll({
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
+      });
+
+      const result = rows.map((item) => ({
         id: item.id,
         name: item.name,
         description: item.description,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

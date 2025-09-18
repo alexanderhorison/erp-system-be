@@ -92,20 +92,54 @@ class MasterDataCustomerService {
     }
   }
 
-  static async findAll(query) {
+  static async findAll(query = {}) {
     try {
-      const data = await Master_Customer.findAll({
+      const { 
+        isPosCustomer, 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "name",
+        sortOrder = "ASC"
+      } = query;
+
+      let whereConditions = {};
+
+      // Filter by isPosCustomer
+      if (isPosCustomer !== undefined) {
+        whereConditions.isPosCustomer = isPosCustomer;
+      }
+
+      // Add search functionality
+      if (search) {
+        whereConditions[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+          { phoneNumber: { [Op.iLike]: `%${search}%` } },
+          { address: { [Op.iLike]: `%${search}%` } },
+          { alias: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['name', 'email', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Master_Customer.findAndCountAll({
         include: [
           {
             model: Master_Rank,
             attributes: ["name"],
           },
         ],
-        where: {
-          ...(query.isPosCustomer && { isPosCustomer: query.isPosCustomer }),
-        },
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
       });
-      const result = data.map((item) => ({
+
+      const result = rows.map((item) => ({
         id: item.id,
         name: item.name,
         phoneNumber: item.phoneNumber,
@@ -118,8 +152,19 @@ class MasterDataCustomerService {
         rankName: item.Master_Rank ? item.Master_Rank?.name : "",
         isPosCustomer: item.isPosCustomer,
         alias: item.alias,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

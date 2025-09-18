@@ -173,13 +173,22 @@ class MasterDataWarehouseController {
   static async getAllWarehouseRack(req, res) {
     try {
       const schemaParams = yup.number().required("Id rak harus diisi");
+      const schemaQuery = yup.object({
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['name', 'createdAt', 'updatedAt']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
+      });
+
       const warehouseId = await yupSchemaValidation(
         req.params.warehouseId,
         schemaParams
       );
+      const query = await yupSchemaValidation(req.query, schemaQuery);
 
       const getAllWarehouseRack =
-        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId);
+        await MasterDataWarehouseService.findAllWarehouseRack(warehouseId, query);
 
       res.status(200).json(responses(true, `Berhasil`, getAllWarehouseRack));
     } catch (error) {

@@ -85,16 +85,55 @@ class MasterDataEmployeeService {
     }
   }
 
-  static async findAll(query) {
+  static async findAll(query = {}) {
     try {
-      const { active } = query;
+      const { 
+        active, 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "nama",
+        sortOrder = "ASC"
+      } = query;
 
-      return await Tm_Employee.findAll({
-        where: {
-          ...(active !== undefined && { is_active: active }),
-        },
-        order: [["nama", "ASC"]],
+      let whereConditions = {};
+
+      // Filter by active status
+      if (active !== undefined) {
+        whereConditions.is_active = active;
+      }
+
+      // Add search functionality
+      if (search) {
+        whereConditions[Op.or] = [
+          { nama: { [Op.iLike]: `%${search}%` } },
+          { phone: { [Op.iLike]: `%${search}%` } },
+          { role: { [Op.iLike]: `%${search}%` } },
+          { address: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['nama', 'role', 'salary', 'is_active', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'nama';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Tm_Employee.findAndCountAll({
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
       });
+
+      return {
+        data: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

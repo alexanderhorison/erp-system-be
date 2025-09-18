@@ -75,6 +75,19 @@ class MasterDataProductController {
 
   static async getAllProduct(req, res) {
     try {
+      const schemaQuery = yup.object({
+        categoryId: yup.number().optional(),
+        typeId: yup.number().optional(),
+        companyId: yup.number().optional(),
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['name', 'createdAt', 'updatedAt']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
+      });
+
+      const query = await yupSchemaValidation(req.query, schemaQuery);
+      req.query = query; // Pass validated query to service
       const data = await MasterDataProductService.findAll(req);
       res
         .status(200)

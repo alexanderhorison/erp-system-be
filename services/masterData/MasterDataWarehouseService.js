@@ -308,9 +308,32 @@ class MasterDataWarehouseService {
     }
   }
 
-  static async findAllWarehouseRack(warehouseId) {
+  static async findAllWarehouseRack(warehouseId, query = {}) {
     try {
-      const data = await Master_Warehouse_Rack.findAll({
+      const { 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "name",
+        sortOrder = "ASC"
+      } = query;
+
+      let whereConditions = { warehouseId: warehouseId };
+
+      // Add search functionality
+      if (search) {
+        whereConditions[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['name', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Master_Warehouse_Rack.findAndCountAll({
         attributes: ["id", "name", "description", "warehouseId"],
         include: [
           {
@@ -318,10 +341,21 @@ class MasterDataWarehouseService {
             attributes: ["id", "warehouseRackId", "key", "value"],
           },
         ],
-        where: { warehouseId: warehouseId },
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
       });
 
-      return data;
+      return {
+        data: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

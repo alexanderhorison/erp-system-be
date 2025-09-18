@@ -144,9 +144,19 @@ class MasterDataProductService {
 
   static async findAll(req) {
     try {
-      const { categoryId, typeId, companyId } = req.query;
+      const { 
+        categoryId, 
+        typeId, 
+        companyId, 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "createdAt",
+        sortOrder = "DESC"
+      } = req.query;
 
       let queryFilter = {};
+      let whereConditions = {};
 
       if (req.query != {}) {
         const filters = [
@@ -170,9 +180,26 @@ class MasterDataProductService {
           },
         ];
         queryFilter = generateFilter(filters);
+        whereConditions = queryFilter.Master_Product || {};
       }
 
-      const data = await Master_Product.findAll({
+      // Add search functionality
+      if (search) {
+        whereConditions = {
+          ...whereConditions,
+          [Op.or]: [
+            { name: { [Op.iLike]: `%${search}%` } },
+            { description: { [Op.iLike]: `%${search}%` } },
+          ],
+        };
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['name', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Master_Product.findAndCountAll({
         include: [
           {
             model: Master_Type,
@@ -189,19 +216,32 @@ class MasterDataProductService {
             attributes: ["name"],
           },
         ],
-        where: queryFilter.Master_Product,
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
       });
 
-      const result = data.map((item) => ({
+      const result = rows.map((item) => ({
         id: item.id,
         name: item.name,
         description: item.description,
         category: item.Master_Category.name,
         type: item.Master_Type.name,
         company: item.Master_Company ? item.Master_Company.name : "",
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       }));
 
-      return result;
+      return {
+        data: result,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

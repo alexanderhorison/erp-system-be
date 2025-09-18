@@ -68,7 +68,16 @@ class MasterDataCompanyController {
 
   static async getAllCompany(req, res) {
     try {
-      const company = await MasterDataCompanyService.findAll();
+      const schemaQuery = yup.object({
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['name', 'createdAt', 'updatedAt']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
+      });
+
+      const query = await yupSchemaValidation(req.query, schemaQuery);
+      const company = await MasterDataCompanyService.findAll(query);
       res.status(200).json(responses(true, "Success get all company", company));
     } catch (error) {
       res

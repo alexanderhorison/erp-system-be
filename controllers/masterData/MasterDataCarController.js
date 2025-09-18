@@ -78,6 +78,11 @@ class MasterDataCarController {
     try {
       const schemaQuery = yup.object({
         active: yup.boolean().optional(),
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['name', 'plate_number', 'is_active', 'createdAt', 'updatedAt']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
       });
       const query = await yupSchemaValidation(req.query, schemaQuery);
       const cars = await MasterDataCarService.findAll(query);

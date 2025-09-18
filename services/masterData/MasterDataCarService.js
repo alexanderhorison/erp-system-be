@@ -1,4 +1,5 @@
 const { Tm_Cars } = require("../../models");
+const { Op } = require("sequelize");
 
 class MasterDataCarService {
   static async create(data, user) {
@@ -99,19 +100,44 @@ class MasterDataCarService {
 
   static async findAll(query) {
     try {
-      const { active } = query;
+      const { 
+        active, 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "name",
+        sortOrder = "ASC"
+      } = query;
 
-      const data = await Tm_Cars.findAll({
-        where: {
-          ...(active !== undefined && { is_active: active }),
-        },
-        order: [
-          ['is_active', 'DESC'], // Active cars first
-          ['name', 'ASC'], // Then sort by name alphabetically
-        ],
+      let whereConditions = {};
+
+      // Filter by active status
+      if (active !== undefined) {
+        whereConditions.is_active = active;
+      }
+
+      // Add search functionality
+      if (search) {
+        whereConditions[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { plate_number: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['name', 'plate_number', 'is_active', 'createdAt', 'updatedAt'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      const { count, rows } = await Tm_Cars.findAndCountAll({
+        where: whereConditions,
+        limit: parseInt(pageSize),
+        offset: (parseInt(page) - 1) * parseInt(pageSize),
+        order: [[orderField, orderDirection]],
       });
 
-      const result = data.map((item) => ({
+      const result = rows.map((item) => ({
         id: item.id,
         name: item.name,
         plate_number: item.plate_number,
@@ -121,7 +147,16 @@ class MasterDataCarService {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(count / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }

@@ -29,11 +29,20 @@ class MasterDataProductPriceController {
   static async getAll(req, res) {
     try {
       const schemaParams = yup.number().required("Product id harus diisi");
+      const schemaQuery = yup.object({
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['unitName', 'basePrice', 'masterModal']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
+      });
 
       const id = await yupSchemaValidation(req.params.productId, schemaParams);
+      const query = await yupSchemaValidation(req.query, schemaQuery);
 
       const productPrice = await MasterDataProductPriceService.findAll({
         productId: id,
+        ...query,
       });
       res
         .status(200)

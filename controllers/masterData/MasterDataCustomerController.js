@@ -85,9 +85,18 @@ class MasterDataCustomerController {
 
   static async getAllCustomer(req, res) {
     try {
-      const query = req.query;
+      const schemaQuery = yup.object({
+        isPosCustomer: yup.boolean().optional(),
+        page: yup.number().integer().min(1).optional(),
+        pageSize: yup.number().integer().min(1).max(100).optional(),
+        search: yup.string().optional(),
+        sortBy: yup.string().oneOf(['name', 'email', 'createdAt', 'updatedAt']).optional(),
+        sortOrder: yup.string().oneOf(['ASC', 'DESC']).optional(),
+      });
+      const query = await yupSchemaValidation(req.query, schemaQuery);
+
       // By Default is pos customer false
-      if (!query?.isPosCustomer) {
+      if (query?.isPosCustomer === undefined) {
         query.isPosCustomer = false;
       }
       const customer = await MasterDataCustomerService.findAll(query);

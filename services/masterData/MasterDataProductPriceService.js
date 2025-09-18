@@ -38,19 +38,28 @@ class MasterDataProductPriceService {
 
   static async findAll(payload) {
     try {
+      const { 
+        productId, 
+        page = 1, 
+        pageSize = 10, 
+        search = "",
+        sortBy = "unitName",
+        sortOrder = "ASC"
+      } = payload;
+
       const units = await Master_Unit.findAll();
 
       const existingPrices = await Master_Product_Price.findAll({
-        where: { productId: payload.productId },
+        where: { productId: productId },
         include: [Master_Product, Master_Unit],
       });
 
       const masterModal = await Master_Modal.findAll({
-        where: { productId: payload.productId },
+        where: { productId: productId },
         include: [Master_Product, Master_Unit],
       });
 
-      const result = units.map((unit, index) => {
+      let result = units.map((unit, index) => {
         // Find if this unit has an existing price for the product
         const existingPrice = existingPrices.find(
           (price) => price.unitId === unit.id
@@ -63,13 +72,47 @@ class MasterDataProductPriceService {
         return {
           id: index + 1,
           unitId: unit.id,
-          unitName: unit.name, // Assuming Master_Unit has a 'name' column
+          unitName: unit.name,
           basePrice: existingPrice ? existingPrice.basePrice : 0,
           masterModal: existingModal ? existingModal.modal : 0,
         };
       });
 
-      return result;
+      // Apply search filter
+      if (search) {
+        result = result.filter(item => 
+          item.unitName.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Define valid sort fields
+      const validSortFields = ['unitName', 'basePrice', 'masterModal'];
+      const orderField = validSortFields.includes(sortBy) ? sortBy : 'unitName';
+      const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 1 : -1;
+
+      // Apply sorting
+      result.sort((a, b) => {
+        if (orderField === 'unitName') {
+          return orderDirection * a[orderField].localeCompare(b[orderField]);
+        }
+        return orderDirection * (a[orderField] - b[orderField]);
+      });
+
+      // Apply pagination
+      const total = result.length;
+      const startIndex = (parseInt(page) - 1) * parseInt(pageSize);
+      const endIndex = startIndex + parseInt(pageSize);
+      const paginatedResult = result.slice(startIndex, endIndex);
+
+      return {
+        data: paginatedResult,
+        pagination: {
+          total: total,
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          totalPages: Math.ceil(total / parseInt(pageSize)),
+        },
+      };
     } catch (error) {
       throw error;
     }
