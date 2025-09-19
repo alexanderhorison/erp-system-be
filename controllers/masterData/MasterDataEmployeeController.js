@@ -89,7 +89,7 @@ class MasterEmployeeController {
         limit: yup.string().default("10"),
         search: yup.string().optional(),
         active: yup.boolean().optional(),
-        orderBy: yup.string().default("nama").oneOf(["id", "nama", "phone", "createdAt"]),
+        orderBy: yup.string().default("id").oneOf(["id", "nama", "phone", "createdAt", "role", "salary", "bonus", "debt"]),
         orderType: yup.string().default("ASC").oneOf(["ASC", "DESC"]),
       });
 

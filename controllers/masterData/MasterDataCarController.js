@@ -81,7 +81,7 @@ class MasterDataCarController {
         limit: yup.string().default("10"),
         search: yup.string().optional(),
         active: yup.boolean().optional(),
-        orderBy: yup.string().default("id").oneOf(["id", "name", "plate_number", "createdAt"]),
+        orderBy: yup.string().default("id").oneOf(["id", "name", "plate_number", "createdAt", "is_active"]),
         orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
       });
 
