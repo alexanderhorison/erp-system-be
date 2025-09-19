@@ -15,7 +15,7 @@ class EquityController {
 
       const result = await EquityService.createEquity(body);
 
-      res.status(201).json(responses(true, "Success create equity", result));
+      res.status(201).json(responses(true, "Success menambahkan equity", result));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -67,7 +67,7 @@ class EquityController {
       const body = await yupSchemaValidation(req.body, schemaBody);
       const result = await EquityService.updateEquity(id, body);
 
-      res.status(200).json(responses(true, `Success update equity`, result));
+      res.status(200).json(responses(true, `Success mengubah equity`, result));
     } catch (error) {
       res
         .status(error.code || 500)

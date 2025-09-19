@@ -66,7 +66,7 @@ class ConfigController {
         query: body,
       });
 
-      res.status(200).json(responses(true, "Success", data));
+      res.status(200).json(responses(true, "Config Berhasil Ditambah", data));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -96,7 +96,7 @@ class ConfigController {
         payload: body,
       });
 
-      res.status(200).json(responses(true, "Success", body));
+      res.status(200).json(responses(true, "Config Berhasil Diubah", body));
     } catch (error) {
       console.log(error);
 
@@ -118,7 +118,7 @@ class ConfigController {
         query: body,
       });
 
-      res.status(200).json(responses(true, "Success", {}));
+      res.status(200).json(responses(true, "Config Berhasil Dihapus", {}));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -145,7 +145,7 @@ class ConfigController {
         payload: body,
       });
 
-      res.status(200).json(responses(true, "Success", body));
+      res.status(200).json(responses(true, "Config Berhasil Diubah", body));
     } catch (error) {
       res
         .status(error.code || 500)
