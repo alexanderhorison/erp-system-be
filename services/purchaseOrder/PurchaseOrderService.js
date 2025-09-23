@@ -1,6 +1,8 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
+const { Op } = require("sequelize");
 const {
   sequelize: sq,
   Master_Product,
@@ -23,18 +25,35 @@ const {
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
 class PurchaseOrderService {
-  static async getAll({ user }) {
+  static async getAll({ user, query }) {
     try {
-      const allData = await Purchase_Order.findAll({
-        // where: {
-        //   ...(user?.warehouseId ? { warehouseId: user.warehouseId } : {}),
-        // },
+      // Gunakan helper untuk membangun options query dinamis
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ['code', '$Master_Vendor.name$'],
+        statusField: 'status',
+        dateField: 'createdAt',
+        enableDate: true,
+      });
+
+      // Override date filtering jika ada dateFrom/dateTo
+      if (query?.dateFrom || query?.dateTo) {
+        const dateCondition = {};
+
+        if (query?.dateFrom) {
+          dateCondition[Op.gte] = new Date(query.dateFrom + 'T00:00:00.000Z');
+        }
+
+        if (query?.dateTo) {
+          dateCondition[Op.lte] = new Date(query.dateTo + 'T23:59:59.999Z');
+        }
+
+        queryOptions.where = queryOptions.where || {};
+        queryOptions.where.createdAt = dateCondition;
+      }
+
+      const allData = await Purchase_Order.findAndCountAll({
+        ...queryOptions, // Spread options dari helper
         include: [
-          // {
-          //   model: Master_Warehouse,
-          //   paranoid: false,
-          //   attributes: ["name"],
-          // },
           {
             model: Master_User,
             as: "creator",
@@ -57,16 +76,16 @@ class PurchaseOrderService {
               },
             ],
           },
+          {
+            model: Master_Vendor,
+          },
         ],
-        order: [["createdAt", "DESC"]],
       });
 
-      const sendData = allData.map((item) => {
+      const sendData = allData.rows.map((item) => {
         return {
           id: item.id,
           code: item.code,
-          // warehouseId: item?.warehouseId,
-          // warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
           notes: item?.notes,
           status: item?.status,
@@ -83,10 +102,14 @@ class PurchaseOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
+          vendor: item?.Master_Vendor,
         };
       });
 
-      return sendData;
+      return {
+        data: sendData,
+        pagination: buildPaginationResponse(allData, query),
+      };
     } catch (error) {
       throw error;
     }
@@ -369,7 +392,7 @@ class PurchaseOrderService {
             {
               quantity: item?.quantity,
               amountPurchaseOrder: item?.subTotal,
-              modal: item?.price, 
+              modal: item?.price,
               totalPurchaseOrder: 1,
             },
             {
@@ -485,7 +508,7 @@ class PurchaseOrderService {
 
           // update Gain Loss pada PO Barter Detail
           const totalModalProduct = Number(item.modal) * Number(item.quantity);
-          const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct) 
+          const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct)
 
           await Purchase_Order_Barter_Detail.update(
             {
@@ -569,9 +592,9 @@ class PurchaseOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalVendor > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalVendor) -
+            ? Number(exsistingData?.grandTotalVendor) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // CHANGE STATUS PURCHASE ORDER
       const approvedData = await Purchase_Order.update(

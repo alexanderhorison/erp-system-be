@@ -2,6 +2,11 @@ const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
 const {
+  buildQueryOptions,
+  buildPaginationResponse,
+} = require("../../helpers/queryBuilderHelper");
+const { Op } = require("sequelize");
+const {
   sequelize: sq,
   Master_Product,
   Master_Unit,
@@ -19,33 +24,39 @@ const {
   Dashboard_Summary_Customer,
   Sales_Order_Barter_Details,
   Master_Modal,
+  Sales_Order_Payment,
 } = require("../../models");
-const moment = require("moment");
-const { Op } = require("sequelize");
 class SalesOrderService {
   static async getAll({ user, query }) {
     try {
-      const formattedDate = query?.date
-        ? moment(query?.date, "DD-MM-YYYY").format("YYYY-MM-DD")
-        : null;
+      // Gunakan helper untuk membangun options query dinamis
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ["code", "$Master_Customer.name$"],
+        statusField: "status",
+        dateField: "createdAt",
+        enableDate:
+          query?.date || query?.dateFrom || query?.dateTo ? true : false,
+      });
 
-      const allData = await Sales_Order.findAll({
-        where: {
-          ...(query?.status && { status: query?.status }),
-          ...(query?.customerId && { customerId: query?.customerId }),
-          ...(query?.date && {
-            shippingDate: {
-              [Op.gte]: moment(formattedDate).startOf("day").toDate(),
-              [Op.lte]: moment(formattedDate).endOf("day").toDate(),
-            },
-          }),
-        },
+      // Override date filtering jika ada dateFrom/dateTo
+      if (query?.dateFrom || query?.dateTo) {
+        const dateCondition = {};
+
+        if (query?.dateFrom) {
+          dateCondition[Op.gte] = new Date(query.dateFrom + "T00:00:00.000Z");
+        }
+
+        if (query?.dateTo) {
+          dateCondition[Op.lte] = new Date(query.dateTo + "T23:59:59.999Z");
+        }
+
+        queryOptions.where = queryOptions.where || {};
+        queryOptions.where.createdAt = dateCondition;
+      }
+
+      const allData = await Sales_Order.findAndCountAll({
+        ...queryOptions, // Spread options dari helper
         include: [
-          // {
-          //   model: Master_Warehouse,
-          //   paranoid: false,
-          //   attributes: ["name"],
-          // },
           {
             model: Master_User,
             as: "creator",
@@ -72,10 +83,9 @@ class SalesOrderService {
             model: Master_Customer,
           },
         ],
-        order: [["createdAt", query?.sort || "DESC"]],
       });
 
-      const sendData = allData.map((item) => {
+      const sendData = allData.rows.map((item) => {
         return {
           id: item.id,
           code: item.code,
@@ -97,13 +107,16 @@ class SalesOrderService {
           approvedAt: item?.approvedAt,
           dateApproved: formatDate(item?.approvedAt),
           dueDate: item?.dueDate,
-          shippingDate:  formatDate(item?.shippingDate),
+          shippingDate: formatDate(item?.shippingDate),
           shippingTime: item?.shippingDate,
           customer: item?.Master_Customer,
         };
       });
 
-      return sendData;
+      return {
+        data: sendData,
+        pagination: buildPaginationResponse(allData, query),
+      };
     } catch (error) {
       throw error;
     }
@@ -126,7 +139,7 @@ class SalesOrderService {
           status: "PENDING",
           createdBy: user?.id,
           dueDate: data?.dueDate,
-          shippingDate: data?.shippingDate
+          shippingDate: data?.shippingDate,
         },
         { transaction }
       );
@@ -204,7 +217,7 @@ class SalesOrderService {
     }
   }
 
-  static async approve({ code, user }) {
+  static async approve({ code, user, fullPayment }) {
     const transaction = await sq.transaction();
     try {
       const exsistingData = await Sales_Order.findOne({
@@ -520,6 +533,24 @@ class SalesOrderService {
             Number(exsistingData?.grandTotalBarter)
           : exsistingData?.grandTotal;
 
+      // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
+      const finalAmountDebt = fullPayment ? 0 : amountDebt;
+      const finalAmountPaid = fullPayment ? amountDebt : 0;
+
+      // JIKA LUNAS DAN ADA PEMBAYARAN
+      if (fullPayment && finalAmountPaid !== 0) {
+        await Sales_Order_Payment.create(
+          {
+            typePayment: "CASH",
+            amount: finalAmountPaid,
+            notes: "Dibayar Lunas saat approve sales order ",
+            salesOrderId: exsistingData?.id,
+            createdBy: user?.id,
+          },
+          { transaction }
+        );
+      }
+
       // CHANGE STATUS SALES ORDER
       const approvedData = await Sales_Order.update(
         {
@@ -527,8 +558,8 @@ class SalesOrderService {
           approvedBy: user?.id,
           approvedAt: new Date(),
           // update value amount paid to 0 and debt to grandTotal
-          amountPaid: 0,
-          amountDebt: amountDebt,
+          amountPaid: finalAmountPaid,
+          amountDebt: finalAmountDebt,
         },
         {
           where: {
@@ -560,7 +591,10 @@ class SalesOrderService {
               Number(exsistingData?.grandTotalCustomer),
             totalAmountDebtSalesOrder:
               Number(findCustomerSummary.totalAmountDebtSalesOrder) +
-              Number(amountDebt),
+              Number(finalAmountDebt),
+            totalAmountPaidSalesOrder:
+              Number(findCustomerSummary.totalAmountPaidSalesOrder) +
+              Number(finalAmountPaid),
             totalAmountBarterSalesOrder:
               Number(findCustomerSummary.totalAmountBarterSalesOrder) +
               Number(exsistingData?.grandTotalBarter),
@@ -579,8 +613,8 @@ class SalesOrderService {
             customerId: exsistingData?.customerId,
             totalSalesOrder: 1,
             totalAmountSalesOrder: Number(exsistingData?.grandTotalCustomer),
-            totalAmountDebtSalesOrder: Number(amountDebt),
-            totalAmountPaidSalesOrder: 0,
+            totalAmountDebtSalesOrder: Number(finalAmountDebt),
+            totalAmountPaidSalesOrder: Number(finalAmountPaid),
             totalAmountBarterSalesOrder: Number(
               exsistingData?.grandTotalBarter
             ),
@@ -903,6 +937,7 @@ class SalesOrderService {
       throw error;
     }
   }
+
   static async getSalesOrderByCustomerId({ customerId }) {
     try {
       const allData = await Sales_Order.findAll({

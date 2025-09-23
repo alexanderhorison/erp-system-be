@@ -11,6 +11,7 @@ const ExportStockOpnameService = require("../../services/export/ExportStockOpnam
 const ExportInternalTransferService = require("../../services/export/ExportInternalTransferService");
 const ExportAllStockService = require("../../services/export/ExportAllStockService");
 const ExportReportGoodsInService = require("../../services/export/ExportGoodsInService");
+const ExportProductRequestOrderService = require("../../services/export/ExportProductRequestService");
 
 class ExportController {
 
@@ -324,6 +325,36 @@ class ExportController {
       res.status(500).json({
         status: false,
         message: "Error export all stock",
+        error: error.message,
+      });
+    }
+  }
+
+  // DONE
+  static async productRequest(req, res) {
+    try {
+      const schemaParams = yup.object({
+        code: yup.string().required("Code Product Request harus ada"),
+      });
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const code = params.code;
+
+      const pdfBuffer = await ExportProductRequestOrderService.export(code);
+
+      const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
+
+      res.json({
+        status: true,
+        data: pdfBase64,
+        fileName: `Product Request #${code}.pdf`,
+        mimeType: "application/pdf",
+      });
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({
+        status: false,
+        message: "Error generating PDF",
         error: error.message,
       });
     }

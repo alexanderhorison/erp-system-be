@@ -1,5 +1,8 @@
 const { responses } = require("../../helpers/responses");
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const {
+  yupSchemaValidation,
+  yupSchemaValidationStrict,
+} = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
 const PrintSalesOrderService = require("../../services/salesOrder/PrintSalesOrderService");
@@ -8,17 +11,33 @@ class SalesOrderController {
   static async getAllSalesOrder(req, res) {
     try {
       const user = req.userData;
+
       const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        status: yup.string().optional(),
+        orderBy: yup
+          .string()
+          .default("createdAt")
+          .oneOf(["createdAt", "approvedAt", "shippingDate"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+        dateFrom: yup.string().optional(),
+        dateTo: yup.string().optional(),
+        paginate: yup.boolean().default(false),
         date: yup.string().optional(),
       });
-      const query = await yupSchemaValidation(req.query, schemaQuery);
 
-      const getAllSalesOrder = await SalesOrderService.getAll({
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
+      const data = await SalesOrderService.getAll({
         user,
         query,
       });
 
-      res.status(200).json(responses(true, "Berhasil", getAllSalesOrder));
+      res
+        .status(200)
+        .json(responses(true, "Berhasil", data.data, data.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -118,6 +137,11 @@ class SalesOrderController {
         })
         .required("Code sales order harus ada");
 
+      const schemaBody = yup.object({
+        fullPayment: yup.boolean().required("Payment status harus diisi"),
+      });
+      const body = await yupSchemaValidation(req.body, schemaBody);
+
       const params = await yupSchemaValidation(req.params, schemaParams);
 
       const user = req.userData;
@@ -125,6 +149,7 @@ class SalesOrderController {
       const approveSalesOrder = await SalesOrderService.approve({
         code: params.code,
         user,
+        fullPayment: body.fullPayment,
       });
 
       res
@@ -318,10 +343,12 @@ class SalesOrderController {
     try {
       const params = req.params;
 
-      const schemaParams = yup.string().required("Sales Order code harus diisi");
+      const schemaParams = yup
+        .string()
+        .required("Sales Order code harus diisi");
 
       const code = await yupSchemaValidation(params.code, schemaParams);
-      
+
       const salesOrder = await SalesOrderService.getDetailByCode(code);
 
       if (!salesOrder) {

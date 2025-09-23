@@ -18,4 +18,5 @@ router.get("/delivery-order-receive-outstanding/:code", ExportController.deliver
 router.get("/adjustment-goods-in/:code", ExportController.adjustmentGoodsIn);
 router.get("/adjustment-goods-out/:code", ExportController.adjustmentGoodsOut);
 router.get("/internal-transfer/:code", ExportController.internalTransfer);
+router.get('/product-request/:code', ExportController.productRequest)
 module.exports = router;
