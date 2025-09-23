@@ -1,5 +1,8 @@
 const { responses } = require("../../helpers/responses");
-const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
+const {
+  yupSchemaValidation,
+  yupSchemaValidationStrict,
+} = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
 const PrintSalesOrderService = require("../../services/salesOrder/PrintSalesOrderService");
@@ -14,10 +17,15 @@ class SalesOrderController {
         limit: yup.string().default("10"),
         search: yup.string().optional(),
         status: yup.string().optional(),
-        orderBy: yup.string().default("createdAt").oneOf(["createdAt", "approvedAt", "shippingDate"]),
+        orderBy: yup
+          .string()
+          .default("createdAt")
+          .oneOf(["createdAt", "approvedAt", "shippingDate"]),
         orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
         dateFrom: yup.string().optional(),
         dateTo: yup.string().optional(),
+        paginate: yup.boolean().default(false),
+        date: yup.string().optional(),
       });
 
       const query = await yupSchemaValidationStrict(req.query, schemaQuery);
@@ -27,7 +35,9 @@ class SalesOrderController {
         query,
       });
 
-      res.status(200).json(responses(true, "Berhasil", data.data, data.pagination, query));
+      res
+        .status(200)
+        .json(responses(true, "Berhasil", data.data, data.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -333,7 +343,9 @@ class SalesOrderController {
     try {
       const params = req.params;
 
-      const schemaParams = yup.string().required("Sales Order code harus diisi");
+      const schemaParams = yup
+        .string()
+        .required("Sales Order code harus diisi");
 
       const code = await yupSchemaValidation(params.code, schemaParams);
 

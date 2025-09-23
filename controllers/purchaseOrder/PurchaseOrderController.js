@@ -17,6 +17,7 @@ class PurchaseOrderController {
         orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
         dateFrom: yup.string().optional(),
         dateTo: yup.string().optional(),
+        paginate: yup.boolean().default(false),
       });
 
       const query = await yupSchemaValidationStrict(req.query, schemaQuery);

@@ -1,7 +1,10 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
-const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
+const {
+  buildQueryOptions,
+  buildPaginationResponse,
+} = require("../../helpers/queryBuilderHelper");
 const { Op } = require("sequelize");
 const {
   sequelize: sq,
@@ -28,10 +31,11 @@ class SalesOrderService {
     try {
       // Gunakan helper untuk membangun options query dinamis
       const queryOptions = buildQueryOptions(query, {
-        searchFields: ['code', '$Master_Customer.name$'],
-        statusField: 'status',
-        dateField: 'createdAt',
-        enableDate: true,
+        searchFields: ["code", "$Master_Customer.name$"],
+        statusField: "status",
+        dateField: "createdAt",
+        enableDate:
+          query?.date || query?.dateFrom || query?.dateTo ? true : false,
       });
 
       // Override date filtering jika ada dateFrom/dateTo
@@ -39,11 +43,11 @@ class SalesOrderService {
         const dateCondition = {};
 
         if (query?.dateFrom) {
-          dateCondition[Op.gte] = new Date(query.dateFrom + 'T00:00:00.000Z');
+          dateCondition[Op.gte] = new Date(query.dateFrom + "T00:00:00.000Z");
         }
 
         if (query?.dateTo) {
-          dateCondition[Op.lte] = new Date(query.dateTo + 'T23:59:59.999Z');
+          dateCondition[Op.lte] = new Date(query.dateTo + "T23:59:59.999Z");
         }
 
         queryOptions.where = queryOptions.where || {};
@@ -525,9 +529,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalCustomer) -
+          ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
       const finalAmountDebt = fullPayment ? 0 : amountDebt;
@@ -1003,7 +1007,6 @@ class SalesOrderService {
       throw error;
     }
   }
-
 }
 
 module.exports = SalesOrderService;
