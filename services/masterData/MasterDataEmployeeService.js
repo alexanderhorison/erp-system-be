@@ -4,6 +4,7 @@ const { Tm_Employee, Trx_Employee_Debt, Daily_Cost_Employee,
 const { throwValidation } = require("../../helpers/responses");
 const { Op } = require("sequelize");
 const { priceFormatWIthCurrency } = require("../../helpers/priceFormat");
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 
 class MasterDataEmployeeService {
   static async create(data) {
@@ -87,14 +88,25 @@ class MasterDataEmployeeService {
 
   static async findAll(query) {
     try {
-      const { active } = query;
 
-      return await Tm_Employee.findAll({
-        where: {
-          ...(active !== undefined && { is_active: active }),
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ["nama"],
+        statusField: "status",
+        additionalWhere: query.is_active !== undefined ? { is_active: query.is_active } : {
+          is_active: { [Op.in]: [true, false] }
         },
-        order: [["nama", "ASC"]],
       });
+
+      const data = await Tm_Employee.findAndCountAll({
+        ...queryOptions,
+      });
+
+      const result = data.rows
+
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, query)
+      }
     } catch (error) {
       throw error;
     }

@@ -1,3 +1,4 @@
+const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
 const { Tm_Cars } = require("../../models");
 
 class MasterDataCarService {
@@ -99,19 +100,17 @@ class MasterDataCarService {
 
   static async findAll(query) {
     try {
-      const { active } = query;
-
-      const data = await Tm_Cars.findAll({
-        where: {
-          ...(active !== undefined && { is_active: active }),
-        },
-        order: [
-          ['is_active', 'DESC'], // Active cars first
-          ['name', 'ASC'], // Then sort by name alphabetically
-        ],
+      // Gunakan helper untuk membangun options query dinamis
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ["name", "plate_number"],
+        statusField: "is_active",
       });
 
-      const result = data.map((item) => ({
+      const data = await Tm_Cars.findAndCountAll({
+        ...queryOptions,
+      });
+
+      const result = data.rows.map((item) => ({
         id: item.id,
         name: item.name,
         plate_number: item.plate_number,
@@ -121,7 +120,12 @@ class MasterDataCarService {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       }));
-      return result;
+
+      return {
+        data: result,
+        pagination: buildPaginationResponse(data, query)
+      };
+
     } catch (error) {
       throw error;
     }

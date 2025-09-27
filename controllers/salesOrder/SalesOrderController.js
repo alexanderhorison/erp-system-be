@@ -37,7 +37,7 @@ class SalesOrderController {
 
       res
         .status(200)
-        .json(responses(true, "Berhasil", data.data, data.pagination, query));
+        .json(responses(true, "Berhasil mendapatkan semua data sales order", data.data, data.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)

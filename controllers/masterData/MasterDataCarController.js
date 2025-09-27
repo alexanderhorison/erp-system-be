@@ -1,4 +1,4 @@
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const { yupSchemaValidation, yupSchemaValidationStrict } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const MasterDataCarService = require("../../services/masterData/MasterDataCarService");
 const { responses } = require("../../helpers/responses");
@@ -77,14 +77,24 @@ class MasterDataCarController {
   static async getAllCars(req, res) {
     try {
       const schemaQuery = yup.object({
-        active: yup.boolean().optional(),
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        orderBy: yup
+          .string()
+          .default("name")
+          .oneOf(["name", "plate_number", "emoneyBalance", "description", "createdAt"]),
+        orderType: yup.string().default("ASC").oneOf(["ASC", "DESC"]),
+        paginate: yup.boolean().default(false),
+        status: yup.boolean().optional(),
       });
-      const query = await yupSchemaValidation(req.query, schemaQuery);
-      const cars = await MasterDataCarService.findAll(query);
+
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+      const data = await MasterDataCarService.findAll(query);
       res
         .status(200)
         .json(
-          responses(true, "Berhasil mendapatkan semua data kendaraan", cars)
+          responses(true, "Berhasil mendapatkan semua data kendaraan", data.data, data.pagination, query)
         );
     } catch (error) {
       res

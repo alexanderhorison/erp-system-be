@@ -12,7 +12,7 @@ function buildQueryOptions(query, options = {}) {
 
   const whereClause = { ...additionalWhere };
 
-  if (query?.status && statusField) {
+  if (query?.status !== undefined && statusField) {
     whereClause[statusField] = query.status;
   }
 

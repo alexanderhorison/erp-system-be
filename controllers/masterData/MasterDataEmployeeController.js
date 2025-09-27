@@ -84,15 +84,27 @@ class MasterEmployeeController {
 
   static async getAllEmployees(req, res) {
     try {
+
       const schemaQuery = yup.object({
-        active: yup.boolean().optional(),
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        orderBy: yup
+          .string()
+          .default("nama")
+          .oneOf(["nama", "status", "salary", "bonus", "debt", "role"]),
+        orderType: yup.string().default("ASC").oneOf(["ASC", "DESC"]),
+        paginate: yup.boolean().default(false),
+        status: yup.string().oneOf(["Tetap", "Kontrak", "Magang"]).optional(),
+        is_active: yup.boolean().optional(),
       });
+      
       const query = await yupSchemaValidation(req.query, schemaQuery);
 
-      const employees = await MasterDataEmployeeService.findAll(query);
+      const data = await MasterDataEmployeeService.findAll(query);
       res
         .status(200)
-        .json(responses(true, "Success get all employees", employees));
+        .json(responses(true, "Success get all employees", data.data, data.pagination, query));
     } catch (error) {
       res
         .status(error.code || 500)
