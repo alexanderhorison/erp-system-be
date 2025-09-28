@@ -17,11 +17,19 @@ const path = require("path");
 class PrintSalesOrderService {
   static async print(data) {
     try {
+      const configPrinter = await ConfigService.get({
+        query: { key: "PRINTER_SERVER" },
+      });
+
+      const printerInfo = configPrinter.value_json;
+
       const printerSetting = {
         maxCol: 80, // Lebar kolom untuk dot matrix printer
-        ip: "192.168.18.110", // IP printer di jaringan lokal
-        hostName: "LX-310", // Epson LX-310 Dot Matrix
-        queueName: "lp", // Nama queue printer
+        ip: printerInfo.ipServer, // IP pc server
+        port: printerInfo.port, // PC Server yang terhubung ke printer
+        printerIp: printerInfo.ipPrinter, // IP Printer Server
+        hostName: printerInfo.hostName || "LX-310", // Epson LX-310 Dot Matrix
+        queueName: printerInfo.queueName || "lp", // Nama queue printer
         targetLines: 41, // Jumlah baris per halaman
         tearOffset: 12, // Offset untuk perforasi kertas
       };

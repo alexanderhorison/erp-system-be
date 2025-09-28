@@ -6,6 +6,7 @@ const {
 const yup = require("yup");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
 const PrintSalesOrderService = require("../../services/salesOrder/PrintSalesOrderService");
+const axios = require("axios");
 
 class SalesOrderController {
   static async getAllSalesOrder(req, res) {
@@ -360,6 +361,16 @@ class SalesOrderController {
 
       const printService = await PrintSalesOrderService.print(salesOrder);
 
+      const { ip, port } = printService.printerSetting;
+      
+      const miniPcUrl = `http://${ip}:${port}/print-api/print-file`;
+
+      await axios.post(miniPcUrl, {
+        fileName: `sales_order_${code}.txt`, // nama file sementara
+        buffer: printService.string,         // isi buffer teks untuk dot matrix
+        printerSetting: printService.printerSetting // opsional kalau mau dipakai Mini PC
+      });
+
       res.status(200).json(
         responses(true, "Success Print", {
           buffer: printService.string,
@@ -367,6 +378,7 @@ class SalesOrderController {
         })
       );
     } catch (error) {
+      console.error("Print error:", error);
       res
         .status(error.code || 500)
         .json(responses(false, error.message || error));
