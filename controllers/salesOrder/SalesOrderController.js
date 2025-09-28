@@ -362,8 +362,9 @@ class SalesOrderController {
       const printService = await PrintSalesOrderService.print(salesOrder);
 
       const { ip, port } = printService.printerSetting;
-      
-      const miniPcUrl = `http://${ip}:${port}/print-api/print-file`;
+
+      const protocol = process.env.PRINTER_PROTOCOL || "http";
+      const miniPcUrl = `${protocol}://${ip}:${port}/print-api/print-file`;
 
       await axios.post(miniPcUrl, {
         fileName: `sales_order_${code}.txt`, // nama file sementara
