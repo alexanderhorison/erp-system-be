@@ -1,4 +1,4 @@
-const { responses } = require("../../helpers/responses");
+const { responses, throwValidation } = require("../../helpers/responses");
 const {
   yupSchemaValidation,
   yupSchemaValidationStrict,
@@ -366,11 +366,34 @@ class SalesOrderController {
       const protocol = process.env.PRINTER_PROTOCOL || "http";
       const miniPcUrl = `${protocol}://${ip}:${port}/print-api/print-file`;
 
-      await axios.post(miniPcUrl, {
-        fileName: `sales_order_${code}.txt`, // nama file sementara
-        buffer: printService.string,         // isi buffer teks untuk dot matrix
-        printerSetting: printService.printerSetting // opsional kalau mau dipakai Mini PC
-      });
+      try {
+        const response = await axios.post(miniPcUrl, {
+          fileName: `sales_order_${code}.txt`, // nama file sementara
+          buffer: printService.string,         // isi buffer teks untuk dot matrix
+          printerSetting: printService.printerSetting // opsional kalau mau dipakai Mini PC
+        },
+          { timeout: 30000 } // 30 seconds timeout);
+        );
+
+        if (!response.data.success) {
+          throwValidation(500, response.data.message || "PC Server did not confirm success")
+        }
+      } catch (error) {
+        // Convert axios error into readable API response
+        if (error.response) {
+          // Mini PC returned a structured error
+          throwValidation(
+            error.response.status,
+            error.response.data.message || "PC Server error"
+          )
+        } else {
+          // Network or axios-level error
+          throwValidation(
+            500,
+            error.message || "Failed to connect to print server"
+          )
+        }
+      }
 
       res.status(200).json(
         responses(true, "Success Print", {
