@@ -1,7 +1,8 @@
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
-const { responses } = require("../../helpers/responses");
+const { responses, throwValidation } = require("../../helpers/responses");
 const MasterDataCustomerService = require("../../services/masterData/MasterDataCustomerService");
+const jwt = require("jsonwebtoken");
 
 class MasterDataCustomerController {
   static async createCustomer(req, res) {
@@ -154,6 +155,30 @@ class MasterDataCustomerController {
       res
         .status(200)
         .json(responses(true, "Success get all customer", customer));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async rankUpCustomer(req, res) {
+    try {
+      const { token } = req.query;
+      if (!token) {
+        throwValidation(401, "Anauthorized");
+      }
+      const decoded = jwt.verify(token, process.env.TOKEN_KEY);
+
+      if (!decoded?.customerId) {
+        throwValidation(400, "Token tidak valid");
+      }
+
+      const message = await MasterDataCustomerService.rankUpCustomer(decoded.customerId);
+
+      res
+        .status(200)
+        .json(responses(true, message));
     } catch (error) {
       res
         .status(error.code || 500)

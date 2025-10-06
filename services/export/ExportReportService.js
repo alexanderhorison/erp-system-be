@@ -17,17 +17,17 @@ const NonCurrentAssetService = require("../asset/NonCurrentAssetService");
 const ShortTermService = require("../liabilities/ShortTermService");
 const LongTermService = require("../liabilities/LongTermService");
 const EquityService = require("../equity/EquityService");
+const { REPORT_TYPE } = require("../../helpers/reportType");
+const MasterDataCustomerService = require("../masterData/MasterDataCustomerService");
 
 class ExportReportService {
   static async getReport({ query }) {
-    const enumTypeReport = {
-      SALES_ORDER: "SALES_ORDER",
-    };
 
     switch (query.reportType) {
-      case enumTypeReport.SALES_ORDER:
+      case REPORT_TYPE.SALES_ORDER:
         return await ExportReportService.getReportSo({ query });
-
+      case REPORT_TYPE.CUSTOMER:
+        return await ExportReportService.getReportDataCustomer({ query });
       default:
         throw throwValidation(500, "Tipe Report tidak ditemukan");
     }
@@ -1178,8 +1178,7 @@ class ExportReportService {
       const bebanOperasi = { formula: dataSheet4Formula.bebanOperasi[0] };
       // C12 is laba kotor and C15 biaya pengiriman + length of unexpectedCostTotalRows + 1
       const labaBersihFormula = {
-        formula: `SUM(C12-C${
-          15 + dataSheet4Formula.unexpectedCost.length + 1
+        formula: `SUM(C12-C${15 + dataSheet4Formula.unexpectedCost.length + 1
           })`,
       };
       const gajiTunjanganFormula = {
@@ -1870,6 +1869,65 @@ class ExportReportService {
     } catch (error) {
       throw error;
     }
+  }
+
+  static async getReportDataCustomer({ query }) {
+    const customers = await MasterDataCustomerService.getAllCustomerReport()
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`Data Customer`);
+    const sheetName = "Data Customer";
+    const { styleBorder, fontBold, centerMiddle } = styleExcel;
+
+
+    // Define column headers sheet 1
+    const headers = [
+      "Nama Customer",
+      "Alias",
+      "Nomor HP",
+      "Email",
+      "Alamat",
+      "Gender",
+      "Pos Customer",
+      "Rank",
+    ];
+
+    worksheet.columns = [
+      { header: headers[0], key: "name", width: 20 },
+      { header: headers[1], key: "alias", width: 18 },
+      { header: headers[2], key: "phoneNumber", width: 20 },
+      { header: headers[3], key: "email", width: 20 },
+      { header: headers[4], key: "address", width: 30 },
+      { header: headers[5], key: "gender", width: 15 },
+      { header: headers[6], key: "isPosCustomer", width: 17 },
+      { header: headers[7], key: "rankName", width: 15 },
+    ];
+
+    // Apply styling to headers Sheet 1
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = fontBold;
+    headerRow.alignment = centerMiddle;
+
+    for (const detail of customers) {
+      // Insert Data Row
+      worksheet.addRow({
+        name: detail?.name,
+        alias: detail?.alias || "",
+        phoneNumber: detail?.phoneNumber,
+        email: detail?.email,
+        address: detail?.address,
+        gender: detail?.gender,
+        isPosCustomer: detail?.isPosCustomer ? "Ya" : "Tidak",
+        rankName: detail?.rankName || "-",
+      });
+    }
+    const file = await workbook.xlsx.writeBuffer();
+    console.log(`Excel report generated: ${query.reportType}`);
+
+    return {
+      sheetName,
+      file
+    };
   }
 }
 

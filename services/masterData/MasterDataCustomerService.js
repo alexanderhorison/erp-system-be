@@ -131,7 +131,7 @@ class MasterDataCustomerService {
         include: [
           {
             model: Master_Rank,
-            attributes: ["name"],
+            attributes: ["name", "level"],
           },
         ],
       });
@@ -152,6 +152,7 @@ class MasterDataCustomerService {
         rankId: customer.rankId,
         rankName: customer.Master_Rank ? customer.Master_Rank?.name : "",
         alias: customer.alias,
+        level: customer.Master_Rank ? customer.Master_Rank?.level : 0
       };
 
       return result;
@@ -195,6 +196,68 @@ class MasterDataCustomerService {
           totalPages: Math.ceil(count / pageSize),
         },
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async rankUpCustomer(id) {
+    try {
+      const findCustomer = await this.findOne(id);
+
+      if (!findCustomer.level) {
+        return `Customer ${findCustomer.name} tidak memiliki level yang valid`
+      }
+
+      const findHigherRank = await Master_Rank.findOne({
+        where: {
+          level: { [Op.gt]: findCustomer.level }
+        },
+      })
+
+      if (!findHigherRank) {
+        return `Customer ${findCustomer.name} sudah berada di level tertinggi`
+      }
+
+      await Master_Customer.update({
+        rankId: findHigherRank.id
+      }, {
+        where: { id: findCustomer.id }
+      })
+
+      return `Customer ${findCustomer.name} has been leveled up successfully.`
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllCustomerReport() {
+    try {
+      const data = await Master_Customer.findAll({
+        include: [
+          {
+            model: Master_Rank,
+            attributes: ["level", "name"],
+          },
+        ],
+      });
+
+      const result = data.map((item) => ({
+        id: item.id,
+        name: item.name,
+        phoneNumber: item.phoneNumber,
+        gender: item.gender,
+        address: item.address,
+        email: item.email,
+        notes: item.notes,
+        phoneNumber: item.phoneNumber,
+        rankId: item.rankId,
+        rankName: item.Master_Rank ? item.Master_Rank?.name : "",
+        isPosCustomer: item.isPosCustomer,
+        alias: item.alias,
+        level: item.Master_Rank ? item.Master_Rank?.level : 0
+      }));
+      return result;
     } catch (error) {
       throw error;
     }

@@ -5,7 +5,7 @@ const {
   buildQueryOptions,
   buildPaginationResponse,
 } = require("../../helpers/queryBuilderHelper");
-const { Op } = require("sequelize");
+const { Op, fn, col, literal } = require("sequelize");
 const {
   sequelize: sq,
   Master_Product,
@@ -529,9 +529,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-          ? Number(exsistingData?.grandTotalCustomer) -
+            ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-          : exsistingData?.grandTotal;
+            : exsistingData?.grandTotal;
 
       // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
       const finalAmountDebt = fullPayment ? 0 : amountDebt;
@@ -1005,6 +1005,63 @@ class SalesOrderService {
       return sendData;
     } catch (error) {
       throw error;
+    }
+  }
+
+  static async getSalesOrderSchedulerReport() {
+    try {
+      /**
+       * 1. Cari semua sales order yang sudah di approve berdasarkan 7 hari terakhir
+       * 2. Include customer dan rank
+       * 3. Group by customerId
+       * 4. Sum grandTotalCustomer as totalPurchase
+       * 5. Count id as totalTransaction
+       * 6. Order by totalPurchase desc
+       */
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // end of today
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(today.getDate() - 6); // start from 7 days ago including today
+      sevenDaysAgo.setHours(0, 0, 0, 0); // start of that day
+
+      const report = await Sales_Order.findAll({
+        where: {
+          status: "APPROVED",
+          approvedAt: {
+            [Op.between]: [sevenDaysAgo, today],
+          },
+        },
+        attributes: [
+          "customerId",
+          [fn("COUNT", col("Sales_Order.id")), "totalSo"],  // fully qualified column
+          [
+            fn(
+              "SUM",
+              literal("CASE WHEN \"Sales_Order\".\"grandTotal\" > 0 THEN \"Sales_Order\".\"grandTotal\" ELSE 0 END")
+            ),
+            "totalAmount",
+          ],
+        ],
+        include: [
+          {
+            model: Master_Customer,
+            attributes: ["id", "name", "phoneNumber", "email"],
+            include: [
+              {
+                model: Master_Rank,
+                attributes: ["name", "level"],
+              },
+            ],
+          },
+        ],
+        group: ["Sales_Order.customerId", "Master_Customer.id", "Master_Customer->Master_Rank.id"],
+        order: [[col("totalAmount"), "DESC"]],
+      });
+
+      return report;
+    } catch (err) {
+      throw err;
     }
   }
 }

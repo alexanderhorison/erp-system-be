@@ -25,12 +25,14 @@ const routerAsset = require("./asset/index")
 const routerLiabilities = require("./liabilities/index");
 const routerEquity = require("./equity/index");
 const routerProductRequestOrder = require("./productRequestOrder/index");
+const MasterDataCustomerController = require("../controllers/masterData/MasterDataCustomerController");
 
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
 });
 
+router.get("/rank-up-customer", MasterDataCustomerController.rankUpCustomer);
 // User
 router.use("/user", routerUser);
 

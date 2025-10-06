@@ -1,0 +1,9 @@
+// DEFINE STATUS ON PROCESS
+const REPORT_TYPE = {
+  SALES_ORDER: "SALES_ORDER",
+  CUSTOMER: "CUSTOMER",
+};
+
+module.exports = {
+  REPORT_TYPE,
+};
