@@ -8,6 +8,9 @@ router.post("/create", SalesOrderController.createSalesOrder);
 // FOR SALES ORDER PAYMENT
 router.use("/payment", routerPayment)
 
+// FOR SCHEDULER REPORT CUSTOMER WEEKLY
+router.post("/report-customer-weekly", SalesOrderController.runSchedulerReportCustomerWeekly);
+
 // FOR APPROVE/REJECT SALES ORDER
 router.post("/approve/:code", SalesOrderController.approveSalesOrder);
 router.post("/reject/:code", SalesOrderController.rejectSalesOrder);

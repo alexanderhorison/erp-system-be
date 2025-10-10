@@ -408,6 +408,17 @@ class SalesOrderController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async runSchedulerReportCustomerWeekly(req, res) {
+    try {
+      const runScheduler = await SalesOrderService.runSchedulerReportCustomerWeekly();
+      res.status(200).json(responses(true, "Berhasil", runScheduler));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = SalesOrderController;

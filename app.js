@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const router = require("./routers");
-const schedulerReportSo = require('./helpers/schedulerReportSo');
+const schedulerReportCustomerWeekly = require('./helpers/schedulerReportCustomerWeekly');
 
 const app = express();
 const port = process.env.PORT;
@@ -17,7 +17,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use("/api", router);
 
 // SCHEDULER REPORT SALES ORDER WITH EMAIL
-schedulerReportSo.start();
+schedulerReportCustomerWeekly.start();
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);

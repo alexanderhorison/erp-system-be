@@ -26,6 +26,9 @@ const {
   Master_Modal,
   Sales_Order_Payment,
 } = require("../../models");
+const transporter = require("../../helpers/emailConfig");
+const jwt = require("jsonwebtoken");
+
 class SalesOrderService {
   static async getAll({ user, query }) {
     try {
@@ -1008,7 +1011,7 @@ class SalesOrderService {
     }
   }
 
-  static async getSalesOrderSchedulerReport() {
+  static async runSchedulerReportCustomerWeekly() {
     try {
       /**
        * 1. Cari semua sales order yang sudah di approve berdasarkan 7 hari terakhir
@@ -1024,6 +1027,8 @@ class SalesOrderService {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(today.getDate() - 6); // start from 7 days ago including today
       sevenDaysAgo.setHours(0, 0, 0, 0); // start of that day
+
+      console.log(`[${today.toISOString()}] Running SCHEDULER_REPORT_CUSTOMER_WEEKLY With Ranking`);
 
       const report = await Sales_Order.findAll({
         where: {
@@ -1059,7 +1064,68 @@ class SalesOrderService {
         order: [[col("totalAmount"), "DESC"]],
       });
 
-      return report;
+      if (!report || report.length === 0) {
+        console.log("No Sales Order data available for the report.");
+        return "No Sales Order data available for the report.";
+      }
+
+      let subjectText = `Report SO Customer periode ${sevenDaysAgo.toLocaleDateString()} - ${today.toLocaleDateString()}`;
+
+      const tableRows = report.map((row, index) => {
+        const data = row.get({ plain: true });
+
+        const token = jwt.sign({ customerId: data.customerId }, process.env.TOKEN_KEY, { expiresIn: "3d" });
+        const link = `${process.env.BASE_URL}/rank-up-customer?token=${token}`;
+
+        return `
+              <tr>
+                <td style="border:1px solid #ccc; padding:8px; text-align:center;">${index + 1}</td>
+                <td style="border:1px solid #ccc; padding:8px;">${data.Master_Customer?.name || "-"}</td>
+                <td style="border:1px solid #ccc; padding:8px; text-align:center;">${data.totalSo}</td>
+                <td style="border:1px solid #ccc; padding:8px; text-align:center;">Rp. ${Number(data.totalAmount).toLocaleString("id-ID")}</td>
+                <td style="border:1px solid #ccc; padding:8px; text-align:center;">
+                  <a href="${link}" 
+                    target="_blank"
+                    style="display:inline-block; padding:6px 12px; background:#28a745; color:#fff; text-decoration:none; border-radius:4px;">
+                    Level Up
+                  </a>
+                </td>
+              </tr>
+            `;
+      }).join("");
+
+      const htmlBody = `
+        <p>Berikut Hasil Belanja SO Customer:</p>
+        <table style="border-collapse:collapse; width:100%; font-family:Arial, sans-serif; font-size:14px;">
+          <thead>
+            <tr style="background-color:#f2f2f2;">
+              <th style="border:1px solid #ccc; padding:8px;">No</th>
+              <th style="border:1px solid #ccc; padding:8px;">Customer Name</th>
+              <th style="border:1px solid #ccc; padding:8px;">Total SO</th>
+              <th style="border:1px solid #ccc; padding:8px;">Total Amount</th>
+              <th style="border:1px solid #ccc; padding:8px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <br>
+        <p>Jika ingin menaikkan level customer klik pada tombol action</p>
+      `;
+
+      const transporterConnection = await transporter();
+
+      const msg = {
+        from: process.env.EMAIL_IS, // sender address
+        to: process.env.EMAIL_RECEIVER, // list of receivers
+        bcc: process.env.EMAIL_RECEIVER_BCC, // BCC email address
+        subject: subjectText, // Subject line
+        text: `Berikut Hasil Belanja SO Customer`, // plain text body
+        html: htmlBody
+      }
+      await transporterConnection.sendMail(msg);
+      return "Email sent";
     } catch (err) {
       throw err;
     }
