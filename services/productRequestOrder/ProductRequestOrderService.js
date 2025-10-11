@@ -106,6 +106,7 @@ class ProductRequestOrderService {
           ...plain,
           approvedAt: formatDate(item.approvedAt),
           createdBy: {
+            id: item.creator.id,
             name: item.creator.name,
             roleName: item.creator.Master_Role.name,
           },
