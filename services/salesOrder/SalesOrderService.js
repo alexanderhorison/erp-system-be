@@ -1047,6 +1047,15 @@ class SalesOrderService {
             ),
             "totalAmount",
           ],
+          [
+            fn(
+              "SUM",
+              literal(
+                "CASE WHEN \"Sales_Order\".\"amountPaid\" > 0 THEN \"Sales_Order\".\"amountPaid\" ELSE 0 END"
+              )
+            ),
+            "amountPaid",
+          ],
         ],
         include: [
           {
@@ -1066,33 +1075,61 @@ class SalesOrderService {
 
       if (!report || report.length === 0) {
         console.log("No Sales Order data available for the report.");
-        return "No Sales Order data available for the report.";
+        return { message: "No Sales Order data available for the report.", data: [] };
       }
 
       let subjectText = `Report SO Customer periode ${sevenDaysAgo.toLocaleDateString()} - ${today.toLocaleDateString()}`;
 
-      const tableRows = report.map((row, index) => {
-        const data = row.get({ plain: true });
+      const tableRowsArray = await Promise.all(
+        report.map(async (row, index) => {
+          const data = row.get({ plain: true });
 
-        const token = jwt.sign({ customerId: data.customerId }, process.env.TOKEN_KEY, { expiresIn: "3d" });
-        const link = `${process.env.BASE_URL}/rank-up-customer?token=${token}`;
+          const token = jwt.sign(
+            { customerId: data.customerId },
+            process.env.TOKEN_KEY,
+            { expiresIn: "3d" }
+          );
 
-        return `
-              <tr>
-                <td style="border:1px solid #ccc; padding:8px; text-align:center;">${index + 1}</td>
-                <td style="border:1px solid #ccc; padding:8px;">${data.Master_Customer?.name || "-"}</td>
-                <td style="border:1px solid #ccc; padding:8px; text-align:center;">${data.totalSo}</td>
-                <td style="border:1px solid #ccc; padding:8px; text-align:center;">Rp. ${Number(data.totalAmount).toLocaleString("id-ID")}</td>
-                <td style="border:1px solid #ccc; padding:8px; text-align:center;">
-                  <a href="${link}" 
-                    target="_blank"
-                    style="display:inline-block; padding:6px 12px; background:#28a745; color:#fff; text-decoration:none; border-radius:4px;">
-                    Level Up
-                  </a>
-                </td>
-              </tr>
-            `;
-      }).join("");
+          const link = `${process.env.BASE_URL}/rank-up-customer?token=${token}`;
+
+          const findNextRank = await Master_Rank.findOne({
+            where: {
+              level: { [Op.gt]: data.Master_Customer?.Master_Rank?.level || 0 },
+            },
+            order: [["level", "ASC"]],
+          });
+
+          return `
+          <tr>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${index + 1}</td>
+            <td style="border:1px solid #ccc; padding:8px;">
+              ${data.Master_Customer?.name || "-"} 
+              (Rank: ${data.Master_Customer?.Master_Rank?.name || "-"})
+            </td>
+            <td style="border:1px solid #ccc; padding:8px;">${findNextRank?.name || "-"}</td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${data.totalSo}</td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">
+              Rp. ${Number(data.totalAmount).toLocaleString("id-ID")}
+            </td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">
+              Rp. ${Number(data.amountPaid).toLocaleString("id-ID")}
+            </td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">
+              ${findNextRank
+              ? `<a href="${link}" 
+                target="_blank"
+                style="display:inline-block; padding:6px 12px; background:#28a745; color:#fff; text-decoration:none; border-radius:4px;">
+                Level Up
+             </a>`
+              : "-"
+            }
+            </td>
+          </tr>
+        `;
+        })
+      );
+
+      const tableRows = tableRowsArray.join("");
 
       const htmlBody = `
         <p>Berikut Hasil Belanja SO Customer:</p>
@@ -1101,8 +1138,10 @@ class SalesOrderService {
             <tr style="background-color:#f2f2f2;">
               <th style="border:1px solid #ccc; padding:8px;">No</th>
               <th style="border:1px solid #ccc; padding:8px;">Customer Name</th>
+              <th style="border:1px solid #ccc; padding:8px;">Next Rank</th>
               <th style="border:1px solid #ccc; padding:8px;">Total SO</th>
               <th style="border:1px solid #ccc; padding:8px;">Total Amount</th>
+              <th style="border:1px solid #ccc; padding:8px;">Total Payment</th>
               <th style="border:1px solid #ccc; padding:8px;">Action</th>
             </tr>
           </thead>
@@ -1125,7 +1164,7 @@ class SalesOrderService {
         html: htmlBody
       }
       await transporterConnection.sendMail(msg);
-      return "Email sent";
+      return { message: "Email sent", data: report?.length };
     } catch (err) {
       throw err;
     }

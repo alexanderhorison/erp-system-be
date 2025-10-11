@@ -412,7 +412,7 @@ class SalesOrderController {
   static async runSchedulerReportCustomerWeekly(req, res) {
     try {
       const runScheduler = await SalesOrderService.runSchedulerReportCustomerWeekly();
-      res.status(200).json(responses(true, "Berhasil", runScheduler));
+      res.status(200).json(responses(true, runScheduler?.message || "Berhasil", runScheduler?.data || []));
     } catch (error) {
       res
         .status(error.code || 500)
