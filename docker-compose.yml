@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Backend API Service
   api-erp:
-    container_name: api-erp
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,11 +14,8 @@ services:
     environment:
       # Only overriding host-specific variables
       POSTGRE_HOST: postgres_db
-      REDIS_HOST: redis_db
     depends_on:
       postgres_db:
-        condition: service_healthy
-      redis_db:
         condition: service_healthy
     networks:
       - app_network
@@ -45,27 +42,8 @@ services:
       - app_network
     restart: unless-stopped
 
-  # Redis Service
-  redis_db:
-    image: redis:alpine
-    container_name: redis_db
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app_network
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   app_network:
