@@ -9,9 +9,14 @@ const {
   Sales_Order,
   Sales_Order_Payment,
   Dashboard_Summary_Customer,
-  Master_Customer
+  Master_Customer,
+  Master_Product_Price,
+  Master_Product,
+  Master_Unit,
 } = require("../../models");
 const { Op } = require("sequelize");
+const fs = require("fs");
+const path = require('path');
 
 class MigrationService {
   static async apiMigration(migrationName) {
@@ -270,6 +275,94 @@ class MigrationService {
             DataPo: resultDataPo,
             DataSo: resultDataSo,
           })
+          break;
+        case "MIGRATION BASE PRICE":
+          console.log("masuk migrasi basic price");
+          // Update all product & unit base price according to files
+          const filePath = path.join(__dirname, '..', '..', 'files', 'BasePrice.csv');
+          console.log("Looking for:", filePath);
+
+          const content = fs.readFileSync(filePath, 'utf8');
+          const lines = content.trim().split('\n');
+
+          console.log('Total lines to process:', lines.length);
+
+          let dataFailed = [];
+          let dataSuccess = [];
+
+          for (let i = 1; i < lines.length; i++) {
+            const data = lines[i].split(';');
+            const productName = data[3].trim();
+            const unit = data[1].trim();
+            const basePrice = data[2].trim();
+            let message = ""
+            
+            // /**
+            //  * 1. Get Product and unit id by name
+            //  * 2. get master product price by product id and unit id
+            //  * 3. if exist update, if not create
+            //  */
+            if (["out", "??"].includes(productName)) {
+              message = `Skipping row ${i + 1} due to out product`;
+              console.warn(`Skipping row ${i + 1} due to out product ${productName}, ${unit}, ${basePrice}`);
+              continue;
+            }
+
+            const findProductData = await Master_Product.findOne({
+              where: {
+                name: productName
+              },
+              transaction
+            });
+
+            const findUnitData = await Master_Unit.findOne({
+              where: {
+                name: unit
+              },
+              transaction
+            });
+
+
+            if (!findProductData || !findUnitData) {
+              message = `Product or unit not found.`;
+              console.warn(`Product or unit not found: ${productName} ${unit}`);
+              dataFailed.push({ productName, unit, basePrice, message });
+              continue;
+            }
+
+            // FIND OR UPDATE
+            const existingProduct = await Master_Product_Price.findOne({
+              where: {
+                productId: findProductData.id,
+                unitId: findUnitData.id
+              },
+              transaction
+            })
+
+            if (existingProduct) {
+              // Update
+              await Master_Product_Price.update({
+                basePrice: Number(basePrice)
+              }, {
+                where: {
+                  id: existingProduct.id
+                },
+                transaction
+              })
+              dataSuccess.push({ productName, unit, basePrice });
+            } else {
+              // Create
+              await Master_Product_Price.create({
+                productId: findProductData.id,
+                unitId: findUnitData.id,
+                basePrice: Number(basePrice)
+              }, { transaction })
+
+              dataSuccess.push({ productName, unit, basePrice });
+            }
+          }
+          result.push({ dataSuccess, dataFailed });
+          break;
 
         default:
           break;
