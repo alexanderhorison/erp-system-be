@@ -18,6 +18,7 @@ const {
   Master_Role,
   Master_Customer,
   Master_Rank,
+  Dashboard_Summary_Pos_Customer
 } = require("../../models");
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
@@ -200,6 +201,10 @@ class PointOfSaleService {
   static async createPointOfSale({ data, user }) {
     const transaction = await sq.transaction();
     try {
+      if ((Number(data.grandTotal) - Number(data.totalPayment) > 0) && !data.customerId) {
+        throwValidation(400, "Customer harus diisi jika terdapat sisa hutang");
+      }
+
       const generateCode = await codeGenerator(8, "POS");
 
       let totalQuantity = 0;
@@ -338,6 +343,49 @@ class PointOfSaleService {
         },
         { transaction }
       );
+
+      // Update Dashboard Summary Pos Customer
+      if (data?.customerId) {
+        const findExisting = await Dashboard_Summary_Pos_Customer.findOne({
+          where: {
+            customerId: data.customerId
+          },
+          transaction
+        });
+
+        const grandTotal = Number(data.grandTotal) || 0;
+        const totalPayment = Number(data.totalPayment) || 0;
+        // Hitung sisa hutang
+        let amountDebt = grandTotal - totalPayment;
+        // Jika hasil negatif atau 0, berarti tidak ada hutang
+        if (amountDebt <= 0) amountDebt = 0;
+
+        // Hitung jumlah yang dibayar
+        const paidAmount = totalPayment >= grandTotal ? grandTotal : totalPayment;
+
+
+        if (findExisting) {
+          // Jika ada, update
+          await Dashboard_Summary_Pos_Customer.update({
+            totalPos: Number(findExisting.totalPos) + 1,
+            totalAmountPos: Number(findExisting.totalAmountPos) + Number(grandTotal),
+            totalAmountPaidPos: Number(findExisting.totalAmountPaidPos) + Number(paidAmount),
+            totalAmountDebtPos: Number(findExisting.totalAmountDebtPos) + Number(amountDebt)
+          }, {
+            where: { id: findExisting.id },
+            transaction
+          });
+        } else {
+          // Jika tidak ada, buat baru
+          await Dashboard_Summary_Pos_Customer.create({
+            customerId: data.customerId,
+            totalPos: 1,
+            totalAmountPos: grandTotal,
+            totalAmountPaidPos: paidAmount,
+            totalAmountDebtPos: amountDebt
+          }, { transaction });
+        }
+      }
 
       await transaction.commit();
       return {

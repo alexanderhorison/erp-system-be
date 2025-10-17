@@ -1,4 +1,4 @@
-const { Master_Rank, Master_Customer } = require("../../models");
+const { Master_Rank, Master_Customer, Dashboard_Summary_Pos_Customer } = require("../../models");
 const { throwValidation } = require("../../helpers/responses");
 const { Op } = require("sequelize");
 
@@ -169,6 +169,16 @@ class MasterDataCustomerService {
             model: Master_Rank,
             attributes: ["name"],
           },
+          {
+            model: Dashboard_Summary_Pos_Customer,
+            attributes: [
+              "totalPos",
+              "totalAmountPos",
+              "totalAmountPaidPos",
+              "totalAmountDebtPos",
+            ],
+            required: false, // LEFT JOIN
+          },
         ],
         where: {
           ...(name && { name: { [Op.iLike]: `%${name}%` } }),
@@ -185,6 +195,12 @@ class MasterDataCustomerService {
         phoneNumber: item.phoneNumber,
         email: item.email,
         isPosCustomer: item.isPosCustomer,
+        ...(item.Dashboard_Summary_Pos_Customer && {
+          totalPos: Number(item.Dashboard_Summary_Pos_Customer.totalPos),
+          totalAmountPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountPos),
+          totalAmountPaidPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountPaidPos),
+          totalAmountDebtPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountDebtPos)
+        }),
       }));
 
       return {
