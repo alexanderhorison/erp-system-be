@@ -3,6 +3,7 @@ version: '3.8'
 services:
   # Backend API Service
   api-erp:
+    image: ${CONTAINER_NAME}:latest
     container_name: ${CONTAINER_NAME:-erp-system-be}
     build:
       context: .
