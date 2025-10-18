@@ -4,7 +4,7 @@ const MasterNonCurrentAssetService = require("../../services/asset/MasterNonCurr
 const { responses } = require("../../helpers/responses");
 const {
   NON_CURENT_ASSETS_TYPE_LIST,
-} = require("../../const/NonCurrentAssetType");
+} = require("../../const/NonCurrentAssetType.js");
 
 class MasterNonCurrentAssetController {
   static async getAll(req, res) {

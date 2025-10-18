@@ -1,4 +1,4 @@
-const { NON_CURENT_ASSETS_TYPE } = require("../../const/NonCurrentAssetType");
+const { NON_CURENT_ASSETS_TYPE } = require("../../const/NonCurrentAssetType.js");
 const { Tm_Non_Current_Assets } = require("../../models");
 
 class MasterNonCurrentAssetService {
