@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Backend API Service
   api-erp:
-    container_name: api
+    container_name: ${CONTAINER_NAME:-erp-system-be}
     build:
       context: .
       dockerfile: Dockerfile
