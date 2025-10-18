@@ -26,6 +26,7 @@ COPY --from=builder /app/package*.json ./
 # Copy only the necessary application code
 COPY --from=builder /app/app.js ./
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/const ./const
 COPY --from=builder /app/controllers ./controllers
 COPY --from=builder /app/models ./models
 COPY --from=builder /app/routers ./routers
