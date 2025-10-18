@@ -13,8 +13,8 @@ COPY . .
 FROM node:18-alpine
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache bash libc6-compat
+# Install runtime dependencies for bcrypt and other native modules
+RUN apk add --no-cache bash libc6-compat python3 make g++
 
 # Create a non-root user to run the application
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
@@ -22,6 +22,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Copy package files and node_modules
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
+
+# Rebuild bcrypt for Alpine Linux to prevent SIGSEGV
+RUN npm rebuild bcrypt --build-from-source
 
 # Copy only the necessary application code
 COPY --from=builder /app/app.js ./

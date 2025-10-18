@@ -284,8 +284,19 @@ class UserService {
       let request = await yupSchemaValidation(req.body, schema);
       let body = {};
 
-      let decryptAuth = decrypt(request.auth);
-      body = JSON.parse(decryptAuth);
+      // Safer decryption with error handling
+      try {
+        let decryptAuth = decrypt(request.auth);
+        body = JSON.parse(decryptAuth);
+      } catch (decryptError) {
+        console.error("Decrypt error:", decryptError);
+        throw throwValidation(400, "Invalid authentication data");
+      }
+
+      // Validate decrypted body
+      if (!body.email || !body.password) {
+        throw throwValidation(400, "Email dan password harus diisi");
+      }
       const user = await Master_User.findOne({
         where: {
           email: body.email,
@@ -310,14 +321,23 @@ class UserService {
         throw throwValidation(400, "Email atau Password tidak valid");
       }
 
-      const checkValidPassword = await compare(body.password, user.password);
+      // Safer bcrypt compare with error handling
+      let checkValidPassword = false;
+      try {
+        checkValidPassword = await compare(body.password, user.password);
+      } catch (bcryptError) {
+        console.error("Bcrypt compare error:", bcryptError);
+        throw throwValidation(500, "Authentication service error");
+      }
 
       if (!checkValidPassword) {
         throw throwValidation(400, "Email atau Password tidak valid");
       }
 
-      const token = jwt.sign(
-        {
+      // Safer JWT signing with error handling
+      let token, refreshToken;
+      try {
+        const payload = {
           id: user.id,
           name: user.name,
           email: user.email,
@@ -327,28 +347,14 @@ class UserService {
           warehouseId: user.warehouseId,
           warehouseName: user?.Master_Warehouse?.name,
           role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
-        },
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "20h",
-        }
-      );
+        };
 
-      const refreshToken = jwt.sign(
-        {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          userName: user.userName,
-          roleId: Number(user.roleId),
-          menuId: user.Master_Role.menuId,
-          warehouseId: user.warehouseId,
-          warehouseName: user?.Master_Warehouse?.name,
-          role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
-        },
-        process.env.REFRESH_TOKEN_KEY,
-        { expiresIn: "7d" }
-      );
+        token = jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: "20h" });
+        refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_KEY, { expiresIn: "7d" });
+      } catch (jwtError) {
+        console.error("JWT signing error:", jwtError);
+        throw throwValidation(500, "Token generation error");
+      }
 
       // await Audit_Trail.create(auditTrailLog("login", user.name, "success"));
       delete user.password;
