@@ -13,6 +13,9 @@ COPY . .
 FROM node:18-alpine
 WORKDIR /app
 
+# Define build-time argument for port (no default - must be provided)
+ARG PORT
+
 # Install runtime dependencies for bcrypt and other native modules
 RUN apk add --no-cache bash libc6-compat python3 make g++
 
@@ -54,8 +57,8 @@ RUN chown -R appuser:appgroup /app
 # Switch to non-root user
 USER appuser
 
-# Expose port (will be overridden by environment)
-EXPOSE ${PORT:-4000}
+# Expose port using build argument
+EXPOSE $PORT
 
 # Start the application using environment variables
 CMD ["sh", "-c", "PORT=${PORT:-4000} NODE_ENV=${NODE_ENV:-production} npm start"]

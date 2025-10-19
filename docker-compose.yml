@@ -8,6 +8,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PORT: ${PORT:-4000}
     ports:
       - "${PORT:-4000}:${PORT:-4000}"
     env_file:
