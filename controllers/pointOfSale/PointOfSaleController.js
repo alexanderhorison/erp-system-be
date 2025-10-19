@@ -96,6 +96,9 @@ class PointOfSaleController {
               subTotal: yup.number().required("Sub Total Product harus diisi"),
               notes: yup.string().optional(),
               title: yup.string().optional(),
+              isDebt: yup.boolean().optional(),
+              debtDate: yup.string().optional(),
+              totalDebt: yup.number().optional()
             })
           )
           .required("List point of sale produk harus ada"),

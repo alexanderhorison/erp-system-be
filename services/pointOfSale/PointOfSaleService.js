@@ -243,9 +243,12 @@ class PointOfSaleService {
       const createPosProducts = [];
       const listProduct = data?.listProduct;
 
+      let totalHargaBarangWithoutDebt = 0;
+
       for (const item of listProduct) {
         // Jika produk memiliki warehouseProductId
         if (item.warehouseProductId) {
+          totalHargaBarangWithoutDebt += item.subTotal;
           const warehouseProduct = await Warehouse_Product.findOne({
             where: {
               id: item.warehouseProductId,
@@ -356,7 +359,7 @@ class PointOfSaleService {
         const grandTotal = Number(data.grandTotal) || 0;
         const totalPayment = Number(data.totalPayment) || 0;
         // Hitung sisa hutang
-        let amountDebt = grandTotal - totalPayment;
+        let amountDebt = totalHargaBarangWithoutDebt + data.totalDebt - totalPayment;
         // Jika hasil negatif atau 0, berarti tidak ada hutang
         if (amountDebt <= 0) amountDebt = 0;
 
@@ -368,9 +371,9 @@ class PointOfSaleService {
           // Jika ada, update
           await Dashboard_Summary_Pos_Customer.update({
             totalPos: Number(findExisting.totalPos) + 1,
-            totalAmountPos: Number(findExisting.totalAmountPos) + Number(grandTotal),
+            totalAmountPos: Number(findExisting.totalAmountPos) + Number(totalHargaBarangWithoutDebt),
             totalAmountPaidPos: Number(findExisting.totalAmountPaidPos) + Number(paidAmount),
-            totalAmountDebtPos: Number(findExisting.totalAmountDebtPos) + Number(amountDebt)
+            totalAmountDebtPos: Number(amountDebt)
           }, {
             where: { id: findExisting.id },
             transaction

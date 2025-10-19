@@ -176,6 +176,7 @@ class MasterDataCustomerService {
               "totalAmountPos",
               "totalAmountPaidPos",
               "totalAmountDebtPos",
+              "updatedAt"
             ],
             required: false, // LEFT JOIN
           },
@@ -199,7 +200,8 @@ class MasterDataCustomerService {
           totalPos: Number(item.Dashboard_Summary_Pos_Customer.totalPos),
           totalAmountPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountPos),
           totalAmountPaidPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountPaidPos),
-          totalAmountDebtPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountDebtPos)
+          totalAmountDebtPos: Number(item.Dashboard_Summary_Pos_Customer.totalAmountDebtPos),
+          lastDateDebtPos: new Date(item.Dashboard_Summary_Pos_Customer.updatedAt).toLocaleDateString("en-GB"),
         }),
       }));
 
