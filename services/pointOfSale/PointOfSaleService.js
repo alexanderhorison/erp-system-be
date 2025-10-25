@@ -248,7 +248,6 @@ class PointOfSaleService {
       for (const item of listProduct) {
         // Jika produk memiliki warehouseProductId
         if (item.warehouseProductId) {
-          totalHargaBarangWithoutDebt += item.subTotal;
           const warehouseProduct = await Warehouse_Product.findOne({
             where: {
               id: item.warehouseProductId,
@@ -317,6 +316,10 @@ class PointOfSaleService {
             },
             { transaction }
           );
+        }
+        // calculated total harga barang tanpa hutang
+        if (!item.isDebt){
+          totalHargaBarangWithoutDebt += item.subTotal;
         }
 
         // push pos products
