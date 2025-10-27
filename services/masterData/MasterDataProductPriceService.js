@@ -8,7 +8,7 @@ const {
 class MasterDataProductPriceService {
   static async createOrUpdate(data) {
     try {
-      const { productId, unitId, basePrice } = data;
+      const { productId, unitId, basePrice, basePricePos } = data;
 
       const existingRecord = await Master_Product_Price.findOne({
         where: {
@@ -20,13 +20,15 @@ class MasterDataProductPriceService {
       if (existingRecord) {
         await existingRecord.update({
           basePrice: basePrice,
+          basePricePos: basePricePos,
         });
         return;
       } else {
-        const newRecord = await Master_Product_Price.create({
+        await Master_Product_Price.create({
           productId: productId,
           unitId: unitId,
           basePrice: basePrice,
+          basePricePos: basePricePos,
         });
 
         return;
@@ -66,6 +68,7 @@ class MasterDataProductPriceService {
           unitName: unit.name, // Assuming Master_Unit has a 'name' column
           basePrice: existingPrice ? existingPrice.basePrice : 0,
           masterModal: existingModal ? existingModal.modal : 0,
+          basePricePos: existingPrice ? existingPrice.basePricePos : 0,
         };
       });
 

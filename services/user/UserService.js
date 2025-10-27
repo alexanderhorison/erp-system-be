@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Master_User, Master_Role, Audit_Trail, Master_Warehouse } = require("../../models");
+const { Master_User, Master_Role, Audit_Trail, Master_Warehouse, Master_Action } = require("../../models");
 const { responses, throwValidation } = require("../../helpers/responses");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
@@ -333,6 +333,18 @@ class UserService {
       if (!checkValidPassword) {
         throw throwValidation(400, "Email atau Password tidak valid");
       }
+      // Get Master Action
+      const masterActions = await Master_Action.findAll({
+        where: {
+          menuId: {
+            [Op.in]: user.Master_Role.menuId, // array of menu IDs
+          },
+          roleId: user.roleId
+        },
+        attributes: ["id", "name",],
+      });
+
+      const listAction = masterActions.map((action) => action.name);
 
       // Safer JWT signing with error handling
       let token, refreshToken;
@@ -347,6 +359,7 @@ class UserService {
           warehouseId: user.warehouseId,
           warehouseName: user?.Master_Warehouse?.name,
           role: user.Master_Role, // Di FE bagian menu ternyata looping menunya pake role
+          actions: listAction
         };
 
         token = jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: "20h" });
@@ -368,6 +381,7 @@ class UserService {
         roleId: Number(user.roleId),
         warehouseId: user.warehouseId,
         warehouseName: user?.Master_Warehouse?.name,
+        actions: listAction
       };
       res.status(200).json(
         responses(true, "Berhasil", {
@@ -424,6 +438,19 @@ class UserService {
               process.env.REFRESH_TOKEN_KEY,
               { expiresIn: "7d" }
             );
+            // Get Master Action
+            const masterActions = await Master_Action.findAll({
+              where: {
+                menuId: {
+                  [Op.in]: user.Master_Role.menuId, // array of menu IDs
+                },
+                roleId: user.roleId
+              },
+              attributes: ["id", "name", "menuId"],
+            });
+
+            const listAction = masterActions.map((action) => action.name);
+
             const userLogin = {
               id: user.id,
               role: user.Master_Role,
@@ -434,6 +461,7 @@ class UserService {
               roleId: Number(user.roleId),
               warehouseId: user.warehouseId,
               warehouseName: user?.Master_Warehouse?.name,
+              actions: listAction
             };
             res.status(200).json(
               responses(true, "Berhasil", {

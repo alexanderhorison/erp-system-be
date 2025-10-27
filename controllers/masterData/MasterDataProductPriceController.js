@@ -10,6 +10,7 @@ class MasterDataProductPriceController {
         productId: yup.number().required("productId harus diisi"),
         unitId: yup.number().required("productId harus diisi"),
         basePrice: yup.number().required("base price harus diisi"),
+        basePricePos: yup.number().required("base price harus diisi"),
       });
 
       const body = await yupSchemaValidation(req.body, schema);

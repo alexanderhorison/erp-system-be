@@ -1,7 +1,8 @@
-const { Master_Role, Master_Menu, Master_User } = require("../../models");
+const { Master_Role, Master_Menu, Master_User, Master_Action } = require("../../models");
 const yup = require("yup");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const { responses, throwValidation } = require("../../helpers/responses");
+const { Op } = require("sequelize");
 
 class RoleService {
   static async createRole(req, res) {
@@ -60,10 +61,14 @@ class RoleService {
           .array()
           .of(yup.number())
           .min(1, "Masukkan salah satu menu untuk membuat otoritas"),
+        actions: yup.array().of(yup.object().shape({
+          name: yup.string().required(),
+          menuId: yup.number().required(),
+        })).optional(),
       });
       const body = await yupSchemaValidation(req.body, schema);
 
-      const { name, description, menuId } = body;
+      const { name, description, menuId, actions } = body;
 
       const role = await Master_Role.findByPk(roleId);
 
@@ -85,6 +90,45 @@ class RoleService {
         description: description,
         menuId: menuId,
       });
+
+      // Update or Remove Master Actions
+      // 🔹 Update or Remove Master Actions
+      if (Array.isArray(actions)) {
+        const existingActions = await Master_Action.findAll({
+          where: { roleId },
+          attributes: ["id", "name", "menuId"],
+          raw: true,
+        });
+
+        // Extract comparison sets
+        const existingKeys = existingActions.map(a => `${a.menuId}_${a.name}`);
+        const newKeys = actions.map(a => `${a.menuId}_${a.name}`);
+
+        // Find what to add
+        const toAdd = actions.filter(a => !existingKeys.includes(`${a.menuId}_${a.name}`));
+
+        // Find what to remove
+        const toRemove = existingActions.filter(a => !newKeys.includes(`${a.menuId}_${a.name}`));
+
+        // Perform DB changes efficiently
+        if (toAdd.length) {
+          await Master_Action.bulkCreate(
+            toAdd.map(a => ({
+              roleId,
+              menuId: a.menuId,
+              name: a.name,
+            }))
+          );
+        }
+
+        if (toRemove.length) {
+          const idsToDelete = existingActions
+            .filter(a => toRemove.some(r => r.menuId === a.menuId && r.name === a.name))
+            .map(a => a.id);
+
+          await Master_Action.destroy({ where: { id: idsToDelete } });
+        }
+      }
 
       return res
         .status(200)
@@ -156,7 +200,23 @@ class RoleService {
         throw throwValidation(404, "Role tidak ditemukan");
       }
 
-      return res.status(200).json(responses(true, "berhasil", role));
+      // Find Actions based on role's menuId
+      const actions = await Master_Action.findAll({
+        where: {
+          menuId: {
+            [Op.in]: role.menuId, // array of menu IDs
+          },
+          roleId: roleId
+        },
+        attributes: ["id", "name", "menuId"],
+      })
+
+      const roleData = {
+        ...role.dataValues,
+        actions
+      }
+
+      return res.status(200).json(responses(true, "berhasil", roleData));
     } catch (error) {
       return res
         .status(error.code || 500)

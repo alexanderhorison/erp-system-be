@@ -171,7 +171,7 @@ class PointOfSaleService {
       // Build a map for quick price lookup
       const priceMap = {};
       prices.forEach((price) => {
-        priceMap[`${price.productId}_${price.unitId}`] = price.basePrice;
+        priceMap[`${price.productId}_${price.unitId}`] = price.basePricePos;
       });
 
       // Format the data using the pre-fetched price map
@@ -417,11 +417,12 @@ class PointOfSaleService {
     }
   }
 
-  static async getAllPointOfSaleByWarehouseId(warehouseId) {
+  static async getAllPointOfSaleByWarehouseId(warehouseId, userId) {
     try {
       const getAllPosTransaction = await Pos_Transaction.findAll({
         where: {
           warehouseId,
+          createdBy: userId
         },
         include: [
           {
