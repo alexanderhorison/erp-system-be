@@ -342,7 +342,8 @@ class MigrationService {
             if (existingProduct) {
               // Update
               await Master_Product_Price.update({
-                basePrice: Number(basePrice)
+                basePrice: Number(basePrice),
+                basePricePos: Number(basePrice)
               }, {
                 where: {
                   id: existingProduct.id
@@ -355,7 +356,8 @@ class MigrationService {
               await Master_Product_Price.create({
                 productId: findProductData.id,
                 unitId: findUnitData.id,
-                basePrice: Number(basePrice)
+                basePrice: Number(basePrice),
+                basePricePos: Number(basePrice)
               }, { transaction })
 
               dataSuccess.push({ productName, unit, basePrice });
