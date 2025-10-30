@@ -236,6 +236,7 @@ class PointOfSaleService {
           status: "PAID",
           totalQuantity: totalQuantity,
           totalItems: totalItems,
+          lastDebt: data.totalDebt || 0
         },
         { transaction }
       );
