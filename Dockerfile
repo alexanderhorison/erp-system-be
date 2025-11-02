@@ -42,6 +42,7 @@ COPY --from=builder /app/seeders ./seeders
 COPY --from=builder /app/helpers ./helpers
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/template ./template
+COPY --from=builder /app/files ./files
 COPY --from=builder /app/.sequelizerc ./
 
 # Try to copy .env file if it exists using shell commands instead of COPY
