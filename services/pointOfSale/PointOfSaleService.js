@@ -713,6 +713,11 @@ class PointOfSaleService {
           }
         ]
       });
+
+      if (lastDayTransactions.length === 0) {
+        console.log("No POS transactions in the last 24 hours. Skipping report email.");
+        return;
+      }
       const filePath = await ExportPointOfSaleService.generateExcel(lastDayTransactions, startOfYesterday);
 
       const transporterConnection = await transporter();
