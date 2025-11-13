@@ -181,6 +181,31 @@ class PointOfSaleController {
     }
   }
 
+  static async getAllPointOfSaleByCustomerId(req, res) {
+    try {
+      const schemaParams = yup.object({
+        customerId: yup
+          .number()
+          .required("Id customer tidak boleh kosong")
+          .typeError("Id customer harus berupa angka"), // Additional type validation
+      });
+
+      const params = await yupSchemaValidation(req.params, schemaParams);
+
+      const customerId = params.customerId;
+
+      const data = await PointOfSaleService.getAllPointOfSaleByCustomerId(
+        customerId
+      );
+
+      res.status(200).json(responses(true, "Sukses Get All Data", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
   static async printPos(req, res) {
     try {
       const schemaParams = yup.object({

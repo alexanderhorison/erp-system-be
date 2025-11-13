@@ -19,6 +19,7 @@ const {
   Stock_Adjustment_History,
   Dashboard_Summary_Customer,
   Dashboard_Summary_Vendor,
+  Master_Customer,
   sequelize: sq,
 } = require("../../models");
 const { Op, fn, col } = require("sequelize");
@@ -698,6 +699,11 @@ class DashboardService {
         where: {
           customerId,
         },
+        include: [
+          {
+            model: Master_Customer,
+          }
+        ]
       });
 
       result.push(

@@ -669,10 +669,57 @@ class PointOfSaleService {
       // 🔹 AKHIR
       printString += `\n`;
 
+      // 🔹 POTONG KERTAS
+      printString += `\x1d\x56\x00`; // Cut paper (full cut)
+
       //! TESTING PURPOSE
       // virtualConsoleLogPos(printString);
 
       return { string: printString, printerSetting };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllPointOfSaleByCustomerId(customerId) {
+    try {
+      const getAllPosTransaction = await Pos_Transaction.findAll({
+        where: {
+          customerId,
+        },
+        include: [
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [
+              { model: Master_Role, attributes: ["name"] },
+            ],
+          },
+          { model: Master_Warehouse, attributes: ["name"], paranoid: true },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+      const all = getAllPosTransaction.map((item) => {
+        return {
+          id: item.id,
+          code: item.code,
+          subTotal: item.subTotal,
+          totalDiscount: item.totalDiscount,
+          grandTotal: item.grandTotal,
+          totalPayment: item.totalPayment,
+          notes: item.notes,
+          status: item.status,
+          createdAt: item.createdAt,
+          dateCreated: formatDate(item?.createdAt),
+          createdBy: item?.creator,
+          warehouseId: item?.warehouseId ?? null,
+          warehouseName: item?.Master_Warehouse?.name ?? "",
+          totalQuantity: item?.totalQuantity,
+          totalItems: item?.totalItems,
+        };
+      });
+      return all;
     } catch (error) {
       throw error;
     }
