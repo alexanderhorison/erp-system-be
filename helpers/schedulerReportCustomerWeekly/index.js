@@ -1,7 +1,5 @@
 const cron = require("node-cron");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
-const transporter = require("../emailConfig");
-const jwt = require("jsonwebtoken");
 
 const SCHEDULER_REPORT_CUSTOMER_WEEKLY = process.env.SCHEDULER_REPORT_CUSTOMER_WEEKLY || "0 23 * * 0"; // every sunday at 11 PM
 const cronjob = cron.schedule(`${SCHEDULER_REPORT_CUSTOMER_WEEKLY}`, async () => {

@@ -22,10 +22,12 @@ const {
 } = require("../../models");
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
-
 const { formatDate, formatTimeSecond } = require("../../helpers/formatDate");
 const { addLine, justifyLeft, justifyRight, addSpace, virtualConsoleLogPos } = require("../../helpers/posFunction");
 const { priceFormat, formatPricePosWithCurrency } = require("../../helpers/priceFormat");
+const ExportPointOfSaleService = require("../export/ExportPointOfSaleService");
+const transporter = require("../../helpers/emailConfig");
+const fs = require("fs/promises");
 
 
 class PointOfSaleService {
@@ -319,7 +321,7 @@ class PointOfSaleService {
           );
         }
         // calculated total harga barang tanpa hutang
-        if (!item.isDebt){
+        if (!item.isDebt) {
           totalHargaBarangWithoutDebt += item.subTotal;
         }
 
@@ -675,6 +677,68 @@ class PointOfSaleService {
       return { string: printString, printerSetting };
     } catch (error) {
       throw error;
+    }
+  }
+
+  static async runSchedulerReportPos() {
+    try {
+      /**
+       * 1. Find all transactions in the last 1 day
+       * 2. Generate report Excel
+       * 3. Send email with the report attached
+       */
+
+      const startOfYesterday = new Date();
+      startOfYesterday.setHours(0, 0, 0, 0);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+      const endOfYesterday = new Date();
+      endOfYesterday.setHours(0, 0, 0, 0);
+
+      const lastDayTransactions = await Pos_Transaction.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfYesterday, endOfYesterday],
+          },
+        },
+        include: [
+          {
+            model: Master_Customer,
+            attributes: ["name", "email", "alias"],
+          },
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name", "email"],
+          }
+        ]
+      });
+      const filePath = await ExportPointOfSaleService.generateExcel(lastDayTransactions, startOfYesterday);
+
+      const transporterConnection = await transporter();
+
+      const msg = {
+        from: process.env.EMAIL_IS,
+        to: process.env.EMAIL_RECEIVER,
+        bcc: process.env.EMAIL_RECEIVER_BCC,
+        subject: `POS Report - ${startOfYesterday.toLocaleDateString("id-ID")}`,
+        text: `Berikut laporan Point of Sale dalam 24 jam terakhir.`,
+        html: `<p>Berikut laporan Point of Sale dalam 24 jam terakhir.</p>`,
+        attachments: [
+          {
+            filename: filePath.split("/").pop(),
+            path: filePath,
+            contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          },
+        ],
+      };
+
+      await transporterConnection.sendMail(msg);
+
+      // 4️⃣ Clean up file
+      await fs.unlink(filePath);
+    } catch (err) {
+      throw err;
     }
   }
 
