@@ -2,6 +2,7 @@ const PointOfSaleService = require("../../services/pointOfSale/PointOfSaleServic
 const { responses } = require("../../helpers/responses");
 const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
+const ConfigService = require("../../services/config/configService");
 
 class PointOfSaleController {
   static async addOrRemoveFavorite(req, res) {
@@ -98,7 +99,7 @@ class PointOfSaleController {
               title: yup.string().optional(),
               isDebt: yup.boolean().optional(),
               debtDate: yup.string().optional(),
-              totalDebt: yup.number().optional()
+              totalDebt: yup.number().optional(),
             })
           )
           .required("List point of sale produk harus ada"),
@@ -219,17 +220,47 @@ class PointOfSaleController {
       //? KIRIM STRING YANG SUDAH DI FORMAT DENGAN \N
       const data = await PointOfSaleService.printPosV3(code);
 
-      res.status(200).json(responses(true, "Success Print", {
-        buffer: data.string,
-        printerSetting: data.printerSetting
-      }));
+      const printerServerSetting = await ConfigService.get({
+        query: {
+          key: "PRINTER_SERVER",
+        },
+      });
 
+      // Kirim ke print server
+      const printServerUrl = `${printerServerSetting.value_json.ip}/print-pos-api/print-file`;
+      const printPayload = {
+        buffer: data.string,
+        printerSetting: data.printerSetting,
+      };
+
+      const printResponse = await fetch(printServerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(printPayload),
+      });
+
+      const printResult = await printResponse.json();
+
+      if (!printResponse.ok) {
+        console.error("Print server error:", printResult);
+        throw new Error(printResult.message || "Failed to send to printer");
+      }
+
+      return res.status(200).json(
+        responses(true, "Print job sent successfully", {
+          printResult,
+          timing: printResult.timing,
+        })
+      );
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ success: false, message: error.message || error });
+      return res
+        .status(500)
+        .json({ success: false, message: error.message || error });
     }
   }
-
 }
 
 module.exports = PointOfSaleController;

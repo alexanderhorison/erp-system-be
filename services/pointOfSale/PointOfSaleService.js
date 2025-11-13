@@ -741,7 +741,7 @@ class PointOfSaleService {
       )}\n`;
 
       // 🔹 AKHIR
-      printString += `\n`;
+      printString += `\n\n\n\n\n`; // Tambahkan 5 baris kosong agar semua konten keluar dari printer
 
       // 🔹 POTONG KERTAS
       printString += `\x1d\x56\x00`; // Cut paper (full cut)

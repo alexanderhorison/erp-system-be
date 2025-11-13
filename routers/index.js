@@ -26,6 +26,7 @@ const routerLiabilities = require("./liabilities/index");
 const routerEquity = require("./equity/index");
 const routerProductRequestOrder = require("./productRequestOrder/index");
 const MasterDataCustomerController = require("../controllers/masterData/MasterDataCustomerController");
+const routerHealthCheck = require("./healthCheck/index");
 
 
 router.get("/", (req, res) => {
@@ -102,5 +103,7 @@ router.use("/equity", routerEquity);
 
 // Product Request Order
 router.use("/product-request-order", routerProductRequestOrder);
+
+router.use("/health-check", routerHealthCheck);
 
 module.exports = router;
