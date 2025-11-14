@@ -13,6 +13,10 @@ router.get(
   "/get-all-point-of-sale/:warehouseId",
   PointOfSaleController.getAllPointOfSaleByWarehouseId
 );
+router.get(
+  "/get-all-point-of-sale-by-customer/:customerId",
+  PointOfSaleController.getAllPointOfSaleByCustomerId
+);
 router.post("/add-favorite", PointOfSaleController.addOrRemoveFavorite);
 router.post("/create-point-of-sale", PointOfSaleController.createPointOfSale);
 router.get("/payment-type", PointOfSaleController.getPaymentType);

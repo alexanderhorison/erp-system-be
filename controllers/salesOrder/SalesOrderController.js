@@ -359,9 +359,12 @@ class SalesOrderController {
         };
       }
 
-      const printService = await PrintSalesOrderService.print(salesOrder);
+      const printService = await PrintSalesOrderService.print5inch(salesOrder);
 
-      const { ip, port } = printService.printerSetting;
+      // const { ip, port } = printService.printerSetting;
+
+      const ip = "localhost";
+      const port = "9002"
 
       const protocol = process.env.PRINTER_PROTOCOL || "http";
       const miniPcUrl = `${protocol}://${ip}:${port}/print-api/print-file`;

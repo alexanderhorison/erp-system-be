@@ -152,7 +152,8 @@ class MasterDataCustomerService {
         rankId: customer.rankId,
         rankName: customer.Master_Rank ? customer.Master_Rank?.name : "",
         alias: customer.alias,
-        level: customer.Master_Rank ? customer.Master_Rank?.level : 0
+        level: customer.Master_Rank ? customer.Master_Rank?.level : 0,
+        isPosCustomer: customer.isPosCustomer,
       };
 
       return result;

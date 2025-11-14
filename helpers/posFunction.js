@@ -1,17 +1,33 @@
 
 const justifyLeft = (str, length) => {
+  // Pastikan str adalah string
+  str = String(str || '');
+  // Jika str lebih panjang dari length, potong atau kembalikan apa adanya
+  if (str.length >= length) {
+    return str.substring(0, length);
+  }
   return str + ' '.repeat(length - str.length);  // Rata kiri
 }
 
 const justifyRight = (str, length) => {
+  // Pastikan str adalah string
+  str = String(str || '');
+  // Jika str lebih panjang dari length, potong atau kembalikan apa adanya
+  if (str.length >= length) {
+    return str.substring(0, length);
+  }
   return ' '.repeat(length - str.length) + str;  // Rata kanan
 }
 
 const addLine = (length) => {
+  // Pastikan length adalah positif
+  length = Math.max(0, parseInt(length) || 0);
   return '-'.repeat(length);  // Menambahkan garis sesuai panjang yang diinginkan
 }
 
 const addSpace = (length) => {
+  // Pastikan length adalah positif
+  length = Math.max(0, parseInt(length) || 0);
   return ' '.repeat(length);
 }
 

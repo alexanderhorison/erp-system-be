@@ -18,17 +18,25 @@ const {
   Master_Role,
   Master_Customer,
   Master_Rank,
-  Dashboard_Summary_Pos_Customer
+  Dashboard_Summary_Pos_Customer,
 } = require("../../models");
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
 const { formatDate, formatTimeSecond } = require("../../helpers/formatDate");
-const { addLine, justifyLeft, justifyRight, addSpace, virtualConsoleLogPos } = require("../../helpers/posFunction");
-const { priceFormat, formatPricePosWithCurrency } = require("../../helpers/priceFormat");
+const {
+  addLine,
+  justifyLeft,
+  justifyRight,
+  addSpace,
+  virtualConsoleLogPos,
+} = require("../../helpers/posFunction");
+const {
+  priceFormat,
+  formatPricePosWithCurrency,
+} = require("../../helpers/priceFormat");
 const ExportPointOfSaleService = require("../export/ExportPointOfSaleService");
 const transporter = require("../../helpers/emailConfig");
 const fs = require("fs/promises");
-
 
 class PointOfSaleService {
   static async addOrRemoveFavorite(data) {
@@ -203,7 +211,10 @@ class PointOfSaleService {
   static async createPointOfSale({ data, user }) {
     const transaction = await sq.transaction();
     try {
-      if ((Number(data.grandTotal) - Number(data.totalPayment) > 0) && !data.customerId) {
+      if (
+        Number(data.grandTotal) - Number(data.totalPayment) > 0 &&
+        !data.customerId
+      ) {
         throwValidation(400, "Customer harus diisi jika terdapat sisa hutang");
       }
 
@@ -238,7 +249,7 @@ class PointOfSaleService {
           status: "PAID",
           totalQuantity: totalQuantity,
           totalItems: totalItems,
-          lastDebt: data.totalDebt || 0
+          lastDebt: data.totalDebt || 0,
         },
         { transaction }
       );
@@ -357,42 +368,52 @@ class PointOfSaleService {
       if (data?.customerId) {
         const findExisting = await Dashboard_Summary_Pos_Customer.findOne({
           where: {
-            customerId: data.customerId
+            customerId: data.customerId,
           },
-          transaction
+          transaction,
         });
 
         const grandTotal = Number(data.grandTotal) || 0;
         const totalPayment = Number(data.totalPayment) || 0;
         // Hitung sisa hutang
-        let amountDebt = totalHargaBarangWithoutDebt + data.totalDebt - totalPayment;
+        let amountDebt =
+          totalHargaBarangWithoutDebt + data.totalDebt - totalPayment;
         // Jika hasil negatif atau 0, berarti tidak ada hutang
         if (amountDebt <= 0) amountDebt = 0;
 
         // Hitung jumlah yang dibayar
-        const paidAmount = totalPayment >= grandTotal ? grandTotal : totalPayment;
-
+        const paidAmount =
+          totalPayment >= grandTotal ? grandTotal : totalPayment;
 
         if (findExisting) {
           // Jika ada, update
-          await Dashboard_Summary_Pos_Customer.update({
-            totalPos: Number(findExisting.totalPos) + 1,
-            totalAmountPos: Number(findExisting.totalAmountPos) + Number(totalHargaBarangWithoutDebt),
-            totalAmountPaidPos: Number(findExisting.totalAmountPaidPos) + Number(paidAmount),
-            totalAmountDebtPos: Number(amountDebt)
-          }, {
-            where: { id: findExisting.id },
-            transaction
-          });
+          await Dashboard_Summary_Pos_Customer.update(
+            {
+              totalPos: Number(findExisting.totalPos) + 1,
+              totalAmountPos:
+                Number(findExisting.totalAmountPos) +
+                Number(totalHargaBarangWithoutDebt),
+              totalAmountPaidPos:
+                Number(findExisting.totalAmountPaidPos) + Number(paidAmount),
+              totalAmountDebtPos: Number(amountDebt),
+            },
+            {
+              where: { id: findExisting.id },
+              transaction,
+            }
+          );
         } else {
           // Jika tidak ada, buat baru
-          await Dashboard_Summary_Pos_Customer.create({
-            customerId: data.customerId,
-            totalPos: 1,
-            totalAmountPos: grandTotal,
-            totalAmountPaidPos: paidAmount,
-            totalAmountDebtPos: amountDebt
-          }, { transaction });
+          await Dashboard_Summary_Pos_Customer.create(
+            {
+              customerId: data.customerId,
+              totalPos: 1,
+              totalAmountPos: grandTotal,
+              totalAmountPaidPos: paidAmount,
+              totalAmountDebtPos: amountDebt,
+            },
+            { transaction }
+          );
         }
       }
 
@@ -425,7 +446,7 @@ class PointOfSaleService {
       const getAllPosTransaction = await Pos_Transaction.findAll({
         where: {
           warehouseId,
-          createdBy: userId
+          createdBy: userId,
         },
         include: [
           {
@@ -597,12 +618,14 @@ class PointOfSaleService {
   static async printPosV3(code) {
     try {
       // CONFIG PRINTER
-      const configPrinter = await ConfigService.get({ query: { key: "PRINTER_SETTING" } });
+      const configPrinter = await ConfigService.get({
+        query: { key: "PRINTER_SETTING" },
+      });
       const printerSetting = configPrinter.value_json;
 
-      // COMPANY INFO 
+      // COMPANY INFO
       const configCompany = await ConfigService.get({
-        query: { key: "COMPANY_INFO" }
+        query: { key: "COMPANY_INFO" },
       });
       const companyInfo = configCompany.value_json;
 
@@ -621,27 +644,50 @@ class PointOfSaleService {
       printString += `${addLine(printerSetting.col)}\n`;
 
       // 🔹 Reset ke left align
-      printString += `\x1b\x61\x00${justifyLeft(formatDate(data.createdAt), printerSetting.col / 2)}${justifyRight(formatTimeSecond(data.createdAt), printerSetting.col / 2)}\n`;
-      printString += `${justifyLeft(`Order ID`, printerSetting.col / 2)}${justifyRight(data.code, printerSetting.col / 2)}\n`;
-      printString += `${justifyLeft(`Customer Name`, printerSetting.col / 2)}${justifyRight(data?.customer?.name || '-', printerSetting.col / 2)}\n`;
+      printString += `\x1b\x61\x00${justifyLeft(
+        formatDate(data.createdAt),
+        printerSetting.col / 2
+      )}${justifyRight(
+        formatTimeSecond(data.createdAt),
+        printerSetting.col / 2
+      )}\n`;
+      printString += `${justifyLeft(
+        `Order ID`,
+        printerSetting.col / 2
+      )}${justifyRight(data.code, printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Customer Name`,
+        printerSetting.col / 2
+      )}${justifyRight(data?.customer?.name || "-", printerSetting.col / 2)}\n`;
       printString += `${addLine(printerSetting.col)}\n`;
 
       // 🔹 LIST PRODUK
       data.listProducts.forEach((product) => {
-        let baseProductName = product?.productName || product?.title || '-';
+        let baseProductName = product?.productName || product?.title || "-";
         let productName = baseProductName;
         let addNewLineProduct = false;
         let newLineProduct = "";
 
         // Cek apakah nama produk terlalu panjang
         if (productName.length > printerSetting.maxProductName) {
-          productName = baseProductName.substring(0, printerSetting.maxProductName);
+          productName = baseProductName.substring(
+            0,
+            printerSetting.maxProductName
+          );
           addNewLineProduct = true;
-          newLineProduct = baseProductName.substring(printerSetting.maxProductName);
+          newLineProduct = baseProductName.substring(
+            printerSetting.maxProductName
+          );
         }
 
         // Cetak baris pertama: Nama produk + quantity + subtotal
-        printString += `${justifyLeft(productName, printerSetting.maxProductName)} x${product.quantity}${justifyRight(formatPricePosWithCurrency(product.subTotal), printerSetting.col / 2 - product?.quantity?.toString().length - 7)}\n`;
+        printString += `${justifyLeft(
+          productName,
+          printerSetting.maxProductName
+        )} x${product.quantity}${justifyRight(
+          formatPricePosWithCurrency(product.subTotal),
+          printerSetting.col / 2 - product?.quantity?.toString().length - 7
+        )}\n`;
 
         // Jika ada baris kedua, tambahkan ke string
         if (addNewLineProduct) {
@@ -649,7 +695,9 @@ class PointOfSaleService {
         }
 
         // Cetak unit dan harga
-        printString += `${addSpace(2)}${product?.unitName} @${priceFormat(product?.price)}\n`;
+        printString += `${addSpace(2)}${product?.unitName} @${priceFormat(
+          product?.price
+        )}\n`;
       });
 
       // 🔹 TOTAL ITEMS
@@ -658,23 +706,92 @@ class PointOfSaleService {
 
       // 🔹 SUBTOTAL
       printString += `${addLine(printerSetting.col)}\n`;
-      printString += `${justifyLeft(`Subtotal`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.subTotal), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Subtotal`,
+        printerSetting.col / 2
+      )}${justifyRight(
+        formatPricePosWithCurrency(data?.subTotal),
+        printerSetting.col / 2
+      )}\n`;
 
       // 🔹 TOTAL
       printString += `${addLine(printerSetting.col)}\n`;
-      printString += `${justifyLeft(`Total`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.grandTotal), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Total`,
+        printerSetting.col / 2
+      )}${justifyRight(
+        formatPricePosWithCurrency(data?.grandTotal),
+        printerSetting.col / 2
+      )}\n`;
 
       // 🔹 PEMBAYARAN
-      printString += `${justifyLeft(`Cash`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment), printerSetting.col / 2)}\n`;
-      printString += `${justifyLeft(`Change`, printerSetting.col / 2)}${justifyRight(formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Cash`,
+        printerSetting.col / 2
+      )}${justifyRight(
+        formatPricePosWithCurrency(data?.totalPayment),
+        printerSetting.col / 2
+      )}\n`;
+      printString += `${justifyLeft(
+        `Change`,
+        printerSetting.col / 2
+      )}${justifyRight(
+        formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal),
+        printerSetting.col / 2
+      )}\n`;
 
       // 🔹 AKHIR
-      printString += `\n`;
+      printString += `\n\n\n\n\n`; // Tambahkan 5 baris kosong agar semua konten keluar dari printer
+
+      // 🔹 POTONG KERTAS
+      printString += `\x1d\x56\x00`; // Cut paper (full cut)
 
       //! TESTING PURPOSE
       // virtualConsoleLogPos(printString);
 
       return { string: printString, printerSetting };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllPointOfSaleByCustomerId(customerId) {
+    try {
+      const getAllPosTransaction = await Pos_Transaction.findAll({
+        where: {
+          customerId,
+        },
+        include: [
+          {
+            model: Master_User,
+            as: "creator",
+            attributes: ["name"],
+            include: [{ model: Master_Role, attributes: ["name"] }],
+          },
+          { model: Master_Warehouse, attributes: ["name"], paranoid: true },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+      const all = getAllPosTransaction.map((item) => {
+        return {
+          id: item.id,
+          code: item.code,
+          subTotal: item.subTotal,
+          totalDiscount: item.totalDiscount,
+          grandTotal: item.grandTotal,
+          totalPayment: item.totalPayment,
+          notes: item.notes,
+          status: item.status,
+          createdAt: item.createdAt,
+          dateCreated: formatDate(item?.createdAt),
+          createdBy: item?.creator,
+          warehouseId: item?.warehouseId ?? null,
+          warehouseName: item?.Master_Warehouse?.name ?? "",
+          totalQuantity: item?.totalQuantity,
+          totalItems: item?.totalItems,
+        };
+      });
+      return all;
     } catch (error) {
       throw error;
     }
@@ -710,15 +827,20 @@ class PointOfSaleService {
             model: Master_User,
             as: "creator",
             attributes: ["name", "email"],
-          }
-        ]
+          },
+        ],
       });
 
       if (lastDayTransactions.length === 0) {
-        console.log("No POS transactions in the last 24 hours. Skipping report email.");
+        console.log(
+          "No POS transactions in the last 24 hours. Skipping report email."
+        );
         return;
       }
-      const filePath = await ExportPointOfSaleService.generateExcel(lastDayTransactions, startOfYesterday);
+      const filePath = await ExportPointOfSaleService.generateExcel(
+        lastDayTransactions,
+        startOfYesterday
+      );
 
       const transporterConnection = await transporter();
 
@@ -733,7 +855,8 @@ class PointOfSaleService {
           {
             filename: filePath.split("/").pop(),
             path: filePath,
-            contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            contentType:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           },
         ],
       };
@@ -746,7 +869,6 @@ class PointOfSaleService {
       throw err;
     }
   }
-
 }
 
 module.exports = PointOfSaleService;
