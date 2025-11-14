@@ -213,6 +213,8 @@ class PointOfSaleController {
         code: yup.string().required("Code point of sale harus diisi"),
       });
 
+      const targetPrinter = req.body;
+
       const params = await yupSchemaValidation(req.params, schemaParams);
 
       const code = params.code;
@@ -230,7 +232,7 @@ class PointOfSaleController {
       const printServerUrl = `${printerServerSetting.value_json.ip}/print-pos-api/print-file`;
       const printPayload = {
         buffer: data.string,
-        printerSetting: data.printerSetting,
+        printerSetting: targetPrinter,
       };
 
       const printResponse = await fetch(printServerUrl, {

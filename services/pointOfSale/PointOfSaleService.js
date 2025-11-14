@@ -580,6 +580,11 @@ class PointOfSaleService {
         };
       });
 
+      // Calculate debt only if customer exists (grandTotal - totalPayment)
+      const debtAmount = detail.customerId
+        ? Number(detail.grandTotal || 0) - Number(detail.totalPayment || 0)
+        : 0;
+
       const sendData = {
         id: detail.id,
         customer: {
@@ -599,6 +604,9 @@ class PointOfSaleService {
         totalDiscount: detail.totalDiscount,
         totalPayment: detail.totalPayment,
         grandTotal: detail.grandTotal,
+        debt: debtAmount > 0 ? debtAmount : 0, // Only show positive debt
+        change: debtAmount < 0 ? Math.abs(debtAmount) : 0, // Show change if payment exceeds grandTotal
+        lastDebt: detail?.lastDebt ?? 0, // Hutang sebelumnya
         status: detail?.status,
         notes: detail?.notes,
         createdBy: detail?.creator?.name ?? "",
@@ -619,14 +627,16 @@ class PointOfSaleService {
     try {
       // CONFIG PRINTER
       const configPrinter = await ConfigService.get({
-        query: { key: "PRINTER_SETTING" },
+        query: { key: "PRINTER_SETTING_POS" },
       });
+
       const printerSetting = configPrinter.value_json;
 
       // COMPANY INFO
       const configCompany = await ConfigService.get({
         query: { key: "COMPANY_INFO" },
       });
+
       const companyInfo = configCompany.value_json;
 
       // DATA
@@ -698,6 +708,11 @@ class PointOfSaleService {
         printString += `${addSpace(2)}${product?.unitName} @${priceFormat(
           product?.price
         )}\n`;
+
+        // Cetak notes produk jika ada
+        if (product?.notes && product?.notes.trim() !== "") {
+          printString += `${addSpace(2)}Note: ${product.notes}\n`;
+        }
       });
 
       // 🔹 TOTAL ITEMS
@@ -732,13 +747,29 @@ class PointOfSaleService {
         formatPricePosWithCurrency(data?.totalPayment),
         printerSetting.col / 2
       )}\n`;
-      printString += `${justifyLeft(
-        `Change`,
-        printerSetting.col / 2
-      )}${justifyRight(
-        formatPricePosWithCurrency(data?.totalPayment - data?.grandTotal),
-        printerSetting.col / 2
-      )}\n`;
+
+      // Calculate debt or change (only show debt if customer exists)
+      const debtOrChange = data?.totalPayment - data?.grandTotal;
+
+      if (data?.customer?.id && debtOrChange < 0) {
+        // If customer exists and there is debt (negative means debt)
+        printString += `${justifyLeft(
+          `Sisa Hutang`,
+          printerSetting.col / 2
+        )}${justifyRight(
+          formatPricePosWithCurrency(Math.abs(debtOrChange)),
+          printerSetting.col / 2
+        )}\n`;
+      } else if (debtOrChange > 0) {
+        // If there is change (positive)
+        printString += `${justifyLeft(
+          `Change`,
+          printerSetting.col / 2
+        )}${justifyRight(
+          formatPricePosWithCurrency(debtOrChange),
+          printerSetting.col / 2
+        )}\n`;
+      }
 
       // 🔹 AKHIR
       printString += `\n\n\n\n\n`; // Tambahkan 5 baris kosong agar semua konten keluar dari printer
@@ -749,7 +780,7 @@ class PointOfSaleService {
       //! TESTING PURPOSE
       // virtualConsoleLogPos(printString);
 
-      return { string: printString, printerSetting };
+      return { string: printString };
     } catch (error) {
       throw error;
     }

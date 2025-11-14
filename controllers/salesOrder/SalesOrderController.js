@@ -7,6 +7,7 @@ const yup = require("yup");
 const SalesOrderService = require("../../services/salesOrder/SalesOrderService");
 const PrintSalesOrderService = require("../../services/salesOrder/PrintSalesOrderService");
 const axios = require("axios");
+const ConfigService = require("../../services/config/configService");
 
 class SalesOrderController {
   static async getAllSalesOrder(req, res) {
@@ -361,25 +362,37 @@ class SalesOrderController {
 
       const printService = await PrintSalesOrderService.print5inch(salesOrder);
 
-      // const { ip, port } = printService.printerSetting;
+      const printerConfig = await ConfigService.get({
+        query: { key: "PRINTER_SERVER" },
+      });
 
-      const ip = "localhost";
-      const port = "9002"
+      const selectedPrinter = await ConfigService.get({
+        query: { key: "PRINTER_DOT_MATRIX" },
+      });
 
-      const protocol = process.env.PRINTER_PROTOCOL || "http";
-      const miniPcUrl = `${protocol}://${ip}:${port}/print-api/print-file`;
+      const { ip } = printerConfig.value_json;
+
+      const miniPcUrl = `${ip}/print-api/print-file`;
 
       try {
-        const response = await axios.post(miniPcUrl, {
-          fileName: `sales_order_${code}.txt`, // nama file sementara
-          buffer: printService.string,         // isi buffer teks untuk dot matrix
-          printerSetting: printService.printerSetting // opsional kalau mau dipakai Mini PC
-        },
-          { timeout: 30000 } // 30 seconds timeout);
+        const response = await axios.post(
+          miniPcUrl,
+          {
+            fileName: `sales_order_${code}.txt`, // nama file sementara
+            buffer: printService.string, // isi buffer teks untuk dot matrix
+            printerSetting: {
+              printerIp: selectedPrinter.value_json.ip,
+              queueName: selectedPrinter.value_json.queueName,
+            }, // opsional kalau mau dipakai Mini PC
+          },
+          { timeout: 10000 } // 10 seconds timeout);
         );
 
         if (!response.data.success) {
-          throwValidation(500, response.data.message || "PC Server did not confirm success")
+          throwValidation(
+            500,
+            response.data.message || "PC Server did not confirm success"
+          );
         }
       } catch (error) {
         // Convert axios error into readable API response
@@ -388,13 +401,13 @@ class SalesOrderController {
           throwValidation(
             error.response.status,
             error.response.data.message || "PC Server error"
-          )
+          );
         } else {
           // Network or axios-level error
           throwValidation(
             500,
             error.message || "Failed to connect to print server"
-          )
+          );
         }
       }
 
@@ -414,8 +427,17 @@ class SalesOrderController {
 
   static async runSchedulerReportCustomerWeekly(req, res) {
     try {
-      const runScheduler = await SalesOrderService.runSchedulerReportCustomerWeekly();
-      res.status(200).json(responses(true, runScheduler?.message || "Berhasil", runScheduler?.data || []));
+      const runScheduler =
+        await SalesOrderService.runSchedulerReportCustomerWeekly();
+      res
+        .status(200)
+        .json(
+          responses(
+            true,
+            runScheduler?.message || "Berhasil",
+            runScheduler?.data || []
+          )
+        );
     } catch (error) {
       res
         .status(error.code || 500)

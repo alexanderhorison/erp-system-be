@@ -15,8 +15,15 @@ const fs = require("fs");
 const path = require("path");
 
 class PrintSalesOrderService {
-
-  static createHeaderV3(data, companyInfo, printerSetting, colSize, headerTable, pageNumber, totalPages) {
+  static createHeaderV3(
+    data,
+    companyInfo,
+    printerSetting,
+    colSize,
+    headerTable,
+    pageNumber,
+    totalPages
+  ) {
     let header = "";
 
     // Nama toko dan tanggal cetak di baris yang sama, tambahkan page number di kanan
@@ -25,17 +32,37 @@ class PrintSalesOrderService {
     const pageInfo = `(${pageNumber}/${totalPages})`;
 
     // Hitung spacing - page info 5 karakter dari tgl cetak
-    const spacingBetweenCompanyAndDate = printerSetting.maxCol - companyName.length - printDate.length - 5 - pageInfo.length;
+    const spacingBetweenCompanyAndDate =
+      printerSetting.maxCol -
+      companyName.length -
+      printDate.length -
+      5 -
+      pageInfo.length;
 
-    header += companyName + " ".repeat(Math.max(spacingBetweenCompanyAndDate, 1)) + printDate + " ".repeat(5) + pageInfo + "\n"; // 1
+    header +=
+      companyName +
+      " ".repeat(Math.max(spacingBetweenCompanyAndDate, 1)) +
+      printDate +
+      " ".repeat(5) +
+      pageInfo +
+      "\n"; // 1
     header += justifyLeft(companyInfo.address, printerSetting.maxCol) + "\n"; // 2
-    header += justifyLeft(`Telp: ${companyInfo.phoneNumber}`, printerSetting.maxCol) + "\n"; // 3
+    header +=
+      justifyLeft(`Telp: ${companyInfo.phoneNumber}`, printerSetting.maxCol) +
+      "\n"; // 3
     header += addLine(printerSetting.maxCol) + "\n"; // 4
 
     // Faktur info
-    header += `No. SO      : ${data.code}`.padEnd(colSize.pos2) + `Pelanggan : ${data.customer?.name || "-"}\n`; // 5
-    header += `Tgl SO      : ${formatDateWithSlash(data.approvedAt)}`.padEnd(colSize.pos2) + `Alamat    : ${data.customer?.address || "-"}\n`; // 6
-    header += `Jth Tempo   : ${data.dueDate}`.padEnd(colSize.pos2) + `No. Telp  : ${data.customer?.phoneNumber || "-"}\n`; // 7
+    header +=
+      `No. SO      : ${data.code}`.padEnd(colSize.pos2) +
+      `Pelanggan : ${data.customer?.name || "-"}\n`; // 5
+    header +=
+      `Tgl SO      : ${formatDateWithSlash(data.approvedAt)}`.padEnd(
+        colSize.pos2
+      ) + `Alamat    : ${data.customer?.address || "-"}\n`; // 6
+    header +=
+      `Jth Tempo   : ${data.dueDate}`.padEnd(colSize.pos2) +
+      `No. Telp  : ${data.customer?.phoneNumber || "-"}\n`; // 7
     header += addLine(printerSetting.maxCol) + "\n"; // 8
 
     // Table header
@@ -52,7 +79,10 @@ class PrintSalesOrderService {
     let productsInCurrentPage = 0;
 
     // Kumpulkan produk untuk halaman ini berdasarkan baris, bukan jumlah produk
-    while (productIndex < totalProducts && currentProductLinesCount < maxProduct) {
+    while (
+      productIndex < totalProducts &&
+      currentProductLinesCount < maxProduct
+    ) {
       const item = listProducts[productIndex];
 
       let name = item.productName || "-";
@@ -81,25 +111,50 @@ class PrintSalesOrderService {
           }
         }
 
-        productLinesForThisItem.push(justifyLeft(firstName, colSize.productName) + " " +
-          justifyLeft(unit.length > 9 ? unit.substring(0, 9) : unit, colSize.unit) + " " +
-          justifyRight(qtyStr, colSize.quantity) + " " +
-          justifyRight(harga, colSize.price) + " " +
-          justifyRight(total, colSize.total));
+        productLinesForThisItem.push(
+          justifyLeft(firstName, colSize.productName) +
+            " " +
+            justifyLeft(
+              unit.length > 9 ? unit.substring(0, 9) : unit,
+              colSize.unit
+            ) +
+            " " +
+            justifyRight(qtyStr, colSize.quantity) +
+            " " +
+            justifyRight(harga, colSize.price) +
+            " " +
+            justifyRight(total, colSize.total)
+        );
 
         if (restName) {
-          productLinesForThisItem.push(justifyLeft(restName, colSize.productName));
+          productLinesForThisItem.push(
+            justifyLeft(restName, colSize.productName)
+          );
         }
       } else {
-        productLinesForThisItem.push(justifyLeft(name, colSize.productName) + " " +
-          justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-          justifyRight(qtyStr, colSize.quantity) + " " +
-          justifyRight(harga, colSize.price) + " " +
-          justifyRight(total, colSize.total));
+        productLinesForThisItem.push(
+          justifyLeft(name, colSize.productName) +
+            " " +
+            justifyLeft(
+              unit.length > colSize.unit
+                ? unit.substring(0, colSize.unit)
+                : unit,
+              colSize.unit
+            ) +
+            " " +
+            justifyRight(qtyStr, colSize.quantity) +
+            " " +
+            justifyRight(harga, colSize.price) +
+            " " +
+            justifyRight(total, colSize.total)
+        );
       }
 
       // Cek apakah masih bisa masuk ke halaman ini
-      if (currentProductLinesCount + productLinesForThisItem.length <= maxProduct) {
+      if (
+        currentProductLinesCount + productLinesForThisItem.length <=
+        maxProduct
+      ) {
         productLines.push(...productLinesForThisItem);
         currentProductLinesCount += productLinesForThisItem.length;
         productIndex++;
@@ -114,11 +169,18 @@ class PrintSalesOrderService {
       productLines,
       newProductIndex: productIndex,
       productsInCurrentPage,
-      linesUsed: currentProductLinesCount
+      linesUsed: currentProductLinesCount,
     };
   }
 
-  static createBarterTableV3(listBarterProducts, barterIndex, remainingLines, colSize, printerMaxCol, totalSalesOrderItems) {
+  static createBarterTableV3(
+    listBarterProducts,
+    barterIndex,
+    remainingLines,
+    colSize,
+    printerMaxCol,
+    totalSalesOrderItems
+  ) {
     const totalBarterProducts = listBarterProducts.length;
     let barterLines = [];
     let currentLinesCount = 0;
@@ -140,13 +202,16 @@ class PrintSalesOrderService {
           barterLines: [],
           newBarterIndex: barterIndex,
           linesUsed: 0,
-          isComplete: false
+          isComplete: false,
         };
       }
     }
 
     // Kumpulkan produk barter untuk halaman ini
-    while (barterIndex < totalBarterProducts && currentLinesCount < remainingLines) {
+    while (
+      barterIndex < totalBarterProducts &&
+      currentLinesCount < remainingLines
+    ) {
       const item = listBarterProducts[barterIndex];
 
       let name = item.productName || "-";
@@ -175,21 +240,45 @@ class PrintSalesOrderService {
           }
         }
 
-        barterLinesForThisItem.push(justifyLeft(firstName, colSize.productName) + " " +
-          justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-          justifyRight(qtyStr, colSize.quantity) + " " +
-          justifyRight(harga, colSize.price) + " " +
-          justifyRight(total, colSize.total));
+        barterLinesForThisItem.push(
+          justifyLeft(firstName, colSize.productName) +
+            " " +
+            justifyLeft(
+              unit.length > colSize.unit
+                ? unit.substring(0, colSize.unit)
+                : unit,
+              colSize.unit
+            ) +
+            " " +
+            justifyRight(qtyStr, colSize.quantity) +
+            " " +
+            justifyRight(harga, colSize.price) +
+            " " +
+            justifyRight(total, colSize.total)
+        );
 
         if (restName) {
-          barterLinesForThisItem.push(justifyLeft(restName, colSize.productName));
+          barterLinesForThisItem.push(
+            justifyLeft(restName, colSize.productName)
+          );
         }
       } else {
-        barterLinesForThisItem.push(justifyLeft(name, colSize.productName) + " " +
-          justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-          justifyRight(qtyStr, colSize.quantity) + " " +
-          justifyRight(harga, colSize.price) + " " +
-          justifyRight(total, colSize.total));
+        barterLinesForThisItem.push(
+          justifyLeft(name, colSize.productName) +
+            " " +
+            justifyLeft(
+              unit.length > colSize.unit
+                ? unit.substring(0, colSize.unit)
+                : unit,
+              colSize.unit
+            ) +
+            " " +
+            justifyRight(qtyStr, colSize.quantity) +
+            " " +
+            justifyRight(harga, colSize.price) +
+            " " +
+            justifyRight(total, colSize.total)
+        );
       }
 
       // Cek apakah masih bisa masuk ke halaman ini
@@ -219,7 +308,7 @@ class PrintSalesOrderService {
       barterLines,
       newBarterIndex: barterIndex,
       linesUsed: currentLinesCount,
-      isComplete
+      isComplete,
     };
   }
 
@@ -247,14 +336,20 @@ class PrintSalesOrderService {
         terbilangText = "nominal tidak valid";
       }
 
-      const terbilangWords = terbilangText.split(" ").filter((word) => word.length > 0);
-      const hargaStartPosition = colSize.productName + 1 + colSize.unit + 1 + colSize.quantity + 1;
+      const terbilangWords = terbilangText
+        .split(" ")
+        .filter((word) => word.length > 0);
+      const hargaStartPosition =
+        colSize.productName + 1 + colSize.unit + 1 + colSize.quantity + 1;
       const totalStartPosition = hargaStartPosition;
 
       // Baris pertama: Terbilang dan TOTAL
-      footer += "Terbilang :".padEnd(totalStartPosition) +
-        justifyRight("TOTAL :", colSize.price) + " " +
-        justifyRight(priceFormat(data.grandTotal), colSize.total) + "\n";
+      footer +=
+        "Terbilang :".padEnd(totalStartPosition) +
+        justifyRight("TOTAL :", colSize.price) +
+        " " +
+        justifyRight(priceFormat(data.grandTotal), colSize.total) +
+        "\n";
 
       // Items untuk kolom kanan
       const rightColumnItems = [
@@ -271,7 +366,10 @@ class PrintSalesOrderService {
         const word = terbilangWords[i];
         const testLine = currentLine + (currentLine ? " " : "") + word;
 
-        if (testLine.length <= totalStartPosition - 2 && i < terbilangWords.length - 1) {
+        if (
+          testLine.length <= totalStartPosition - 2 &&
+          i < terbilangWords.length - 1
+        ) {
           currentLine = testLine;
         } else {
           if (i === terbilangWords.length - 1) {
@@ -280,9 +378,12 @@ class PrintSalesOrderService {
 
           if (lineIndex < rightColumnItems.length) {
             const item = rightColumnItems[lineIndex];
-            footer += justifyLeft(currentLine, totalStartPosition) +
-              justifyRight(item.label, colSize.price) + " " +
-              justifyRight(item.value, colSize.total) + "\n";
+            footer +=
+              justifyLeft(currentLine, totalStartPosition) +
+              justifyRight(item.label, colSize.price) +
+              " " +
+              justifyRight(item.value, colSize.total) +
+              "\n";
           } else {
             footer += justifyLeft(currentLine, printerSetting.maxCol) + "\n";
           }
@@ -297,15 +398,26 @@ class PrintSalesOrderService {
       // Cetak sisa kolom kanan yang belum tercetak
       while (lineIndex < rightColumnItems.length) {
         const item = rightColumnItems[lineIndex];
-        footer += " ".repeat(Math.max(0, totalStartPosition)) +
-          justifyRight(item.label, colSize.price) + " " +
-          justifyRight(item.value, colSize.total) + "\n";
+        footer +=
+          " ".repeat(Math.max(0, totalStartPosition)) +
+          justifyRight(item.label, colSize.price) +
+          " " +
+          justifyRight(item.value, colSize.total) +
+          "\n";
         lineIndex++;
       }
 
       footer += addLine(printerSetting.maxCol) + "\n";
-      footer += justifyRight(`${data.amountDebt == 0 ? "TOTAL :" : "SISA HUTANG :"}`, printerSetting.maxCol - colSize.pos3) +
-        justifyRight(priceFormat(data.amountDebt == 0 ? data.grandTotal : data.amountDebt), colSize.pos3) + "\n";
+      footer +=
+        justifyRight(
+          `${data.amountDebt == 0 ? "TOTAL :" : "SISA HUTANG :"}`,
+          printerSetting.maxCol - colSize.pos3
+        ) +
+        justifyRight(
+          priceFormat(data.amountDebt == 0 ? data.grandTotal : data.amountDebt),
+          colSize.pos3
+        ) +
+        "\n";
       footer += addLine(printerSetting.maxCol) + "\n";
 
       // Footer dengan positioning spesifik - sesuaikan dengan lebar kertas
@@ -329,21 +441,47 @@ class PrintSalesOrderService {
         printerSetting.maxCol - hormatKamiFromRight - signatureLength
       );
 
-      const penerimaTextPosition = penerimaSignaturePosition + Math.floor((signatureLength - "Penerima".length) / 2);
-      const hormatKamiTextPosition = hormatKamiSignaturePosition + Math.floor((signatureLength - "Hormat Kami".length) / 2);
+      const penerimaTextPosition =
+        penerimaSignaturePosition +
+        Math.floor((signatureLength - "Penerima".length) / 2);
+      const hormatKamiTextPosition =
+        hormatKamiSignaturePosition +
+        Math.floor((signatureLength - "Hormat Kami".length) / 2);
 
-      const spaceBetweenPenerimaAndHormat = Math.max(0, hormatKamiTextPosition - penerimaTextPosition - "Penerima".length);
-      const spaceBetweenSignatures = Math.max(0, hormatKamiSignaturePosition - penerimaSignaturePosition - signatureLength);
+      const spaceBetweenPenerimaAndHormat = Math.max(
+        0,
+        hormatKamiTextPosition - penerimaTextPosition - "Penerima".length
+      );
+      const spaceBetweenSignatures = Math.max(
+        0,
+        hormatKamiSignaturePosition -
+          penerimaSignaturePosition -
+          signatureLength
+      );
 
-      footer += " ".repeat(Math.max(0, penerimaTextPosition)) + "Penerima" +
-        " ".repeat(spaceBetweenPenerimaAndHormat) + "Hormat Kami" + "\n\n\n";
-      footer += " ".repeat(Math.max(0, penerimaSignaturePosition)) + "(.............)" +
-        " ".repeat(spaceBetweenSignatures) + "(.............)" + "\n\n";
-      footer += justifyLeft("Silahkan transfer ke rekening:", printerSetting.maxCol) + "\n";
+      footer +=
+        " ".repeat(Math.max(0, penerimaTextPosition)) +
+        "Penerima" +
+        " ".repeat(spaceBetweenPenerimaAndHormat) +
+        "Hormat Kami" +
+        "\n\n\n";
+      footer +=
+        " ".repeat(Math.max(0, penerimaSignaturePosition)) +
+        "(.............)" +
+        " ".repeat(spaceBetweenSignatures) +
+        "(.............)" +
+        "\n\n";
+      footer +=
+        justifyLeft("Silahkan transfer ke rekening:", printerSetting.maxCol) +
+        "\n";
 
       // Potong teks rekening jika terlalu panjang untuk printer kecil
       const rekeningText = "248 882 2298 BCA a/n PT TJAHAYA BERKAT ABADI";
-      footer += justifyLeft(rekeningText.substring(0, printerSetting.maxCol), printerSetting.maxCol) + "\n";
+      footer +=
+        justifyLeft(
+          rekeningText.substring(0, printerSetting.maxCol),
+          printerSetting.maxCol
+        ) + "\n";
     } else {
       // Footer template untuk halaman yang bukan terakhir (tanpa text/value, hanya struktur)
       footer += addLine(printerSetting.maxCol) + "\n"; // Garis atas
@@ -437,7 +575,11 @@ class PrintSalesOrderService {
       });
 
       // Jika ada barang barter, hitung juga baris yang dibutuhkan
-      if (data.listBarterProducts && Array.isArray(data.listBarterProducts) && data.listBarterProducts.length > 0) {
+      if (
+        data.listBarterProducts &&
+        Array.isArray(data.listBarterProducts) &&
+        data.listBarterProducts.length > 0
+      ) {
         // Header barter membutuhkan 5 baris (line + "Sales Order: X items" + line + "BARANG BARTER:" + line)
         totalProductLines += 5;
 
@@ -457,7 +599,8 @@ class PrintSalesOrderService {
       }
 
       // Maksimal maxProduct baris per halaman, pastikan minimal 1 halaman
-      const totalPages = totalProductLines > 0 ? Math.ceil(totalProductLines / maxProduct) : 1;
+      const totalPages =
+        totalProductLines > 0 ? Math.ceil(totalProductLines / maxProduct) : 1;
 
       let printString = "";
       // Set font size 11 dan LPI 9
@@ -468,18 +611,32 @@ class PrintSalesOrderService {
       let productIndex = 0;
       let barterIndex = 0;
       const totalProducts = data.listProducts.length;
-      const hasBarterProducts = data.listBarterProducts && data.listBarterProducts.length > 0;
-      const totalBarterProducts = hasBarterProducts ? data.listBarterProducts.length : 0;
+      const hasBarterProducts =
+        data.listBarterProducts && data.listBarterProducts.length > 0;
+      const totalBarterProducts = hasBarterProducts
+        ? data.listBarterProducts.length
+        : 0;
       let barterStarted = false;
       let barterCompleted = false;
 
       // Loop untuk setiap halaman
-      while (productIndex < totalProducts || (hasBarterProducts && !barterCompleted)) {
+      while (
+        productIndex < totalProducts ||
+        (hasBarterProducts && !barterCompleted)
+      ) {
         const isLastPage = currentPage === totalPages;
         let currentLineCount = 0;
 
         // Tambahkan header (10 baris) menggunakan function terpisah
-        printString += this.createHeaderV3(data, companyInfo, printerSetting, colSize, headerTable, currentPage, totalPages);
+        printString += this.createHeaderV3(
+          data,
+          companyInfo,
+          printerSetting,
+          colSize,
+          headerTable,
+          currentPage,
+          totalPages
+        );
         currentLineCount += 10;
 
         let remainingLines = maxProduct;
@@ -487,14 +644,23 @@ class PrintSalesOrderService {
 
         // Jika masih ada produk biasa, tambahkan
         if (productIndex < totalProducts) {
-          const productResult = this.createProductTableV3(data.listProducts, productIndex, remainingLines, colSize);
+          const productResult = this.createProductTableV3(
+            data.listProducts,
+            productIndex,
+            remainingLines,
+            colSize
+          );
           allLines.push(...productResult.productLines);
           productIndex = productResult.newProductIndex;
           remainingLines -= productResult.linesUsed;
         }
 
         // Jika produk sudah habis dan ada barter, coba tambahkan barter
-        if (productIndex >= totalProducts && hasBarterProducts && !barterCompleted) {
+        if (
+          productIndex >= totalProducts &&
+          hasBarterProducts &&
+          !barterCompleted
+        ) {
           const totalSalesOrderItems = data.listProducts.length;
           const barterResult = this.createBarterTableV3(
             data.listBarterProducts,
@@ -525,11 +691,18 @@ class PrintSalesOrderService {
         }
 
         // Jika ini halaman terakhir dan semua sudah selesai, cetak footer lengkap
-        const allDone = productIndex >= totalProducts && (!hasBarterProducts || barterCompleted);
+        const allDone =
+          productIndex >= totalProducts &&
+          (!hasBarterProducts || barterCompleted);
 
         if (allDone) {
           // Halaman terakhir: isi dengan footer lengkap menggunakan function terpisah
-          printString += this.createFooterV3(data, printerSetting, colSize, true);
+          printString += this.createFooterV3(
+            data,
+            printerSetting,
+            colSize,
+            true
+          );
         } else {
           // Halaman bukan terakhir: isi dengan template footer kosong dalam 17 baris
           printString += addLine(printerSetting.maxCol) + "\n"; // 1
@@ -537,7 +710,7 @@ class PrintSalesOrderService {
           printString += addLine(printerSetting.maxCol) + "\n"; // 3
           printString += "\n"; // 4 - Terbilang + TOTAL
           printString += "\n"; // 5 - HUTANG
-          printString += "\n"; // 6 - BAYAR  
+          printString += "\n"; // 6 - BAYAR
           printString += "\n"; // 7 - POTONGAN
           printString += addLine(printerSetting.maxCol) + "\n"; // 8
           printString += "\n"; // 9 - SISA HUTANG/TOTAL
@@ -570,24 +743,15 @@ class PrintSalesOrderService {
   static async print5inch(data) {
     try {
       const configPrinter = await ConfigService.get({
-        query: { key: "PRINTER_SERVER" },
+        query: { key: "PRINTER_SETTING_DOT_MATRIX" },
       });
 
       const printerInfo = configPrinter.value_json;
 
-      const printerSetting = {
-        maxCol: 80, // Lebar kolom sama dengan 11 inch (dot matrix 9.5 inch)
-        ip: printerInfo.ipServer,
-        port: printerInfo.port,
-        printerIp: printerInfo.ipPrinter,
-        hostName: printerInfo.hostName || "LX-310",
-        queueName: printerInfo.queueName || "lp",
-        targetLines: 16,
-        newPageEnterLine: 3,
-        maxProduct: 5, // Maksimal 5 produk per kertas (fixed template)
-      };
+      const printerSetting = printerInfo;
 
       const maxProduct = printerSetting.maxProduct;
+
       const colSize = {
         productName: 29,
         unit: 9,
@@ -628,7 +792,8 @@ class PrintSalesOrderService {
       const hasBarterProducts = totalBarterProducts > 0;
 
       // Total halaman = halaman produk normal + halaman barter (jika ada)
-      let totalPages = totalProducts > 0 ? Math.ceil(totalProducts / maxProduct) : 1;
+      let totalPages =
+        totalProducts > 0 ? Math.ceil(totalProducts / maxProduct) : 1;
       if (hasBarterProducts) {
         totalPages += Math.ceil(totalBarterProducts / maxProduct);
       }
@@ -644,7 +809,15 @@ class PrintSalesOrderService {
       // Loop untuk setiap halaman PRODUK NORMAL
       while (productIndex < totalProducts) {
         // Header - SELALU TAMPIL di setiap kertas
-        printString += this.createHeaderV3(data, companyInfo, printerSetting, colSize, headerTable, currentPage, totalPages);
+        printString += this.createHeaderV3(
+          data,
+          companyInfo,
+          printerSetting,
+          colSize,
+          headerTable,
+          currentPage,
+          totalPages
+        );
 
         // Body - maksimal 5 BARIS (bukan 5 produk!)
         // Kalau nama panjang pakai 2 baris, berarti cuma muat 2-3 produk
@@ -691,11 +864,22 @@ class PrintSalesOrderService {
               }
             }
 
-            printString += justifyLeft(firstName, colSize.productName) + " " +
-              justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-              justifyRight(qtyStr, colSize.quantity) + " " +
-              justifyRight(harga, colSize.price) + " " +
-              justifyRight(total, colSize.total) + "\n";
+            printString +=
+              justifyLeft(firstName, colSize.productName) +
+              " " +
+              justifyLeft(
+                unit.length > colSize.unit
+                  ? unit.substring(0, colSize.unit)
+                  : unit,
+                colSize.unit
+              ) +
+              " " +
+              justifyRight(qtyStr, colSize.quantity) +
+              " " +
+              justifyRight(harga, colSize.price) +
+              " " +
+              justifyRight(total, colSize.total) +
+              "\n";
             linesUsedInPage++;
 
             if (restName) {
@@ -703,11 +887,22 @@ class PrintSalesOrderService {
               linesUsedInPage++;
             }
           } else {
-            printString += justifyLeft(name, colSize.productName) + " " +
-              justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-              justifyRight(qtyStr, colSize.quantity) + " " +
-              justifyRight(harga, colSize.price) + " " +
-              justifyRight(total, colSize.total) + "\n";
+            printString +=
+              justifyLeft(name, colSize.productName) +
+              " " +
+              justifyLeft(
+                unit.length > colSize.unit
+                  ? unit.substring(0, colSize.unit)
+                  : unit,
+                colSize.unit
+              ) +
+              " " +
+              justifyRight(qtyStr, colSize.quantity) +
+              " " +
+              justifyRight(harga, colSize.price) +
+              " " +
+              justifyRight(total, colSize.total) +
+              "\n";
             linesUsedInPage++;
           }
 
@@ -725,7 +920,12 @@ class PrintSalesOrderService {
         const isLastPage = isLastNormalProductPage && !hasBarterProducts;
 
         // Footer - SELALU TAMPIL di setiap kertas (dengan data lengkap hanya di halaman terakhir)
-        printString += this.createFooterV3(data, printerSetting, colSize, isLastPage);
+        printString += this.createFooterV3(
+          data,
+          printerSetting,
+          colSize,
+          isLastPage
+        );
 
         // Form feed untuk halaman berikutnya (kecuali halaman terakhir)
         if (!isLastPage) {
@@ -750,13 +950,24 @@ class PrintSalesOrderService {
 
         while (barterIndex < totalBarterProducts) {
           // Header untuk halaman barter (dengan header tabel "PRODUK BARTER")
-          printString += this.createHeaderV3(data, companyInfo, printerSetting, colSize, headerTableBarter, currentPage, totalPages);
+          printString += this.createHeaderV3(
+            data,
+            companyInfo,
+            printerSetting,
+            colSize,
+            headerTableBarter,
+            currentPage,
+            totalPages
+          );
 
           // Body barter - maksimal 5 BARIS
           let linesUsedInPage = 0;
           const maxLines = 5;
 
-          while (linesUsedInPage < maxLines && barterIndex < totalBarterProducts) {
+          while (
+            linesUsedInPage < maxLines &&
+            barterIndex < totalBarterProducts
+          ) {
             const item = data.listBarterProducts[barterIndex];
 
             let name = item.productName || "-";
@@ -795,23 +1006,46 @@ class PrintSalesOrderService {
                 }
               }
 
-              printString += justifyLeft(firstName, colSize.productName) + " " +
-                justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-                justifyRight(qtyStr, colSize.quantity) + " " +
-                justifyRight(harga, colSize.price) + " " +
-                justifyRight(total, colSize.total) + "\n";
+              printString +=
+                justifyLeft(firstName, colSize.productName) +
+                " " +
+                justifyLeft(
+                  unit.length > colSize.unit
+                    ? unit.substring(0, colSize.unit)
+                    : unit,
+                  colSize.unit
+                ) +
+                " " +
+                justifyRight(qtyStr, colSize.quantity) +
+                " " +
+                justifyRight(harga, colSize.price) +
+                " " +
+                justifyRight(total, colSize.total) +
+                "\n";
               linesUsedInPage++;
 
               if (restName) {
-                printString += justifyLeft(restName, colSize.productName) + "\n";
+                printString +=
+                  justifyLeft(restName, colSize.productName) + "\n";
                 linesUsedInPage++;
               }
             } else {
-              printString += justifyLeft(name, colSize.productName) + " " +
-                justifyLeft(unit.length > colSize.unit ? unit.substring(0, colSize.unit) : unit, colSize.unit) + " " +
-                justifyRight(qtyStr, colSize.quantity) + " " +
-                justifyRight(harga, colSize.price) + " " +
-                justifyRight(total, colSize.total) + "\n";
+              printString +=
+                justifyLeft(name, colSize.productName) +
+                " " +
+                justifyLeft(
+                  unit.length > colSize.unit
+                    ? unit.substring(0, colSize.unit)
+                    : unit,
+                  colSize.unit
+                ) +
+                " " +
+                justifyRight(qtyStr, colSize.quantity) +
+                " " +
+                justifyRight(harga, colSize.price) +
+                " " +
+                justifyRight(total, colSize.total) +
+                "\n";
               linesUsedInPage++;
             }
 
@@ -828,7 +1062,12 @@ class PrintSalesOrderService {
           const isLastBarterPage = barterIndex >= totalBarterProducts;
 
           // Footer
-          printString += this.createFooterV3(data, printerSetting, colSize, isLastBarterPage);
+          printString += this.createFooterV3(
+            data,
+            printerSetting,
+            colSize,
+            isLastBarterPage
+          );
 
           // Form feed untuk halaman berikutnya (kecuali halaman terakhir)
           if (!isLastBarterPage) {
