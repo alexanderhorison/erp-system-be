@@ -20,6 +20,7 @@ const {
   Dashboard_Summary_Customer,
   Dashboard_Summary_Vendor,
   Master_Customer,
+  Dashboard_Summary_Pos_Customer,
   sequelize: sq,
 } = require("../../models");
 const { Op, fn, col } = require("sequelize");
@@ -694,50 +695,97 @@ class DashboardService {
 
       const result = [];
 
-      // Get All data dashboard summary customer
-      const customerSummary = await Dashboard_Summary_Customer.findOne({
+      const customerType = await Master_Customer.findOne({
         where: {
-          customerId,
+          id: customerId,
         },
-        include: [
-          {
-            model: Master_Customer,
-          }
-        ]
       });
 
-      result.push(
-        {
-          name: "totalSalesOrder",
-          value: customerSummary?.totalSalesOrder || 0,
-          title: "Total Pesanan",
-          description: "Total Pesanan yang sudah dipesan"
-        },
-        {
-          name: "totalAmountSalesOrder",
-          value: customerSummary?.totalAmountSalesOrder || 0,
-          title: "Total Nilai Pesanan",
-          description: "Total Akumulasi nilai pesanan"
-        },
-        {
-          name: "totalAmountPaymentSalesOrder",
-          value: customerSummary?.totalAmountPaidSalesOrder || 0,
-          title: "Total Pembayaran",
-          description: "Total Pembayaran yang sudah dibayarkan"
-        },
-        {
-          name: "totalAmountDebtSalesOrder",
-          value: customerSummary?.totalAmountDebtSalesOrder || 0,
-          title: "Total Hutang",
-          description: "Total Hutang pembayaran yang belum dibayarkan"
-        },
-        {
-          name: "totalAmountBarterSalesOrder",
-          value: customerSummary?.totalAmountBarterSalesOrder || 0,
-          title: "Total Barter",
-          description: "Total Akumulasi Nilai Barang yang dibarter"
-        }
-      );
+      const isPosCustomer = customerType?.isPosCustomer || false;
+
+      if (isPosCustomer) {
+        const customerSummary = await Dashboard_Summary_Pos_Customer.findOne({
+          where: {
+            customerId,
+          },
+          include: [
+            {
+              model: Master_Customer,
+            },
+          ],
+        });
+        result.push(
+          {
+            name: "totalPos",
+            value: customerSummary?.totalPos || 0,
+            title: "Total POS",
+            description: "Total Point of Sales yang sudah dibuat",
+          },
+          {
+            name: "totalAmountPos",
+            value: customerSummary?.totalAmountPos || 0,
+            title: "Total Nilai POS",
+            description: "Total Akumulasi nilai Point of Sales",
+          },
+          {
+            name: "totalAmountPaidPos",
+            value: customerSummary?.totalAmountPaidPos || 0,
+            title: "Total Pembayaran",
+            description: "Total Pembayaran yang sudah dibayarkan",
+          },
+          {
+            name: "totalAmountDebtPos",
+            value: customerSummary?.totalAmountDebtPos || 0,
+            title: "Total Hutang",
+            description: "Total Hutang pembayaran yang belum dibayarkan",
+          }
+        );
+      } else {
+        const customerSummary = await Dashboard_Summary_Customer.findOne({
+          where: {
+            customerId,
+          },
+          include: [
+            {
+              model: Master_Customer,
+            },
+          ],
+        });
+
+        result.push(
+          {
+            name: "totalSalesOrder",
+            value: customerSummary?.totalSalesOrder || 0,
+            title: "Total Pesanan",
+            description: "Total Pesanan yang sudah dipesan",
+          },
+          {
+            name: "totalAmountSalesOrder",
+            value: customerSummary?.totalAmountSalesOrder || 0,
+            title: "Total Nilai Pesanan",
+            description: "Total Akumulasi nilai pesanan",
+          },
+          {
+            name: "totalAmountPaymentSalesOrder",
+            value: customerSummary?.totalAmountPaidSalesOrder || 0,
+            title: "Total Pembayaran",
+            description: "Total Pembayaran yang sudah dibayarkan",
+          },
+          {
+            name: "totalAmountDebtSalesOrder",
+            value: customerSummary?.totalAmountDebtSalesOrder || 0,
+            title: "Total Hutang",
+            description: "Total Hutang pembayaran yang belum dibayarkan",
+          },
+          {
+            name: "totalAmountBarterSalesOrder",
+            value: customerSummary?.totalAmountBarterSalesOrder || 0,
+            title: "Total Barter",
+            description: "Total Akumulasi Nilai Barang yang dibarter",
+          }
+        );
+      }
+      // Get All data dashboard summary customer
 
       return result;
     } catch (error) {
