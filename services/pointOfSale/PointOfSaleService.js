@@ -896,6 +896,7 @@ class PointOfSaleService {
 
       // 4️⃣ Clean up file
       await fs.unlink(filePath);
+      return { message: "Email sent", data: lastDayTransactions?.length };
     } catch (err) {
       throw err;
     }

@@ -9,6 +9,10 @@ router.get(
   "/get-all-product-by-productid",
   PointOfSaleController.getAllProductByProductId
 );
+
+// FOR SCHEDULER REPORT POIN OF SALE 24 HOUR
+router.post("/report-pos-last-day", PointOfSaleController.runSchedulerReportPos)
+
 router.get(
   "/get-all-point-of-sale/:warehouseId",
   PointOfSaleController.getAllPointOfSaleByWarehouseId

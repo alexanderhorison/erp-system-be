@@ -263,6 +263,25 @@ class PointOfSaleController {
         .json({ success: false, message: error.message || error });
     }
   }
+
+  static async runSchedulerReportPos(req, res) {
+    try {
+      const runScheduler = await PointOfSaleService.runSchedulerReportPos();
+      res
+        .status(200)
+        .json(
+          responses(
+            true,
+            runScheduler?.message || "Berhasil",
+            runScheduler?.data || []
+          )
+        );
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = PointOfSaleController;
