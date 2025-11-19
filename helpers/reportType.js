@@ -2,6 +2,7 @@
 const REPORT_TYPE = {
   SALES_ORDER: "SALES_ORDER",
   CUSTOMER: "CUSTOMER",
+  POS: "POS",
 };
 
 module.exports = {

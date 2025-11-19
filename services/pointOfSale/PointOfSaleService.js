@@ -831,22 +831,23 @@ class PointOfSaleService {
   static async runSchedulerReportPos() {
     try {
       /**
-       * 1. Find all transactions in the last 1 day
-       * 2. Generate report Excel
-       * 3. Send email with the report attached
+       * 1. Find all transactions from start of today until current time
+       * 2. Order by grandTotal (highest first)
+       * 3. Generate report Excel
+       * 4. Send email with the report attached
+       * 
+       * Example: If run at 7 PM on Nov 17, it will get transactions from Nov 17 00:00 - Nov 17 19:00
        */
 
-      const startOfYesterday = new Date();
-      startOfYesterday.setHours(0, 0, 0, 0);
-      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
 
-      const endOfYesterday = new Date();
-      endOfYesterday.setHours(0, 0, 0, 0);
+      const now = new Date();
 
-      const lastDayTransactions = await Pos_Transaction.findAll({
+      const todayTransactions = await Pos_Transaction.findAll({
         where: {
           createdAt: {
-            [Op.between]: [startOfYesterday, endOfYesterday],
+            [Op.between]: [startOfToday, now],
           },
         },
         include: [
@@ -859,18 +860,28 @@ class PointOfSaleService {
             as: "creator",
             attributes: ["name", "email"],
           },
+          {
+            model: Pos_Transaction_Payment_History,
+            include: [
+              {
+                model: Pos_Payment_Type,
+                attributes: ["id", "label", "code", "description"],
+              },
+            ],
+          },
         ],
+        order: [["grandTotal", "DESC"]],
       });
 
-      if (lastDayTransactions.length === 0) {
+      if (todayTransactions.length === 0) {
         console.log(
-          "No POS transactions in the last 24 hours. Skipping report email."
+          "No POS transactions today. Skipping report email."
         );
         return;
       }
       const filePath = await ExportPointOfSaleService.generateExcel(
-        lastDayTransactions,
-        startOfYesterday
+        todayTransactions,
+        startOfToday
       );
 
       const transporterConnection = await transporter();
@@ -879,9 +890,9 @@ class PointOfSaleService {
         from: process.env.EMAIL_IS,
         to: process.env.EMAIL_RECEIVER,
         bcc: process.env.EMAIL_RECEIVER_BCC,
-        subject: `POS Report - ${startOfYesterday.toLocaleDateString("id-ID")}`,
-        text: `Berikut laporan Point of Sale dalam 24 jam terakhir.`,
-        html: `<p>Berikut laporan Point of Sale dalam 24 jam terakhir.</p>`,
+        subject: `POS Report - ${startOfToday.toLocaleDateString("id-ID")}`,
+        text: `Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.`,
+        html: `<p>Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.</p>`,
         attachments: [
           {
             filename: filePath.split("/").pop(),
@@ -896,7 +907,7 @@ class PointOfSaleService {
 
       // 4️⃣ Clean up file
       await fs.unlink(filePath);
-      return { message: "Email sent", data: lastDayTransactions?.length };
+      return { message: "Email sent", data: todayTransactions?.length };
     } catch (err) {
       throw err;
     }

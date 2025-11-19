@@ -32,17 +32,25 @@ class ExportReportController {
       });
       const query = await yupSchemaValidation(req.query, reportQuerySchema);
 
-      const { sheetName, file } = await ExportReportService.getReport({ query });
+      // For Report that not send email
+      if ([REPORT_TYPE.POS].includes(query.reportType)) {
+        await ExportReportService.getReport({ query });
+        res.status(200).json(responses(true, "Report berhasil dikirim"));
+      } else {
+        const { sheetName, file } = await ExportReportService.getReport({
+          query,
+        });
 
-      // Kirim Excel sebagai respons
-      res.set({
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="${sheetName}"`,
-        "Access-Control-Expose-Headers": "Content-Disposition",
-      });
+        // Kirim Excel sebagai respons
+        res.set({
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${sheetName}"`,
+          "Access-Control-Expose-Headers": "Content-Disposition",
+        });
 
-      res.end(file);
+        res.end(file);
+      }
     } catch (error) {
       console.error("Error generating report:", error);
       res

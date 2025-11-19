@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       Pos_Transaction.hasMany(models.Pos_Transaction_Detail, {
         foreignKey: "posTransactionId",
       });
-      Pos_Transaction.hasMany(models.Pos_Transaction_Payment_History, {
+      Pos_Transaction.hasOne(models.Pos_Transaction_Payment_History, {
         foreignKey: "posTransactionId",
       });
       Pos_Transaction.belongsTo(models.Master_Warehouse, {

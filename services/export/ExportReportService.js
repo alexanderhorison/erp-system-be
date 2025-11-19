@@ -19,6 +19,7 @@ const LongTermService = require("../liabilities/LongTermService");
 const EquityService = require("../equity/EquityService");
 const { REPORT_TYPE } = require("../../helpers/reportType");
 const MasterDataCustomerService = require("../masterData/MasterDataCustomerService");
+const PointOfSaleService = require("../pointOfSale/PointOfSaleService");
 
 class ExportReportService {
   static async getReport({ query }) {
@@ -28,6 +29,8 @@ class ExportReportService {
         return await ExportReportService.getReportSo({ query });
       case REPORT_TYPE.CUSTOMER:
         return await ExportReportService.getReportDataCustomer({ query });
+      case REPORT_TYPE.POS:
+        return await PointOfSaleService.runSchedulerReportPos();
       default:
         throw throwValidation(500, "Tipe Report tidak ditemukan");
     }

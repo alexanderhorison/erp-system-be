@@ -11,11 +11,11 @@ class ExportPointOfSaleService {
 
       const { fontBold, centerMiddle } = styleExcel;
 
-
       worksheet.columns = [
         { header: "Customer Name", key: "customerName", width: 30 },
         { header: "Code", key: "code", width: 20 },
         { header: "Status", key: "status", width: 15 },
+        { header: "Metode Pembayaran", key: "paymentType", width: 15 },
         { header: "Total Barang", key: "totalItems", width: 15 },
         { header: "Sub Total", key: "subTotal", width: 20 },
         { header: "Discount", key: "totalDiscount", width: 15 },
@@ -23,7 +23,7 @@ class ExportPointOfSaleService {
         { header: "Grand Total", key: "grandTotal", width: 25 },
         { header: "Catatan", key: "notes", width: 20 },
         { header: "Kasir", key: "createdBy", width: 20 },
-      ]
+      ];
 
       // Apply styling to headers Sheet 1
       const headerRow = worksheet.getRow(1);
@@ -31,10 +31,22 @@ class ExportPointOfSaleService {
       headerRow.alignment = centerMiddle;
 
       for (const pos of data) {
-        const name = pos.Master_Customer ? `${pos.Master_Customer.name}  ${pos.Master_Customer.alias ? `(${pos.Master_Customer.alias})` : ""}` : "";
+        const paymentType =
+          pos.Pos_Transaction_Payment_History &&
+          pos.Pos_Transaction_Payment_History.Pos_Payment_Type
+            ? pos.Pos_Transaction_Payment_History.Pos_Payment_Type.label
+            : "";
+
+        const name = pos.Master_Customer
+          ? `${pos.Master_Customer.name}  ${
+              pos.Master_Customer.alias ? `(${pos.Master_Customer.alias})` : ""
+            }`
+          : "";
+
         worksheet.addRow({
           customerName: name,
           code: pos.code,
+          paymentType: `${paymentType} ${paymentType == "Cash" ? "" : `- ${pos.Pos_Transaction_Payment_History.Pos_Payment_Type.description || ""}`}`,
           status: pos.status,
           totalItems: pos.totalItems,
           subTotal: pos.subTotal,
