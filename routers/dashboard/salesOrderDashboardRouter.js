@@ -2,7 +2,6 @@ const SalesOrderDashboardController = require("../../controllers/dashboard/Sales
 
 const router = require("express").Router();
 
-
 // 1. DashboardSo1: Top 5 Customer yang total nominal SO nya paling bnyk
 // 2. DashboardSo2: Top 5 Customer yang total surat SO nya paling bnyk
 // 3. DashboardSo3: Top 5 Customer yang total hutang SO nya paling bnyk
@@ -12,6 +11,7 @@ const router = require("express").Router();
 
 router.get("/so1", SalesOrderDashboardController.getDashboardSo);
 router.get("/so6", SalesOrderDashboardController.getDashboardSoListOverDueDate);
+router.get("/menu", SalesOrderDashboardController.getDasboardMenuSalesOrder);
 // router.get("/total-amount-sales-order", SalesOrderDashboardController.totalAmountSalesOrder);
 // router.get("/total-amount-payment-sales-order", SalesOrderDashboardController.totalAmountPaymentSalesOrder);
 

@@ -18,20 +18,26 @@ class PurchaseOrderDashboardController {
     try {
       const { query } = req;
 
-      const dashboard1 = await DashboardPurchaseOrderService.getDashboardPo1(query);
-      const dashboard2 = await DashboardPurchaseOrderService.getDashboardPo2(query);
-      const dashboard3 = await DashboardPurchaseOrderService.getDashboardPo3(query);
-      const dashboard4 = await DashboardPurchaseOrderService.getDashboardPo4(query);
+      const dashboard1 = await DashboardPurchaseOrderService.getDashboardPo1(
+        query
+      );
+      const dashboard2 = await DashboardPurchaseOrderService.getDashboardPo2(
+        query
+      );
+      const dashboard3 = await DashboardPurchaseOrderService.getDashboardPo3(
+        query
+      );
+      const dashboard4 = await DashboardPurchaseOrderService.getDashboardPo4(
+        query
+      );
 
       const result = {
         dashboard1,
         dashboard2,
         dashboard3,
-        dashboard4
-      }
-      res
-        .status(200)
-        .json(responses(true, "Berhasil", result));
+        dashboard4,
+      };
+      res.status(200).json(responses(true, "Berhasil", result));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -42,12 +48,25 @@ class PurchaseOrderDashboardController {
   static async getDashboardPoListOverDueDate(req, res) {
     try {
       const { query } = req;
-      const data =
-        await DashboardPurchaseOrderService.getDashboardPo6({ query });
+      const data = await DashboardPurchaseOrderService.getDashboardPo6({
+        query,
+      });
 
+      res.status(200).json(responses(true, "Berhasil", data));
+    } catch (error) {
       res
-        .status(200)
-        .json(responses(true, "Berhasil", data));
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // DASHBOARD DI MENU PURCHASE ORDER
+  static async getDashboardMenuPurchaseOrder(req, res) {
+    try {
+      const data =
+        await DashboardPurchaseOrderService.getDashboardMenuPurchaseOrder();
+
+      res.status(200).json(responses(true, "Berhasil", data));
     } catch (error) {
       res
         .status(error.code || 500)

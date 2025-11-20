@@ -95,6 +95,8 @@ class SalesOrderService {
           // warehouseId: item?.warehouseId,
           // warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
+          amountPaid: item?.amountPaid,
+          amountDebt: item?.amountDebt,
           notes: item?.notes,
           status: item?.status,
           createdBy: {
