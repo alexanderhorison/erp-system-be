@@ -87,6 +87,8 @@ class PurchaseOrderService {
           id: item.id,
           code: item.code,
           grandTotal: item?.grandTotal,
+          amountPaid: item?.amountPaid,
+          amountDebt: item?.amountDebt,
           notes: item?.notes,
           status: item?.status,
           createdBy: {

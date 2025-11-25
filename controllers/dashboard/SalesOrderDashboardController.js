@@ -19,20 +19,26 @@ class SalesOrderDashboardController {
     try {
       const { query } = req;
 
-      const dashboard1 = await DashboardSalesOrderService.getDashboardSo1(query);
-      const dashboard2 = await DashboardSalesOrderService.getDashboardSo2(query);
-      const dashboard3 = await DashboardSalesOrderService.getDashboardSo3(query);
-      const dashboard4 = await DashboardSalesOrderService.getDashboardSo4(query);
+      const dashboard1 = await DashboardSalesOrderService.getDashboardSo1(
+        query
+      );
+      const dashboard2 = await DashboardSalesOrderService.getDashboardSo2(
+        query
+      );
+      const dashboard3 = await DashboardSalesOrderService.getDashboardSo3(
+        query
+      );
+      const dashboard4 = await DashboardSalesOrderService.getDashboardSo4(
+        query
+      );
 
       const result = {
         dashboard1,
         dashboard2,
         dashboard3,
-        dashboard4
-      }
-      res
-        .status(200)
-        .json(responses(true, "Berhasil", result));
+        dashboard4,
+      };
+      res.status(200).json(responses(true, "Berhasil", result));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -43,12 +49,23 @@ class SalesOrderDashboardController {
   static async getDashboardSoListOverDueDate(req, res) {
     try {
       const { query } = req;
-      const data =
-        await DashboardSalesOrderService.getDashboardSo6({ query });
+      const data = await DashboardSalesOrderService.getDashboardSo6({ query });
 
+      res.status(200).json(responses(true, "Berhasil", data));
+    } catch (error) {
       res
-        .status(200)
-        .json(responses(true, "Berhasil", data));
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  // DASHBOARD DI MENU SALES ORDER
+  static async getDasboardMenuSalesOrder(req, res) {
+    try {
+      const data =
+        await DashboardSalesOrderService.getDashboardMenuSalesOrder();
+
+      res.status(200).json(responses(true, "Berhasil", data));
     } catch (error) {
       res
         .status(error.code || 500)

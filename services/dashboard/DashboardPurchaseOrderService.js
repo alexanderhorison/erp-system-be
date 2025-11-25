@@ -32,15 +32,15 @@ class DashboardPurchaseOrderService {
           {
             model: Master_Vendor,
             attributes: ["name"],
-          }
-        ]
+          },
+        ],
       });
       const result = data.map((item) => {
         return {
           vendorName: item.Master_Vendor.name,
           totalNominal: item.totalAmountPurchaseOrder,
         };
-      })
+      });
       return result;
     } catch (error) {
       throwValidation(error.code, error.message);
@@ -51,18 +51,18 @@ class DashboardPurchaseOrderService {
     try {
       const data = await Purchase_Order.findAll({
         attributes: [
-          ['vendorId', 'id'],
-          [sq.fn('COUNT', 'id'), 'totalPo'],
+          ["vendorId", "id"],
+          [sq.fn("COUNT", "id"), "totalPo"],
         ],
-        group: ['vendorId', 'Master_Vendor.id'],
+        group: ["vendorId", "Master_Vendor.id"],
         include: [
           {
             model: Master_Vendor,
             attributes: ["name"],
           },
         ],
-        order: [['totalPo', 'DESC']],
-        limit: 5
+        order: [["totalPo", "DESC"]],
+        limit: 5,
       });
 
       const result = data.map((item) => {
@@ -70,7 +70,7 @@ class DashboardPurchaseOrderService {
           vendorName: item?.Master_Vendor?.name,
           totalPo: item?.dataValues?.totalPo,
         };
-      })
+      });
 
       return result;
     } catch (error) {
@@ -87,15 +87,15 @@ class DashboardPurchaseOrderService {
           {
             model: Master_Vendor,
             attributes: ["name"],
-          }
-        ]
+          },
+        ],
       });
       const result = data.map((item) => {
         return {
           vendorName: item.Master_Vendor.name,
           totalNominalDebt: item.totalAmountDebtPurchaseOrder,
         };
-      })
+      });
       return result;
     } catch (error) {
       throwValidation(error.code, error.message);
@@ -105,9 +105,7 @@ class DashboardPurchaseOrderService {
   static async getDashboardPo4() {
     try {
       const data = await Master_Vendor.findAll({
-        attributes: [
-          "name",
-        ],
+        attributes: ["name"],
         include: [
           {
             model: Purchase_Order,
@@ -117,10 +115,10 @@ class DashboardPurchaseOrderService {
               {
                 model: Purchase_Order_Barter_Detail,
                 attributes: ["id"],
-                required: true
-              }
-            ]
-          }
+                required: true,
+              },
+            ],
+          },
         ],
         limit: 5,
       });
@@ -130,11 +128,11 @@ class DashboardPurchaseOrderService {
           vendorName: item.name,
           totalPoBarter: item.Purchase_Orders.length,
         };
-      })
+      });
 
       result = result?.sort((a, b) => b.totalPoBarter - a.totalPoBarter) || [];
 
-      return result
+      return result;
     } catch (error) {
       throwValidation(error.code, error.message);
     }
@@ -145,7 +143,7 @@ class DashboardPurchaseOrderService {
       const defaultQuery = {
         limit: query?.limit || 10,
         offset: (query?.page || 1 - 1) * 10,
-      }
+      };
       const dateNow = moment(new Date()).format("DD/MM/yyyy");
       const data = await Purchase_Order.findAndCountAll({
         where: { status: "PENDING" },
@@ -164,17 +162,17 @@ class DashboardPurchaseOrderService {
                 attributes: ["name"],
               },
             ],
-          }
+          },
         ],
         //! Disable karena datenya masih string
         // limit: defaultQuery.limit,
         // offset: defaultQuery.offset,
-        order: [["dueDate", "ASC"]]
+        order: [["dueDate", "ASC"]],
       });
 
-      let result = []
+      let result = [];
       data?.rows?.forEach((item) => {
-        const dueDate = formatDateFromString(item?.dueDate)
+        const dueDate = formatDateFromString(item?.dueDate);
         if (new Date(dueDate) < new Date()) {
           result.push({
             id: item.id,
@@ -182,10 +180,10 @@ class DashboardPurchaseOrderService {
             dueDate: dueDate,
             creatorName: item?.creator?.name,
             creatorRole: item?.creator?.Master_Role?.name,
-            createdAt: item?.createdAt
+            createdAt: item?.createdAt,
           });
         }
-      })
+      });
 
       const totalPages = Math.ceil(data?.count / defaultQuery.limit);
 
@@ -204,6 +202,32 @@ class DashboardPurchaseOrderService {
     }
   }
 
+  static async getDashboardMenuPurchaseOrder() {
+    try {
+      const countPaid = await Purchase_Order.count({
+        where: {
+          status: "APPROVED",
+          amountDebt: 0,
+        },
+      });
+
+      const countDebt = await Purchase_Order.count({
+        where: {
+          status: "APPROVED",
+          amountDebt: {
+            [Op.ne]: 0,
+          },
+        },
+      });
+
+      return {
+        countPaid,
+        countDebt,
+      };
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
 }
 
 module.exports = DashboardPurchaseOrderService;

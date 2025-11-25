@@ -10,6 +10,13 @@ const router = require("express").Router();
 // 6. DashboardPo6: List 10 PO yang sudah lewat due date nya → pagination
 
 router.get("/po1", PurchaseOrderDashboardController.getDashboardPo);
-router.get("/po6", PurchaseOrderDashboardController.getDashboardPoListOverDueDate);
+router.get(
+  "/po6",
+  PurchaseOrderDashboardController.getDashboardPoListOverDueDate
+);
+router.get(
+  "/menu",
+  PurchaseOrderDashboardController.getDashboardMenuPurchaseOrder
+);
 
 module.exports = router;

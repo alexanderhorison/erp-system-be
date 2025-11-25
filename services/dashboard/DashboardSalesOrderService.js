@@ -11,9 +11,6 @@ const {
 const { Op } = require("sequelize");
 const moment = require("moment");
 
-
-
-
 // 1. DashboardSo1: Top 5 Customer yang total nominal SO nya paling bnyk
 // 2. DashboardSo2: Top 5 Customer yang total surat SO nya paling bnyk
 // 3. DashboardSo3: Top 5 Customer yang total hutang SO nya paling bnyk
@@ -34,15 +31,15 @@ class DashboardSalesOrderService {
           {
             model: Master_Customer,
             attributes: ["name"],
-          }
-        ]
+          },
+        ],
       });
       const result = data.map((item) => {
         return {
           customerName: item.Master_Customer.name,
           totalNominal: item.totalAmountSalesOrder,
         };
-      })
+      });
       return result;
     } catch (error) {
       throwValidation(error.code, error.message);
@@ -53,18 +50,18 @@ class DashboardSalesOrderService {
     try {
       const data = await Sales_Order.findAll({
         attributes: [
-          ['customerId', 'id'],
-          [sq.fn('COUNT', 'id'), 'totalSo'],
+          ["customerId", "id"],
+          [sq.fn("COUNT", "id"), "totalSo"],
         ],
-        group: ['customerId', 'Master_Customer.id'],
+        group: ["customerId", "Master_Customer.id"],
         include: [
           {
             model: Master_Customer,
             attributes: ["name"],
           },
         ],
-        order: [['totalSo', 'DESC']],
-        limit: 5
+        order: [["totalSo", "DESC"]],
+        limit: 5,
       });
 
       const result = data.map((item) => {
@@ -72,7 +69,7 @@ class DashboardSalesOrderService {
           customerName: item?.Master_Customer?.name,
           totalSo: item?.dataValues?.totalSo,
         };
-      })
+      });
 
       return result;
     } catch (error) {
@@ -89,15 +86,15 @@ class DashboardSalesOrderService {
           {
             model: Master_Customer,
             attributes: ["name"],
-          }
-        ]
+          },
+        ],
       });
       const result = data.map((item) => {
         return {
           customerName: item.Master_Customer.name,
           totalNominalDebt: item.totalAmountDebtSalesOrder,
         };
-      })
+      });
       return result;
     } catch (error) {
       console.log(error);
@@ -108,9 +105,7 @@ class DashboardSalesOrderService {
   static async getDashboardSo4() {
     try {
       const data = await Master_Customer.findAll({
-        attributes: [
-          "name",
-        ],
+        attributes: ["name"],
         include: [
           {
             model: Sales_Order,
@@ -120,10 +115,10 @@ class DashboardSalesOrderService {
               {
                 model: Sales_Order_Barter_Details,
                 attributes: ["id"],
-                required: true
-              }
-            ]
-          }
+                required: true,
+              },
+            ],
+          },
         ],
         limit: 5,
       });
@@ -133,11 +128,11 @@ class DashboardSalesOrderService {
           customerName: item.name,
           totalSoBarter: item.Sales_Orders.length,
         };
-      })
+      });
 
       result = result?.sort((a, b) => b.totalSoBarter - a.totalSoBarter) || [];
 
-      return result
+      return result;
     } catch (error) {
       throwValidation(error.code, error.message);
     }
@@ -148,7 +143,7 @@ class DashboardSalesOrderService {
       const defaultQuery = {
         limit: query?.limit || 10,
         offset: (query?.page || 1 - 1) * 10,
-      }
+      };
       const dateNow = moment(new Date()).format("DD/MM/yyyy");
       const data = await Sales_Order.findAndCountAll({
         where: { status: "PENDING" },
@@ -167,14 +162,14 @@ class DashboardSalesOrderService {
                 attributes: ["name"],
               },
             ],
-          }
+          },
         ],
         limit: defaultQuery.limit,
         offset: defaultQuery.offset,
-        order: [["dueDate", "ASC"]]
+        order: [["dueDate", "ASC"]],
       });
 
-      let result = []
+      let result = [];
       data?.rows?.forEach((item) => {
         const tempDate = item?.dueDate?.split("/");
         const dueDate = `${tempDate[1]}/${tempDate[0]}/${tempDate[2]}`;
@@ -185,10 +180,10 @@ class DashboardSalesOrderService {
             dueDate: dueDate,
             creatorName: item?.creator?.name,
             creatorRole: item?.creator?.Master_Role?.name,
-            createdAt: item?.createdAt
+            createdAt: item?.createdAt,
           });
         }
-      })
+      });
       result = result?.sort((a, b) => new Date(a.dueDate) - new Date()) || [];
       const totalPages = Math.ceil(data?.count / defaultQuery.limit);
       return {
@@ -201,6 +196,32 @@ class DashboardSalesOrderService {
     }
   }
 
+  static async getDashboardMenuSalesOrder() {
+    try {
+      const countPaid = await Sales_Order.count({
+        where: {
+          status: "APPROVED",
+          amountDebt: 0,
+        },
+      });
+
+      const countDebt = await Sales_Order.count({
+        where: {
+          status: "APPROVED",
+          amountDebt: {
+            [Op.ne]: 0,
+          },
+        },
+      });
+
+      return {
+        countPaid,
+        countDebt,
+      };
+    } catch (error) {
+      throwValidation(error.code, error.message);
+    }
+  }
 }
 
 module.exports = DashboardSalesOrderService;
