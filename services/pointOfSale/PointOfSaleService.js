@@ -873,12 +873,6 @@ class PointOfSaleService {
         order: [["grandTotal", "DESC"]],
       });
 
-      if (todayTransactions.length === 0) {
-        console.log(
-          "No POS transactions today. Skipping report email."
-        );
-        return;
-      }
       const filePath = await ExportPointOfSaleService.generateExcel(
         todayTransactions,
         startOfToday
