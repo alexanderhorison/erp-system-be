@@ -3,8 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const router = require("./routers");
-const schedulerReportCustomerWeekly = require('./helpers/schedulerReportCustomerWeekly');
-const schedulerReportPos = require('./helpers/schedulerReportPos');
 
 const app = express();
 const port = process.env.PORT;
@@ -26,11 +24,6 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api", router);
-
-// SCHEDULER REPORT SALES ORDER WITH EMAIL
-schedulerReportCustomerWeekly.start();
-// SCHEDULER REPORT POS WITH EMAIL
-schedulerReportPos.start();
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
