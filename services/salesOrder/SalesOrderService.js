@@ -534,9 +534,9 @@ class SalesOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalCustomer > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalCustomer) -
+          ? Number(exsistingData?.grandTotalCustomer) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // JIKA FULL PAYMENT = TRUE MAKA ANGGAPAN CUSTOMER LANGSUNG LUNAS
       const finalAmountDebt = fullPayment ? 0 : amountDebt;
@@ -988,6 +988,8 @@ class SalesOrderService {
           warehouseId: item?.warehouseId,
           warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
+          amountPaid: item?.amountPaid,
+          amountDebt: item?.amountDebt,
           notes: item?.notes,
           status: item?.status,
           createdBy: {
@@ -1030,7 +1032,9 @@ class SalesOrderService {
       sevenDaysAgo.setDate(today.getDate() - 6); // start from 7 days ago including today
       sevenDaysAgo.setHours(0, 0, 0, 0); // start of that day
 
-      console.log(`[${today.toISOString()}] Running SCHEDULER_REPORT_CUSTOMER_WEEKLY With Ranking`);
+      console.log(
+        `[${today.toISOString()}] Running SCHEDULER_REPORT_CUSTOMER_WEEKLY With Ranking`
+      );
 
       const report = await Sales_Order.findAll({
         where: {
@@ -1041,11 +1045,13 @@ class SalesOrderService {
         },
         attributes: [
           "customerId",
-          [fn("COUNT", col("Sales_Order.id")), "totalSo"],  // fully qualified column
+          [fn("COUNT", col("Sales_Order.id")), "totalSo"], // fully qualified column
           [
             fn(
               "SUM",
-              literal("CASE WHEN \"Sales_Order\".\"grandTotal\" > 0 THEN \"Sales_Order\".\"grandTotal\" ELSE 0 END")
+              literal(
+                'CASE WHEN "Sales_Order"."grandTotal" > 0 THEN "Sales_Order"."grandTotal" ELSE 0 END'
+              )
             ),
             "totalAmount",
           ],
@@ -1053,7 +1059,7 @@ class SalesOrderService {
             fn(
               "SUM",
               literal(
-                "CASE WHEN \"Sales_Order\".\"amountPaid\" > 0 THEN \"Sales_Order\".\"amountPaid\" ELSE 0 END"
+                'CASE WHEN "Sales_Order"."amountPaid" > 0 THEN "Sales_Order"."amountPaid" ELSE 0 END'
               )
             ),
             "amountPaid",
@@ -1071,13 +1077,20 @@ class SalesOrderService {
             ],
           },
         ],
-        group: ["Sales_Order.customerId", "Master_Customer.id", "Master_Customer->Master_Rank.id"],
+        group: [
+          "Sales_Order.customerId",
+          "Master_Customer.id",
+          "Master_Customer->Master_Rank.id",
+        ],
         order: [[col("totalAmount"), "DESC"]],
       });
 
       if (!report || report.length === 0) {
         console.log("No Sales Order data available for the report.");
-        return { message: "No Sales Order data available for the report.", data: [] };
+        return {
+          message: "No Sales Order data available for the report.",
+          data: [],
+        };
       }
 
       let subjectText = `Report SO Customer periode ${sevenDaysAgo.toLocaleDateString()} - ${today.toLocaleDateString()}`;
@@ -1103,13 +1116,19 @@ class SalesOrderService {
 
           return `
           <tr>
-            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${index + 1}</td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${
+              index + 1
+            }</td>
             <td style="border:1px solid #ccc; padding:8px;">
               ${data.Master_Customer?.name || "-"} 
               (Rank: ${data.Master_Customer?.Master_Rank?.name || "-"})
             </td>
-            <td style="border:1px solid #ccc; padding:8px;">${findNextRank?.name || "-"}</td>
-            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${data.totalSo}</td>
+            <td style="border:1px solid #ccc; padding:8px;">${
+              findNextRank?.name || "-"
+            }</td>
+            <td style="border:1px solid #ccc; padding:8px; text-align:center;">${
+              data.totalSo
+            }</td>
             <td style="border:1px solid #ccc; padding:8px; text-align:center;">
               Rp. ${Number(data.totalAmount).toLocaleString("id-ID")}
             </td>
@@ -1117,14 +1136,15 @@ class SalesOrderService {
               Rp. ${Number(data.amountPaid).toLocaleString("id-ID")}
             </td>
             <td style="border:1px solid #ccc; padding:8px; text-align:center;">
-              ${findNextRank
-              ? `<a href="${link}" 
+              ${
+                findNextRank
+                  ? `<a href="${link}" 
                 target="_blank"
                 style="display:inline-block; padding:6px 12px; background:#28a745; color:#fff; text-decoration:none; border-radius:4px;">
                 Level Up
              </a>`
-              : "-"
-            }
+                  : "-"
+              }
             </td>
           </tr>
         `;
@@ -1163,8 +1183,8 @@ class SalesOrderService {
         bcc: process.env.EMAIL_RECEIVER_BCC, // BCC email address
         subject: subjectText, // Subject line
         text: `Berikut Hasil Belanja SO Customer`, // plain text body
-        html: htmlBody
-      }
+        html: htmlBody,
+      };
       await transporterConnection.sendMail(msg);
       return { message: "Email sent", data: report?.length };
     } catch (err) {

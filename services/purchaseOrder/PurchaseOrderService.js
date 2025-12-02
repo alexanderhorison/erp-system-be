@@ -1,7 +1,10 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { formatDate } = require("../../helpers/formatDate");
 const { throwValidation } = require("../../helpers/responses");
-const { buildQueryOptions, buildPaginationResponse } = require("../../helpers/queryBuilderHelper");
+const {
+  buildQueryOptions,
+  buildPaginationResponse,
+} = require("../../helpers/queryBuilderHelper");
 const { Op } = require("sequelize");
 const {
   sequelize: sq,
@@ -29,9 +32,9 @@ class PurchaseOrderService {
     try {
       // Gunakan helper untuk membangun options query dinamis
       const queryOptions = buildQueryOptions(query, {
-        searchFields: ['code', '$Master_Vendor.name$'],
-        statusField: 'status',
-        dateField: 'createdAt',
+        searchFields: ["code", "$Master_Vendor.name$"],
+        statusField: "status",
+        dateField: "createdAt",
         enableDate: true,
       });
 
@@ -40,11 +43,11 @@ class PurchaseOrderService {
         const dateCondition = {};
 
         if (query?.dateFrom) {
-          dateCondition[Op.gte] = new Date(query.dateFrom + 'T00:00:00.000Z');
+          dateCondition[Op.gte] = new Date(query.dateFrom + "T00:00:00.000Z");
         }
 
         if (query?.dateTo) {
-          dateCondition[Op.lte] = new Date(query.dateTo + 'T23:59:59.999Z');
+          dateCondition[Op.lte] = new Date(query.dateTo + "T23:59:59.999Z");
         }
 
         queryOptions.where = queryOptions.where || {};
@@ -510,7 +513,8 @@ class PurchaseOrderService {
 
           // update Gain Loss pada PO Barter Detail
           const totalModalProduct = Number(item.modal) * Number(item.quantity);
-          const gainLossProduct = Number(item.subTotal) - Number(totalModalProduct)
+          const gainLossProduct =
+            Number(item.subTotal) - Number(totalModalProduct);
 
           await Purchase_Order_Barter_Detail.update(
             {
@@ -568,7 +572,6 @@ class PurchaseOrderService {
               }
             );
           }
-
         }
       }
 
@@ -576,15 +579,15 @@ class PurchaseOrderService {
       await Purchase_Order.update(
         {
           totalModal,
-          totalGainLoss
+          totalGainLoss,
         },
         {
           where: {
-            id: exsistingData?.id
+            id: exsistingData?.id,
           },
-          transaction
+          transaction,
         }
-      )
+      );
 
       /**
        * Jika grandtotal minus maka vendor harus bayar ke kita maka amountDebt vendor 0
@@ -594,9 +597,9 @@ class PurchaseOrderService {
         exsistingData?.grandTotal < 0
           ? 0
           : exsistingData?.grandTotalVendor > exsistingData?.grandTotalBarter
-            ? Number(exsistingData?.grandTotalVendor) -
+          ? Number(exsistingData?.grandTotalVendor) -
             Number(exsistingData?.grandTotalBarter)
-            : exsistingData?.grandTotal;
+          : exsistingData?.grandTotal;
 
       // CHANGE STATUS PURCHASE ORDER
       const approvedData = await Purchase_Order.update(
@@ -1028,6 +1031,8 @@ class PurchaseOrderService {
           warehouseId: item?.warehouseId,
           warehouseName: item?.Master_Warehouse?.name,
           grandTotal: item?.grandTotal,
+          amountPaid: item?.amountPaid,
+          amountDebt: item?.amountDebt,
           notes: item?.notes,
           status: item?.status,
           createdBy: {
