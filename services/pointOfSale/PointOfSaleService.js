@@ -835,14 +835,12 @@ class PointOfSaleService {
        * 2. Order by grandTotal (highest first)
        * 3. Generate report Excel
        * 4. Send email with the report attached
-       * 
+       *
        * Example: If run at 7 PM on Nov 17, it will get transactions from Nov 17 00:00 - Nov 17 19:00
        */
 
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-
-      const now = new Date();
+      const startOfToday = moment().tz("Asia/Jakarta").startOf("day").toDate();
+      const now = moment().tz("Asia/Jakarta").toDate();
 
       const todayTransactions = await Pos_Transaction.findAll({
         where: {
@@ -874,8 +872,7 @@ class PointOfSaleService {
       });
 
       const filePath = await ExportPointOfSaleService.generateExcel(
-        todayTransactions,
-        startOfToday
+        todayTransactions
       );
 
       const transporterConnection = await transporter();
@@ -884,9 +881,13 @@ class PointOfSaleService {
         from: process.env.EMAIL_IS,
         to: process.env.EMAIL_RECEIVER,
         bcc: process.env.EMAIL_RECEIVER_BCC,
-        subject: `POS Report - ${startOfToday.toLocaleDateString("id-ID")}`,
-        text: `Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.`,
-        html: `<p>Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.</p>`,
+        subject: `POS Report - ${moment(startOfToday).format("DD/MM/YYYY")}`,
+        text: `Berikut laporan Point of Sale hari ini (sampai pukul ${moment(
+          now
+        ).format("HH:mm")}).`,
+        html: `<p>Berikut laporan Point of Sale hari ini sampai pukul ${moment(
+          now
+        ).format("HH:mm")}.</p>`,
         attachments: [
           {
             filename: filePath.split("/").pop(),
