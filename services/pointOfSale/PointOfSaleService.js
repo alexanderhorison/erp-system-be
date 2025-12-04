@@ -28,7 +28,6 @@ const {
   justifyLeft,
   justifyRight,
   addSpace,
-  virtualConsoleLogPos,
 } = require("../../helpers/posFunction");
 const {
   priceFormat,
@@ -840,8 +839,8 @@ class PointOfSaleService {
        * Example: If run at 7 PM on Nov 17, it will get transactions from Nov 17 00:00 - Nov 17 19:00
        */
 
-      const startOfToday = moment().tz("Asia/Jakarta").startOf("day").toDate();
-      const now = moment().tz("Asia/Jakarta").toDate();
+      const startOfToday = moment.tz("Asia/Jakarta").startOf("day").clone().utc().toDate();
+      const now = moment.tz("Asia/Jakarta").clone().utc().toDate();
 
       const todayTransactions = await Pos_Transaction.findAll({
         where: {
