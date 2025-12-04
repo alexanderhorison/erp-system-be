@@ -37,6 +37,7 @@ const {
 const ExportPointOfSaleService = require("../export/ExportPointOfSaleService");
 const transporter = require("../../helpers/emailConfig");
 const fs = require("fs/promises");
+const moment = require('moment-timezone')
 
 class PointOfSaleService {
   static async addOrRemoveFavorite(data) {
