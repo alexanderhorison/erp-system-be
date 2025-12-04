@@ -28,6 +28,7 @@ const {
   justifyLeft,
   justifyRight,
   addSpace,
+  virtualConsoleLogPos,
 } = require("../../helpers/posFunction");
 const {
   priceFormat,
@@ -36,7 +37,6 @@ const {
 const ExportPointOfSaleService = require("../export/ExportPointOfSaleService");
 const transporter = require("../../helpers/emailConfig");
 const fs = require("fs/promises");
-const moment = require('moment-timezone')
 
 class PointOfSaleService {
   static async addOrRemoveFavorite(data) {
@@ -839,8 +839,10 @@ class PointOfSaleService {
        * Example: If run at 7 PM on Nov 17, it will get transactions from Nov 17 00:00 - Nov 17 19:00
        */
 
-      const startOfToday = moment.tz("Asia/Jakarta").startOf("day").clone().utc().toDate();
-      const now = moment.tz("Asia/Jakarta").clone().utc().toDate();
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      const now = new Date();
 
       const todayTransactions = await Pos_Transaction.findAll({
         where: {
@@ -877,17 +879,19 @@ class PointOfSaleService {
 
       const transporterConnection = await transporter();
 
+      const nowJakarta = now.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
       const msg = {
         from: process.env.EMAIL_IS,
         to: process.env.EMAIL_RECEIVER,
         bcc: process.env.EMAIL_RECEIVER_BCC,
-        subject: `POS Report - ${moment(startOfToday).format("DD/MM/YYYY")}`,
-        text: `Berikut laporan Point of Sale hari ini (sampai pukul ${moment(
-          now
-        ).format("HH:mm")}).`,
-        html: `<p>Berikut laporan Point of Sale hari ini sampai pukul ${moment(
-          now
-        ).format("HH:mm")}.</p>`,
+        subject: `POS Report - ${startOfToday.toLocaleDateString("id-ID")}`,
+        text: `Berikut laporan Point of Sale hari ini sampai dengan pukul ${nowJakarta}.`,
+        html: `<p>Berikut laporan Point of Sale hari ini sampai dengan pukul ${nowJakarta}.</p>`,
         attachments: [
           {
             filename: filePath.split("/").pop(),
