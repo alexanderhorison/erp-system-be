@@ -291,8 +291,8 @@ class MigrationService {
           let dataSuccess = [];
 
           for (let i = 1; i < lines.length; i++) {
-            const data = lines[i].split(';');
-            const productName = data[3].trim();
+            const data = lines[i].split(',');
+            const productName = data[0].trim();
             const unit = data[1].trim();
             const basePrice = data[2].trim();
             let message = ""
