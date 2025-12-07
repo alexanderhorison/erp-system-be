@@ -441,13 +441,19 @@ class PointOfSaleService {
     }
   }
 
-  static async getAllPointOfSaleByWarehouseId(warehouseId, userId) {
+  static async getAllPointOfSaleByWarehouseId(warehouseId, userId, roleId) {
     try {
+      const whereClause = {
+        warehouseId,
+      };
+
+      // Only add createdBy filter if user is not admin (roleId !== 1)
+      if (roleId !== 1) {
+        whereClause.createdBy = userId;
+      }
+
       const getAllPosTransaction = await Pos_Transaction.findAll({
-        where: {
-          warehouseId,
-          createdBy: userId,
-        },
+        where: whereClause,
         include: [
           {
             model: Master_User,

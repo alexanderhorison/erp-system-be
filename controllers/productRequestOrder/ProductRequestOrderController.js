@@ -42,7 +42,7 @@ class ProductRequestOrderController {
   static async getAllProductRequest(req, res) {
     try {
       const getAllProductRequest =
-        await ProductRequestOrderService.getAllProductRequest({ query: req.query });
+        await ProductRequestOrderService.getAllProductRequest({ query: req.query, userData: req.userData });
 
       res.status(200).json(responses(true, "Berhasil", getAllProductRequest));
     } catch (error) {

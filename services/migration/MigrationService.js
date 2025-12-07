@@ -340,6 +340,10 @@ class MigrationService {
             })
 
             if (existingProduct) {
+              // skip if base price 0
+              if (Number(basePrice) === 0) {
+                continue;
+              }
               // Update
               await Master_Product_Price.update({
                 basePrice: Number(basePrice),
