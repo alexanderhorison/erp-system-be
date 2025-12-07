@@ -60,7 +60,11 @@ class ProductRequestOrderService {
 
   static async getAllProductRequest(payload) {
     try {
-      let queryOption = {
+      const isPosLayout = payload?.query?.isPosLayout === 'true' || payload?.query?.isPosLayout === true;
+      const statusOrder = payload?.query?.statusOrder;
+
+      const queryOption = {
+        where: {},
         include: [
           {
             model: Master_User,
@@ -90,11 +94,14 @@ class ProductRequestOrderService {
         order: [["createdAt", "DESC"]],
       };
 
-      // query status [PENDING, COMPLETED, REJECTED]
-      if (payload.query.statusOrder) {
-        queryOption.where = {
-          status: STATUS[payload.query.statusOrder] || "PENDING",
-        }
+      // Add status filter if provided [PENDING, COMPLETED, REJECTED]
+      if (statusOrder) {
+        queryOption.where.status = STATUS[statusOrder] || "PENDING";
+      }
+
+      // Add createdBy filter if isPosLayout is true and user is not admin
+      if (isPosLayout && payload.userData?.userId && payload.userData?.roleId !== 1) {
+        queryOption.where.createdBy = payload.userData?.userId;
       }
 
       const data = await Pr_Orders.findAll(queryOption);
@@ -102,13 +109,15 @@ class ProductRequestOrderService {
       const result = data.map((item) => {
         const plain = item.get({ plain: true });
         delete plain.creator;
+        delete plain.approver;
+        
         return {
           ...plain,
           approvedAt: formatDate(item.approvedAt),
           createdBy: {
-            id: item.creator.id,
-            name: item.creator.name,
-            roleName: item.creator.Master_Role.name,
+            id: item.creator?.id,
+            name: item.creator?.name,
+            roleName: item.creator?.Master_Role?.name,
           },
           approvedBy: {
             name: item.approver?.name || null,

@@ -149,7 +149,8 @@ class PointOfSaleController {
       // saat ini tidak ada params dlu
       const data = await PointOfSaleService.getAllPointOfSaleByWarehouseId(
         warehouseId,
-        req.userData.id
+        req.userData.id,
+        req.userData.roleId
       );
 
       res.status(200).json(responses(true, `Sukses Get All Data`, data));

@@ -2,7 +2,7 @@ const { styleExcel } = require("../../helpers/excelHelperStyle");
 const ExcelJS = require("exceljs");
 
 class ExportPointOfSaleService {
-  static async generateExcel(data, date) {
+  static async generateExcel(data) {
     try {
       const workbook = new ExcelJS.Workbook();
 

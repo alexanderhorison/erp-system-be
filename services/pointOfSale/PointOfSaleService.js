@@ -441,13 +441,19 @@ class PointOfSaleService {
     }
   }
 
-  static async getAllPointOfSaleByWarehouseId(warehouseId, userId) {
+  static async getAllPointOfSaleByWarehouseId(warehouseId, userId, roleId) {
     try {
+      const whereClause = {
+        warehouseId,
+      };
+
+      // Only add createdBy filter if user is not admin (roleId !== 1)
+      if (roleId !== 1) {
+        whereClause.createdBy = userId;
+      }
+
       const getAllPosTransaction = await Pos_Transaction.findAll({
-        where: {
-          warehouseId,
-          createdBy: userId,
-        },
+        where: whereClause,
         include: [
           {
             model: Master_User,
@@ -835,7 +841,7 @@ class PointOfSaleService {
        * 2. Order by grandTotal (highest first)
        * 3. Generate report Excel
        * 4. Send email with the report attached
-       * 
+       *
        * Example: If run at 7 PM on Nov 17, it will get transactions from Nov 17 00:00 - Nov 17 19:00
        */
 
@@ -874,19 +880,24 @@ class PointOfSaleService {
       });
 
       const filePath = await ExportPointOfSaleService.generateExcel(
-        todayTransactions,
-        startOfToday
+        todayTransactions
       );
 
       const transporterConnection = await transporter();
+
+      const nowJakarta = now.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
       const msg = {
         from: process.env.EMAIL_IS,
         to: process.env.EMAIL_RECEIVER,
         bcc: process.env.EMAIL_RECEIVER_BCC,
         subject: `POS Report - ${startOfToday.toLocaleDateString("id-ID")}`,
-        text: `Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.`,
-        html: `<p>Berikut laporan Point of Sale hari ini (${startOfToday.toLocaleDateString("id-ID")}) sampai dengan pukul ${now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}.</p>`,
+        text: `Berikut laporan Point of Sale hari ini sampai dengan pukul ${nowJakarta}.`,
+        html: `<p>Berikut laporan Point of Sale hari ini sampai dengan pukul ${nowJakarta}.</p>`,
         attachments: [
           {
             filename: filePath.split("/").pop(),
