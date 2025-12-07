@@ -44,12 +44,15 @@ class UserService {
         warehouseId,
       } = body;
 
+      // Sanitize email: trim and convert to lowercase
+      const sanitizedEmail = email.trim().toLowerCase();
+
       let decryptPassword = decrypt(password);
       // validation input
       await UserService.validationRole(body);
 
       // validation check user email and username
-      await UserService.checkUser({ email, userName });
+      await UserService.checkUser({ email: sanitizedEmail, userName });
 
       // Validation if Role id admin gudang
       if (roleId == 3 && warehouseId) {
@@ -61,7 +64,7 @@ class UserService {
       const newUser = await Master_User.create({
         name,
         description,
-        email,
+        email: sanitizedEmail,
         userName,
         password: decryptPassword,
         roleId,
@@ -119,6 +122,9 @@ class UserService {
         password,
       } = body;
 
+      // Sanitize email: trim and convert to lowercase
+      const sanitizedEmail = email.trim().toLowerCase();
+
       // validation input
       await UserService.validationRole(body);
 
@@ -136,7 +142,7 @@ class UserService {
       }
       // find user that not with the userId
       const findExistUser = await Master_User.findOne({
-        where: { [Op.or]: [{ userName }, { email }], id: { [Op.ne]: userId } },
+        where: { [Op.or]: [{ userName }, { email: sanitizedEmail }], id: { [Op.ne]: userId } },
       });
 
       if (findExistUser) {
@@ -148,7 +154,7 @@ class UserService {
         await user.update({
           name,
           description,
-          email,
+          email: sanitizedEmail,
           password: decryptPassword,
           userName,
           roleId,
@@ -158,7 +164,7 @@ class UserService {
         await user.update({
           name,
           description,
-          email,
+          email: sanitizedEmail,
           userName,
           roleId,
           warehouseId: roleId == 3 ? warehouseId : null,
@@ -297,9 +303,13 @@ class UserService {
       if (!body.email || !body.password) {
         throw throwValidation(400, "Email dan password harus diisi");
       }
+
+      // Sanitize email: trim and convert to lowercase
+      const sanitizedEmail = body.email.trim().toLowerCase();
+
       const user = await Master_User.findOne({
         where: {
-          email: body.email,
+          email: sanitizedEmail,
         },
         attributes: [
           "id",
