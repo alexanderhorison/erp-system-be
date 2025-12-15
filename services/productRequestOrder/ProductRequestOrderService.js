@@ -100,8 +100,8 @@ class ProductRequestOrderService {
       }
 
       // Add createdBy filter if isPosLayout is true and user is not admin
-      if (isPosLayout && payload.userData?.userId && payload.userData?.roleId !== 1) {
-        queryOption.where.createdBy = payload.userData?.userId;
+      if (isPosLayout && payload.userData?.id && payload.userData?.roleId !== 1) {
+        queryOption.where.createdBy = payload.userData?.id;
       }
 
       const data = await Pr_Orders.findAll(queryOption);
