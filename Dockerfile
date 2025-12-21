@@ -17,7 +17,11 @@ WORKDIR /app
 ARG PORT
 
 # Install runtime dependencies for bcrypt and other native modules
-RUN apk add --no-cache bash libc6-compat python3 make g++
+RUN apk add --no-cache bash libc6-compat python3 make g++ tzdata
+
+# Set timezone to Asia/Jakarta
+ENV TZ=Asia/Jakarta
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Create a non-root user to run the application
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
