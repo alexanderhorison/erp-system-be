@@ -58,6 +58,7 @@ class SalesOrderController {
         grandTotalBarter: yup.number().required("Total Barter harus ada"),
         dueDate: yup.string().required("Tanggal jatuh tempo harus ada"),
         notes: yup.string().optional(),
+        isLoanStockSO: yup.boolean().optional().default(false),
         listProduct: yup
           .array()
           .of(
@@ -119,10 +120,12 @@ class SalesOrderController {
         user,
       });
 
+      const isLoanStockSO = body.isLoanStockSO || false;
+
       res
         .status(201)
         .json(
-          responses(true, "Berhasil membuat sales order", createSalesOrder)
+          responses(true, `Berhasil membuat sales order ${isLoanStockSO ? "loan": ""}`, createSalesOrder)
         );
     } catch (error) {
       res

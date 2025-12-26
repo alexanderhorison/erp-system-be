@@ -25,6 +25,8 @@ const {
   Sales_Order_Barter_Details,
   Master_Modal,
   Sales_Order_Payment,
+  Stock_Loan_Products,
+  Stock_Loan_History,
 } = require("../../models");
 const transporter = require("../../helpers/emailConfig");
 const jwt = require("jsonwebtoken");
@@ -115,6 +117,7 @@ class SalesOrderService {
           shippingDate: formatDate(item?.shippingDate),
           shippingTime: item?.shippingDate,
           customer: item?.Master_Customer,
+          isLoanStockSO: item?.isLoanStockSO ?? false,
         };
       });
 
@@ -145,6 +148,7 @@ class SalesOrderService {
           createdBy: user?.id,
           dueDate: data?.dueDate,
           shippingDate: data?.shippingDate,
+          isLoanStockSO: data?.isLoanStockSO || false,
         },
         { transaction }
       );
@@ -282,8 +286,8 @@ class SalesOrderService {
           );
         }
 
-        // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup
-        if (warehouseProduct.quantity < item.quantity) {
+        // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup (hanya untuk bukan loan stock SO)
+        if (warehouseProduct.quantity < item.quantity && !exsistingData.isLoanStockSO) {
           const productName = warehouseProduct.Master_Product?.name || "Produk";
           const unitName = warehouseProduct.Master_Unit?.name || "unit";
           throwValidation(
@@ -292,8 +296,20 @@ class SalesOrderService {
           );
         }
 
-        const newWarehouseQuantity =
-          warehouseProduct?.quantity - item?.quantity;
+        let newWarehouseQuantity;
+        let loanQuantity = 0;
+        let actualSubtractedQuantity = item.quantity;
+
+        // Check if warehouse has enough stock
+        if (warehouseProduct.quantity >= item.quantity) {
+          // Stock is sufficient, subtract normally
+          newWarehouseQuantity = warehouseProduct.quantity - item.quantity;
+        } else {
+          // Stock is insufficient, need to use loan stock
+          actualSubtractedQuantity = warehouseProduct.quantity;
+          loanQuantity = item.quantity - warehouseProduct.quantity;
+          newWarehouseQuantity = 0; // Cannot go negative
+        }
 
         // Kurangi stok product di warehouse
         await Warehouse_Product.update(
@@ -307,6 +323,82 @@ class SalesOrderService {
             transaction,
           }
         );
+
+        // If there's a loan quantity, handle Stock_Loan_Products and Stock_Loan_History
+        if (loanQuantity > 0) {
+          // Find or create Stock_Loan_Products entry
+          const existingLoanProduct = await Stock_Loan_Products.findOne({
+            where: {
+              productWarehouseId: item.warehouseProductId,
+            },
+            transaction,
+          });
+
+          if (existingLoanProduct) {
+            // Update existing loan quantity
+            await Stock_Loan_Products.update(
+              {
+                quantity: existingLoanProduct.quantity + loanQuantity,
+              },
+              {
+                where: {
+                  productWarehouseId: item.warehouseProductId,
+                },
+                transaction,
+              }
+            );
+          } else {
+            // Create new loan product entry
+            await Stock_Loan_Products.create(
+              {
+                productWarehouseId: item.warehouseProductId,
+                quantity: loanQuantity,
+              },
+              { transaction }
+            );
+          }
+
+          // Check if INITIATE history exists for this product
+          const initiateHistory = await Stock_Loan_History.findOne({
+            where: {
+              productWarehouseId: item.warehouseProductId,
+              adjustmentType: "INITIATE",
+            },
+            transaction,
+          });
+
+          // Create INITIATE history if it doesn't exist
+          if (!initiateHistory) {
+            await Stock_Loan_History.create(
+              {
+                productWarehouseId: item.warehouseProductId,
+                quantity: 0,
+                adjustmentType: "INITIATE",
+                warehouseId: warehouseProduct.warehouseId,
+                userId: user.id,
+                description: "Initiate loan stock tracking",
+                info: "LOAN STOCK INITIATION",
+                salesOrderId: exsistingData.id,
+              },
+              { transaction }
+            );
+          }
+
+          // Create PLUS history for the loan
+          await Stock_Loan_History.create(
+            {
+              productWarehouseId: item.warehouseProductId,
+              quantity: loanQuantity,
+              adjustmentType: "PLUS",
+              warehouseId: warehouseProduct.warehouseId,
+              userId: user.id,
+              description: `Loan stock for Sales Order ${exsistingData.code}`,
+              info: "SALES ORDER LOAN",
+              salesOrderId: exsistingData.id,
+            },
+            { transaction }
+          );
+        }
 
         // update Gain Loss pada SO Detail
 
@@ -332,20 +424,22 @@ class SalesOrderService {
         totalModal += Number(item.modal);
         totalGainLoss += Number(gainLossProduct);
 
-        // catat stock adjustment histories
-        await Stock_Adjustment_History.create(
-          {
-            productWarehouseId: item?.warehouseProductId,
-            quantity: item?.quantity,
-            adjustmentType: "MINUS",
-            warehouseId: warehouseProduct?.warehouseId,
-            userId: user?.id,
-            info: "SALES ORDER",
-            salesOrderId: exsistingData?.id,
-            lastQuantity: newWarehouseQuantity, // stock product warehouse kurang product sales order
-          },
-          { transaction }
-        );
+        // catat stock adjustment histories (only for actual subtracted quantity)
+        if (actualSubtractedQuantity > 0) {
+          await Stock_Adjustment_History.create(
+            {
+              productWarehouseId: item?.warehouseProductId,
+              quantity: actualSubtractedQuantity,
+              adjustmentType: "MINUS",
+              warehouseId: warehouseProduct?.warehouseId,
+              userId: user?.id,
+              info: "SALES ORDER",
+              salesOrderId: exsistingData?.id,
+              lastQuantity: newWarehouseQuantity, // stock product warehouse kurang product sales order
+            },
+            { transaction }
+          );
+        }
 
         // Update Base Modal Jika input harga modal beda dengan base master modal
         const findMasterModal = await Master_Modal.findOne({
@@ -841,6 +935,7 @@ class SalesOrderService {
         amountPaid: detail?.amountPaid,
         amountDebt: detail?.amountDebt,
         shippingDate: detail?.shippingDate,
+        isLoanStockSO: detail?.isLoanStockSO || false,
       };
 
       return sendData;

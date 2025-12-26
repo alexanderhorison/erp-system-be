@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
       grandTotalBarter: DataTypes.BIGINT,
       totalModal: DataTypes.BIGINT,
       totalGainLoss: DataTypes.BIGINT,
+      isLoanStockSO: DataTypes.BOOLEAN,
     },
     {
       sequelize,
