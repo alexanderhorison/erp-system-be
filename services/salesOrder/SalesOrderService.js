@@ -377,7 +377,7 @@ class SalesOrderService {
                 warehouseId: warehouseProduct.warehouseId,
                 userId: user.id,
                 description: "Initiate loan stock tracking",
-                info: "LOAN STOCK INITIATION",
+                info: "SALES ORDER LOAN",
                 salesOrderId: exsistingData.id,
               },
               { transaction }
