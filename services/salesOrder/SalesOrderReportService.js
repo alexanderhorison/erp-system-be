@@ -7,6 +7,7 @@ const {
   Sales_Order,
   Sales_Order_Detail,
   Master_Customer,
+  Sales_Order_Barter_Details,
 } = require("../../models");
 const { Op } = require("sequelize");
 
@@ -35,6 +36,34 @@ class SalesOrderReportService {
                 include: [
                   {
                     model: Master_Product,
+                    attributes: ["id", "name", "companyId"], // Fetch product details
+                    include: [
+                      {
+                        model: Master_Company,
+                        attributes: ["id", "name"], // Fetch company details
+                      },
+                    ],
+                  },
+                  { model: Master_Unit, attributes: ["id", "name"] }, // Fetch unit details
+                  {
+                    model: Master_Warehouse,
+                    attributes: ["id", "name"],
+                  }, // Fetch warehouse details
+                ],
+              },
+            ],
+          },
+          {
+            model: Sales_Order_Barter_Details,
+            include: [
+              {
+                model: Warehouse_Product,
+                paranoid: false, // Include deleted records if needed
+                // Remove attributes restriction to fetch all fields
+                include: [
+                  {
+                    model: Master_Product,
+                    paranoid: false, // Include deleted records
                     attributes: ["id", "name", "companyId"], // Fetch product details
                     include: [
                       {
