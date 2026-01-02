@@ -4,17 +4,17 @@ const {
   Master_Company,
   Master_Warehouse,
   Warehouse_Product,
-  Sales_Order,
-  Sales_Order_Detail,
-  Master_Customer,
-  Sales_Order_Barter_Details,
+  Purchase_Order,
+  Purchase_Order_Detail,
+  Master_Vendor,
+  Purchase_Order_Barter_Detail,
 } = require("../../models");
 const { Op } = require("sequelize");
 
-class SalesOrderReportService {
-  static async getDataReportSo({ query }) {
+class PurchaseOrderReportService {
+  static async getDataReportPo({ query }) {
     try {
-      const allData = await Sales_Order.findAll({
+      const allData = await Purchase_Order.findAll({
         where: {
           status: "APPROVED",
           approvedAt: {
@@ -23,11 +23,11 @@ class SalesOrderReportService {
         },
         include: [
           {
-            model: Master_Customer,
-            attributes: ["name", "alias"],
+            model: Master_Vendor,
+            attributes: ["name"],
           },
           {
-            model: Sales_Order_Detail,
+            model: Purchase_Order_Detail,
             include: [
               {
                 model: Warehouse_Product,
@@ -54,29 +54,17 @@ class SalesOrderReportService {
             ],
           },
           {
-            model: Sales_Order_Barter_Details,
+            model: Purchase_Order_Barter_Detail,
             include: [
               {
                 model: Warehouse_Product,
-                paranoid: false, // Include deleted records if needed
-                // Remove attributes restriction to fetch all fields
+                paranoid: false,
                 include: [
                   {
                     model: Master_Product,
-                    paranoid: false, // Include deleted records
-                    attributes: ["id", "name", "companyId"], // Fetch product details
-                    include: [
-                      {
-                        model: Master_Company,
-                        attributes: ["id", "name"], // Fetch company details
-                      },
-                    ],
-                  },
-                  { model: Master_Unit, attributes: ["id", "name"] }, // Fetch unit details
-                  {
-                    model: Master_Warehouse,
+                    paranoid: false,
                     attributes: ["id", "name"],
-                  }, // Fetch warehouse details
+                  },
                 ],
               },
             ],
@@ -92,4 +80,4 @@ class SalesOrderReportService {
   }
 }
 
-module.exports = SalesOrderReportService;
+module.exports = PurchaseOrderReportService;
