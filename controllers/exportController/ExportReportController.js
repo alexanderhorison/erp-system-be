@@ -15,7 +15,7 @@ class ExportReportController {
           .min(1, "Bulan Minimal adalah 1")
           .max(12, "Bulan Maksimal adalah 12")
           .when("reportType", {
-            is: (val) => [REPORT_TYPE.SALES_ORDER].includes(val), // only required if Sales Order
+            is: (val) => [REPORT_TYPE.SALES_ORDER, REPORT_TYPE.PURCHASE_ORDER].includes(val), // required if Sales Order or Purchase Order
             then: (schema) => schema.required("Bulan Report harus diisi"),
             otherwise: (schema) => schema.notRequired(),
           }),
@@ -25,7 +25,7 @@ class ExportReportController {
           .min(2025, "Tahun harus lebih dari 2025")
           .max(new Date().getFullYear(), "Hanya bisa diambil sampai tahun ini")
           .when("reportType", {
-            is: (val) => [REPORT_TYPE.SALES_ORDER].includes(val), // only required if Sales Order
+            is: (val) => [REPORT_TYPE.SALES_ORDER, REPORT_TYPE.PURCHASE_ORDER].includes(val), // required if Sales Order or Purchase Order
             then: (schema) => schema.required("Tahun Report harus diisi"),
             otherwise: (schema) => schema.notRequired(),
           }),

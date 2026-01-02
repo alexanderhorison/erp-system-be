@@ -1,5 +1,6 @@
 const ExcelJS = require("exceljs");
 const SalesOrderReportService = require("../salesOrder/SalesOrderReportService");
+const PurchaseOrderReportService = require("../purchaseOrder/PurchaseOrderReportService");
 const { generateFilterDate } = require("../../helpers/queryGenerator");
 const { priceFormatWIthCurrency } = require("../../helpers/priceFormat");
 const {
@@ -28,6 +29,8 @@ class ExportReportService {
     switch (query.reportType) {
       case REPORT_TYPE.SALES_ORDER:
         return await ExportReportService.getReportSo({ query });
+      case REPORT_TYPE.PURCHASE_ORDER:
+        return await ExportReportService.getReportPo({ query });
       case REPORT_TYPE.CUSTOMER:
         return await ExportReportService.getReportDataCustomer({ query });
       case REPORT_TYPE.POS:
@@ -2174,6 +2177,484 @@ class ExportReportService {
       sheetName,
       file
     };
+  }
+
+  static async getReportPo({ query }) {
+    try {
+      const { startDate, endDate } = generateFilterDate(
+        query.month,
+        query.year
+      );
+
+      // Data for Purchase Order Report   
+      const getDataReportPo = await PurchaseOrderReportService.getDataReportPo({
+        query: { startDate, endDate },
+      });
+
+      const workbook = new ExcelJS.Workbook();
+
+      const monthName = new Date(query.year, query.month - 1).toLocaleString(
+        "en-US",
+        {
+          month: "long",
+        }
+      );
+
+      // Set the worksheet name dynamically
+      const sheetName = `Purchase_Order_Report_${monthName}_${query.year}`;
+
+      // Process Data For Sheet 1 - Catatan Pembelian
+      await ExportReportService.generateSheetPurchaseOrderDetailTransaction({
+        workbook,
+        monthName,
+        getDataReportPo,
+      });
+
+      // Save the file
+      const file = await workbook.xlsx.writeBuffer();
+
+      console.log(`Excel report generated: ${query.reportType}`);
+      return {
+        sheetName,
+        file,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async generateSheetPurchaseOrderDetailTransaction({
+    workbook,
+    monthName,
+    getDataReportPo,
+  }) {
+    try {
+      const { styleBorder, fontBold, centerMiddle } = styleExcel;
+
+      const worksheet = workbook.addWorksheet(`Catatan Pembelian ${monthName}`);
+      worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+      // Define column headers
+      const headers = [
+        "Tanggal",
+        "Vendor",
+        "Nama Barang",
+        "Harga Beli",
+        "Harga Modal",
+        "Harga Barter",
+        "Quantity",
+        "Total Harga Beli",
+        "Total Harga Modal",
+        "Total Harga Barter",
+        "Gain/Loss",
+      ];
+
+      worksheet.columns = [
+        { header: headers[0], key: "tanggal", width: 15 },
+        { header: headers[1], key: "vendor", width: 20 },
+        { header: headers[2], key: "namaBarang", width: 30 },
+        { header: headers[3], key: "hargaBeli", width: 15 },
+        { header: headers[4], key: "hargaModal", width: 15 },
+        { header: headers[5], key: "hargaBarter", width: 15 },
+        { header: headers[6], key: "quantity", width: 10 },
+        { header: headers[7], key: "totalHargaBeli", width: 20 },
+        { header: headers[8], key: "totalHargaModal", width: 20 },
+        { header: headers[9], key: "totalHargaBarter", width: 20 },
+        { header: headers[10], key: "gainLoss", width: 15 },
+      ];
+
+      // Apply styling to headers
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = fontBold;
+      headerRow.alignment = centerMiddle;
+
+      headerRow.eachCell((cell, colNumber) => {
+        cell.border = styleBorder;
+
+        // Apply RED to headers Tanggal → Total Harga Barter (columns 1-10)
+        if (colNumber >= 1 && colNumber <= 10) {
+          applyCellFill(cell, "FFFFC1C1");
+        }
+
+        // Apply BLUE to Gain/Loss (column 11)
+        if (colNumber === 11) {
+          applyCellFill(cell, "FFADD8E6");
+        }
+      });
+
+      let rowIndex = 2; // Start inserting data from row 2
+
+      // Track all Total Harga Beli and Total Barter cells for summary
+      const allTotalHargaBeliCells = [];
+      const allTotalBarterCells = [];
+
+      // Report for Purchase Order
+      for (const order of getDataReportPo) {
+        const {
+          approvedAt,
+          Master_Vendor,
+          Purchase_Order_Details,
+          Purchase_Order_Barter_Details,
+        } = order;
+
+        const vendorName = Master_Vendor?.name || "";
+        const orderStartRow = rowIndex;
+
+        // Track GRAND TOTAL only from Purchase Order Details (column H - Total Harga Beli)
+        let grandTotalPurchaseOrderFormula = null;
+        let grandTotalBarterFormula = null; // Track barter total for this PO
+        let purchaseOrderDetailTotalRow = null; // Store Purchase Order Details TOTAL row number
+
+        // ========== PURCHASE ORDER DETAILS SECTION ==========
+        if (Purchase_Order_Details && Purchase_Order_Details.length > 0) {
+          const detailStartRow = rowIndex;
+
+          for (const detail of Purchase_Order_Details) {
+            const { Warehouse_Product, price, quantity } = detail;
+
+            // Insert Data Row (Non-Barter: hanya Harga Beli dan Total Harga Beli)
+            const dataRow = worksheet.addRow({
+              tanggal: approvedAt,
+              vendor: vendorName,
+              namaBarang: Warehouse_Product?.Master_Product?.name || "",
+              hargaBeli: Number(price) || 0,
+              quantity: Number(quantity) || 0,
+            });
+
+            const rowNumber = dataRow.number;
+
+            // totalHargaBeli (Harga Beli * Quantity) - column H
+            worksheet.getCell(`H${rowNumber}`).value = {
+              formula: `D${rowNumber}*G${rowNumber}`,
+            };
+
+            // Apply Cell Formatting - Apply borders to ALL columns (A-K)
+            for (let col = 1; col <= 11; col++) {
+              const cell = dataRow.getCell(col);
+              cell.border = styleBorder;
+
+              // Center align and format Harga Beli (D) and Total Harga Beli (H)
+              if (col === 4 || col === 8) {
+                cell.alignment = centerMiddle;
+                cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+              }
+
+              // Quantity column (G) center align without currency
+              if (col === 7) {
+                cell.alignment = centerMiddle;
+              }
+            }
+
+            rowIndex++;
+          }
+
+          const detailEndRow = rowIndex - 1;
+
+          // Store TOTAL row reference for GRAND TOTAL
+          const totalDetailRowNumber = rowIndex;
+          purchaseOrderDetailTotalRow = totalDetailRowNumber; // Store for later use
+
+          // Add TOTAL row for Purchase Order Details (Non-Barter)
+          const totalDetailRow = worksheet.addRow({
+            namaBarang: "TOTAL",
+            hargaBeli: { formula: `SUM(D${detailStartRow}:D${detailEndRow})` },
+            totalHargaBeli: { formula: `SUM(H${detailStartRow}:H${detailEndRow})` },
+          });
+
+          // Track for summary: Add Total Harga Beli cell
+          allTotalHargaBeliCells.push(`H${totalDetailRowNumber}`);
+
+          // Store reference to this TOTAL row for GRAND TOTAL (use column H - Total Harga Beli)
+          grandTotalPurchaseOrderFormula = `H${totalDetailRowNumber}`;
+
+          totalDetailRow.font = fontBold;
+
+          // Apply borders to ALL columns (A-K) and yellow fill only to cells with values
+          for (let col = 1; col <= 11; col++) {
+            const cell = totalDetailRow.getCell(col);
+            cell.border = styleBorder;
+
+            // Format and fill hanya untuk Harga Beli (D) dan Total Harga Beli (H)
+            if (col === 4 || col === 8) {
+              cell.alignment = centerMiddle;
+              cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+
+              // Only apply yellow fill if cell has a value
+              if (cell.value) {
+                applyCellFill(cell, "FFEE8C");
+              }
+            }
+          }
+
+          rowIndex++;
+        }
+
+        // ========== PURCHASE ORDER BARTER DETAILS SECTION ==========
+        if (Purchase_Order_Barter_Details && Purchase_Order_Barter_Details.length > 0) {
+          const barterStartRow = rowIndex;
+
+          // Collect all unique productIds from barter details
+          const productIds = [...new Set(
+            Purchase_Order_Barter_Details
+              .map(detail => detail.Warehouse_Product?.productId)
+              .filter(Boolean)
+          )];
+
+          // Fetch Master_Product manually for deleted products
+          const productMap = {};
+          if (productIds.length > 0) {
+            const products = await Master_Product.findAll({
+              where: { id: productIds },
+              attributes: ['id', 'name'],
+              paranoid: false, // Include soft-deleted products
+            });
+
+            products.forEach(product => {
+              productMap[product.id] = product.name;
+            });
+          }
+
+          for (const barterDetail of Purchase_Order_Barter_Details) {
+            const { Warehouse_Product: warehouseProduct, modal, price, quantity } = barterDetail;
+
+            // Get product name from manual fetch or from include
+            const productId = warehouseProduct?.productId;
+            const productName = productMap[productId] ||
+              warehouseProduct?.Master_Product?.name ||
+              "";
+
+            // Insert Barter Row - Harga Modal (E), Harga Barter (F), Total Modal (I), Total Barter (J), Gain/Loss (K)
+            const barterRow = worksheet.addRow({
+              tanggal: approvedAt,
+              vendor: vendorName,
+              namaBarang: productName,
+              quantity: Number(quantity) || 0,
+            });
+
+            const rowNumber = barterRow.number;
+
+            // Harga Modal in column E (modal dari PO Barter = harga jual SO)
+            worksheet.getCell(`E${rowNumber}`).value = Number(modal) || 0;
+
+            // Harga Barter in column F
+            worksheet.getCell(`F${rowNumber}`).value = Number(price) || 0;
+
+            // Total Harga Modal in column I (Harga Modal * Quantity)
+            worksheet.getCell(`I${rowNumber}`).value = {
+              formula: `E${rowNumber}*G${rowNumber}`,
+            };
+
+            // Total Harga Barter in column J (Harga Barter * Quantity)
+            worksheet.getCell(`J${rowNumber}`).value = {
+              formula: `F${rowNumber}*G${rowNumber}`,
+            };
+
+            // Gain/Loss in column K (Total Harga Barter - Total Harga Modal)
+            worksheet.getCell(`K${rowNumber}`).value = {
+              formula: `J${rowNumber}-I${rowNumber}`,
+            };
+
+            // Apply Cell Formatting - Apply borders to ALL columns (A-K)
+            for (let col = 1; col <= 11; col++) {
+              const cell = barterRow.getCell(col);
+              cell.border = styleBorder;
+
+              // Center align and format Harga Modal (E), Harga Barter (F), Total Modal (I), Total Barter (J)
+              if (col === 5 || col === 6 || col === 9 || col === 10) {
+                cell.alignment = centerMiddle;
+                cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+              }
+
+              // Gain/Loss (K) - blue background
+              if (col === 11) {
+                cell.alignment = centerMiddle;
+                cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+              }
+
+              // Quantity column (G) center align without currency
+              if (col === 7) {
+                cell.alignment = centerMiddle;
+              }
+            }
+
+            rowIndex++;
+          }
+
+          const barterEndRow = rowIndex - 1;
+          const totalBarterRowNumber = rowIndex;
+
+          // Add TOTAL row for Barter Details (PO)
+          const totalBarterRow = worksheet.addRow({
+            namaBarang: "TOTAL",
+            hargaModal: { formula: `SUM(E${barterStartRow}:E${barterEndRow})` }, // Harga Modal total
+            hargaBarter: { formula: `SUM(F${barterStartRow}:F${barterEndRow})` }, // Harga Barter total
+            totalHargaModal: { formula: `SUM(I${barterStartRow}:I${barterEndRow})` }, // Total Harga Modal
+            totalHargaBarter: { formula: `SUM(J${barterStartRow}:J${barterEndRow})` }, // Total Harga Barter
+            gainLoss: { formula: `J${totalBarterRowNumber}-I${totalBarterRowNumber}` }, // Gain/Loss = Total Barter - Total Modal
+          });
+
+          // Track for summary: Add Total Barter cell (PO)
+          allTotalBarterCells.push(`J${totalBarterRowNumber}`);
+
+          // Store reference for GRAND TOTAL of this PO
+          grandTotalBarterFormula = `J${totalBarterRowNumber}`;
+
+          totalBarterRow.font = fontBold;
+
+          // Apply borders to ALL columns (A-K) and yellow fill only to cells with values
+          for (let col = 1; col <= 11; col++) {
+            const cell = totalBarterRow.getCell(col);
+            cell.border = styleBorder;
+
+            // Format untuk Harga Modal (E), Harga Barter (F), Total Modal (I), Total Barter (J)
+            if (col === 5 || col === 6 || col === 9 || col === 10) {
+              cell.alignment = centerMiddle;
+              cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+
+              // Only apply yellow fill if cell has a value
+              if (cell.value) {
+                applyCellFill(cell, "FFEE8C");
+              }
+            }
+
+            // Gain/Loss (K) - blue background
+            if (col === 11 && cell.value) {
+              cell.alignment = centerMiddle;
+              cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+              applyCellFill(cell, "FFADD8E6");
+            }
+          }
+
+          rowIndex++;
+        }
+
+        // ========== GRAND TOTAL ROW ==========
+        const grandTotalRow = worksheet.addRow({
+          namaBarang: "GRAND TOTAL",
+        });
+
+        const grandTotalRowNumber = grandTotalRow.number;
+
+        // Merge cells D to K (columns 4-11) for GRAND TOTAL
+        worksheet.mergeCells(`D${grandTotalRowNumber}:K${grandTotalRowNumber}`);
+
+        // GRAND TOTAL = Total Harga Beli - Total Harga Barter
+        if (grandTotalPurchaseOrderFormula && grandTotalBarterFormula) {
+          // Ada keduanya: non-barter dan barter
+          worksheet.getCell(`D${grandTotalRowNumber}`).value = {
+            formula: `${grandTotalPurchaseOrderFormula}-${grandTotalBarterFormula}`,
+          };
+        } else if (grandTotalPurchaseOrderFormula) {
+          // Hanya non-barter
+          worksheet.getCell(`D${grandTotalRowNumber}`).value = {
+            formula: grandTotalPurchaseOrderFormula,
+          };
+        } else if (grandTotalBarterFormula) {
+          // Hanya barter (negative karena kita kasih barang ke vendor)
+          worksheet.getCell(`D${grandTotalRowNumber}`).value = {
+            formula: `-${grandTotalBarterFormula}`,
+          };
+        }
+
+        grandTotalRow.font = fontBold;
+
+        // Apply borders to ALL cells in the row (columns A-K)
+        for (let col = 1; col <= 11; col++) {
+          const cell = grandTotalRow.getCell(col);
+          cell.border = styleBorder;
+
+          // Format the merged cell (D-K)
+          if (col >= 4 && col <= 11) {
+            cell.alignment = centerMiddle;
+            cell.numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+          }
+        }
+
+        // Merge Tanggal and Vendor for the entire order
+        const orderEndRow = rowIndex;
+        if (orderEndRow > orderStartRow) {
+          worksheet.mergeCells(`A${orderStartRow}:A${orderEndRow}`);
+          worksheet.mergeCells(`B${orderStartRow}:B${orderEndRow}`);
+          worksheet.getCell(`A${orderStartRow}`).alignment = centerMiddle;
+          worksheet.getCell(`B${orderStartRow}`).alignment = centerMiddle;
+        }
+
+        rowIndex++;
+
+        // Add 2 blank rows for spacing
+        worksheet.addRow({});
+        worksheet.addRow({});
+        rowIndex += 2;
+      }
+
+      // ========== ADD SUMMARY SECTION AT BOTTOM ==========
+      // Add blank row
+      worksheet.addRow({});
+      rowIndex++;
+
+      // Add summary rows
+      const summaryTotalHargaBeliRow = worksheet.addRow({
+        tanggal: "Total Harga Beli",
+      });
+
+      const summaryTotalBarterRow = worksheet.addRow({
+        tanggal: "Total Barter",
+      });
+
+      const summaryGrandTotalRow = worksheet.addRow({
+        tanggal: "Grand Total",
+      });
+
+      // ========== UPDATE SUMMARY SECTION FORMULAS ==========
+      // Total Harga Beli: Sum all Total Harga Beli cells (column H from all TOTAL rows)
+      if (allTotalHargaBeliCells.length > 0) {
+        summaryTotalHargaBeliRow.getCell(2).value = {
+          formula: `SUM(${allTotalHargaBeliCells.join(",")})`
+        };
+      }
+
+      // Total Barter: Sum all Total Barter cells (column J from all Barter TOTAL rows)
+      if (allTotalBarterCells.length > 0) {
+        summaryTotalBarterRow.getCell(2).value = {
+          formula: `SUM(${allTotalBarterCells.join(",")})`
+        };
+      }
+
+      // Grand Total: Total Harga Beli - Total Barter
+      summaryGrandTotalRow.getCell(2).value = {
+        formula: `B${summaryTotalHargaBeliRow.number}-B${summaryTotalBarterRow.number}`
+      };
+
+      // Style summary section
+      [summaryTotalHargaBeliRow, summaryTotalBarterRow, summaryGrandTotalRow].forEach((row, index) => {
+        row.getCell(1).font = fontBold; // Column A bold
+        row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+        row.getCell(2).alignment = centerMiddle;
+        row.getCell(2).numFmt = '"Rp." #,##0; "Rp." -#,##0; "Rp." 0';
+        row.getCell(2).font = fontBold;
+
+        // Add border to both cells
+        row.getCell(1).border = styleBorder;
+        row.getCell(2).border = styleBorder;
+
+        // Grand Total row styling (blue background)
+        if (index === 2) {
+          row.getCell(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFADD8E6' }
+          };
+          row.getCell(2).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFADD8E6' }
+          };
+        }
+      });
+
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
