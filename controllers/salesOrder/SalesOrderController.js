@@ -125,7 +125,11 @@ class SalesOrderController {
       res
         .status(201)
         .json(
-          responses(true, `Berhasil membuat sales order ${isLoanStockSO ? "loan": ""}`, createSalesOrder)
+          responses(
+            true,
+            `Berhasil membuat sales order ${isLoanStockSO ? "loan" : ""}`,
+            createSalesOrder
+          )
         );
     } catch (error) {
       res
@@ -441,6 +445,41 @@ class SalesOrderController {
             runScheduler?.data || []
           )
         );
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getAllLoanProduct(req, res) {
+    try {
+      const data = await SalesOrderService.getAllLoanProduct();
+
+      res.status(200).json(responses(true, "Berhasil", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async payLoanProducts(req, res) {
+    try {
+      const schema = yup.object({
+        productWarehouseId: yup
+          .number()
+          .required("Product Warehouse harus ada"),
+        quantity: yup.number().required("Kuantiti Pembayaran harus ada"),
+      });
+
+      const body = await yupSchemaValidation(req.body, schema);
+
+      const user = req.userData;
+
+      const data = await SalesOrderService.payLoanProducts({ ...body, user });
+
+      res.status(200).json(responses(true, "Berhasil Membayar Pinjaman"));
     } catch (error) {
       res
         .status(error.code || 500)

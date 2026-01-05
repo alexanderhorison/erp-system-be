@@ -266,6 +266,27 @@ class ProductWarehouseController {
       res.status(error.code || 500).json(responses(false, error.message || error));
     }
   }
+
+
+  static async getHistoryLoanProductWarehouse(req, res) {
+    try {
+      const schemaParams = yup
+        .number()
+        .required("Id produk warehouse tidak boleh kosong");
+
+      const id = await yupSchemaValidation(req.params.id, schemaParams);
+
+      const data = await ProductWarehouseService.getHistoryLoanProductWarehouse({
+        id: id,
+      });
+
+      res.status(200).json(responses(true, "Success get product", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
 }
 
 module.exports = ProductWarehouseController;

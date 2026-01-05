@@ -87,6 +87,7 @@ ID MENU : NAMA
 43. Dashboard Finance
 44. Product Request Order
 45. Configuration Setting
+46. Loan Stock
 ```
 
 ### API Migration (15 Agustus 2024)

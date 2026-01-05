@@ -17,6 +17,7 @@ router.post("/create/:warehouseId", ProductWarehouseController.create);
 router.get("/warehouse/:id/list-product-internal-transfer", ProductWarehouseController.getProductWarehouseInternalTransfer)
 
 router.get("/history/:id", ProductWarehouseController.getHistoryProductWarehouse);
+router.get("/history-loan/:id", ProductWarehouseController.getHistoryLoanProductWarehouse);
 router.get("/:id", ProductWarehouseController.getProductWarehouse);
 router.put("/:id", ProductWarehouseController.adjustProduct);
 router.delete("/:id", ProductWarehouseController.deleteProductWarehouse);

@@ -42,6 +42,12 @@ const titleInfo = (item) => {
     case "POINT OF SALE":
       result = "Point Of Sale"
       break;
+    case "SALES ORDER LOAN":
+      result = "Sales Order Loan"
+      break;
+    case "PAYMENT LOAN STOCK":
+      result = "Pembayaran Loan Stock"
+    break;
     default:
       result = "Penyesuaian Stock Product"
   }
@@ -66,10 +72,29 @@ const infoType = (item) => {
   return result
 }
 
+const infoTypeLoan = (item) => {
+  let result = ""
+  switch (item?.adjustmentType) {
+    case "INITIATE":
+      result = `Inisialisasi Stock`
+      break;
+    case "PLUS":
+      result = "Peminjaman Stock"
+      break;
+    case "MINUS":
+      result = "Pembayaran Stock"
+      break;
+    default:
+      result = ""
+  }
+  return result
+}
+
 module.exports = {
   wordingHistory,
   infoType,
-  titleInfo
+  titleInfo,
+  infoTypeLoan
 };
 
 

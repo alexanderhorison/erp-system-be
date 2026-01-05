@@ -287,7 +287,10 @@ class SalesOrderService {
         }
 
         // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup (hanya untuk bukan loan stock SO)
-        if (warehouseProduct.quantity < item.quantity && !exsistingData.isLoanStockSO) {
+        if (
+          warehouseProduct.quantity < item.quantity &&
+          !exsistingData.isLoanStockSO
+        ) {
           const productName = warehouseProduct.Master_Product?.name || "Produk";
           const unitName = warehouseProduct.Master_Unit?.name || "unit";
           throwValidation(
@@ -324,6 +327,8 @@ class SalesOrderService {
           }
         );
 
+        let lastLoanStock = 0
+
         // If there's a loan quantity, handle Stock_Loan_Products and Stock_Loan_History
         if (loanQuantity > 0) {
           // Find or create Stock_Loan_Products entry
@@ -335,6 +340,7 @@ class SalesOrderService {
           });
 
           if (existingLoanProduct) {
+            lastLoanStock = existingLoanProduct.quantity
             // Update existing loan quantity
             await Stock_Loan_Products.update(
               {
@@ -379,10 +385,12 @@ class SalesOrderService {
                 description: "Initiate loan stock tracking",
                 info: "SALES ORDER LOAN",
                 salesOrderId: exsistingData.id,
+                lastQuantity: 0,
               },
               { transaction }
             );
           }
+          const lastQuantity = Number(loanQuantity) + Number(lastLoanStock)
 
           // Create PLUS history for the loan
           await Stock_Loan_History.create(
@@ -395,6 +403,7 @@ class SalesOrderService {
               description: `Loan stock for Sales Order ${exsistingData.code}`,
               info: "SALES ORDER LOAN",
               salesOrderId: exsistingData.id,
+              lastQuantity: lastQuantity,
             },
             { transaction }
           );
@@ -1284,6 +1293,161 @@ class SalesOrderService {
       return { message: "Email sent", data: report?.length };
     } catch (err) {
       throw err;
+    }
+  }
+
+  static async getAllLoanProduct() {
+    try {
+      const allData = await Stock_Loan_Products.findAll({
+        include: [
+          {
+            model: Warehouse_Product,
+            include: [
+              {
+                model: Master_Product,
+                attributes: ["id", "name"],
+              },
+              {
+                model: Master_Unit,
+                attributes: ["id", "name"],
+              },
+              {
+                model: Master_Warehouse,
+                attributes: ["id", "name"],
+              },
+            ],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      const sendData = allData.map((item) => {
+        return {
+          id: item.id,
+          productWarehouseId: item?.productWarehouseId,
+          quantity: item.quantity,
+          productName: item?.Warehouse_Product?.Master_Product?.name,
+          unitName: item?.Warehouse_Product?.Master_Unit?.name,
+          warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name,
+          warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id,
+        };
+      });
+
+      return sendData;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  static async payLoanProducts({ productWarehouseId, quantity, user }) {
+    const transaction = await sq.transaction();
+    console.log(`Pay Loan Products for Warehouse Product ID: ${productWarehouseId}, Quantity: ${quantity}`);
+    try {
+      // 1. Check if product warehouse exists
+      const warehouseProduct = await Warehouse_Product.findOne({
+        where: {
+          id: productWarehouseId,
+        },
+        transaction,
+      });
+
+      if (!warehouseProduct) {
+        throwValidation(400, "Product warehouse tidak ditemukan");
+      }
+
+      // 2. Check if the loan stock exists for this product
+      const loanProduct = await Stock_Loan_Products.findOne({
+        where: {
+          productWarehouseId: productWarehouseId,
+        },
+        transaction,
+      });
+
+      if (!loanProduct) {
+        throwValidation(400, "Tidak ada stock pinjaman untuk product ini");
+      }
+
+      // Validation 1: Check if payment quantity exceeds available loan stock
+      if (quantity > loanProduct.quantity) {
+        throwValidation(400, "Jumlah pembayaran melebihi stock peminjaman");
+      }
+
+      // Validation 2: Check if warehouse product has enough stock to pay the loan
+      if (warehouseProduct.quantity < quantity) {
+        throwValidation(
+          400,
+          `Jumlah stock product warehouse tidak mencukupi, available ${warehouseProduct.quantity}`
+        );
+      }
+
+      // 3. Update or decrease the loan stock quantity
+      const newLoanQuantity = loanProduct.quantity - quantity;
+
+      // Update with the remaining loan quantity
+      await Stock_Loan_Products.update(
+        {
+          quantity: newLoanQuantity,
+        },
+        {
+          where: {
+            productWarehouseId: productWarehouseId,
+          },
+          transaction,
+        }
+      );
+
+      // 4. Add stock back to warehouse product
+      const newWarehouseQuantity = warehouseProduct.quantity - quantity;
+
+      await Warehouse_Product.update(
+        {
+          quantity: newWarehouseQuantity,
+        },
+        {
+          where: {
+            id: productWarehouseId,
+          },
+          transaction,
+        }
+      );
+
+      // 5. Create stock adjustment history to record the addition
+      await Stock_Adjustment_History.create(
+        {
+          productWarehouseId: productWarehouseId,
+          quantity: quantity,
+          adjustmentType: "MINUS",
+          description: "Pengurangan stock untuk pembayaran loan stock produk",
+          warehouseId: warehouseProduct.warehouseId,
+          userId: user?.id,
+          info: "PAYMENT LOAN STOCK",
+          lastQuantity: newWarehouseQuantity,
+        },
+        { transaction }
+      );
+
+      // 6. Create stock loan history for payment tracking
+      await Stock_Loan_History.create(
+        {
+          productWarehouseId: productWarehouseId,
+          quantity: quantity,
+          adjustmentType: "MINUS",
+          warehouseId: warehouseProduct.warehouseId,
+          userId: user?.id,
+          description: `Pembayaran stock pinjam sebanyak ${quantity}`,
+          info: "PAYMENT LOAN STOCK",
+          lastQuantity: newLoanQuantity
+        },
+        { transaction }
+      );
+      console.log('success')
+
+      await transaction.commit();
+      return
+    } catch (e) {
+      console.log(e)
+      await transaction.rollback();
+      throw e;
     }
   }
 }

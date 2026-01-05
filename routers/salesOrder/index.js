@@ -1,12 +1,16 @@
 const router = require("express").Router();
 const SalesOrderController = require("../../controllers/salesOrder/SalesOrderController");
 const routerPayment = require("./paymentRouter")
+const routerLoan = require("./loanRouter")
 
 router.get("/", SalesOrderController.getAllSalesOrder);
 router.post("/create", SalesOrderController.createSalesOrder);
 
 // FOR SALES ORDER PAYMENT
 router.use("/payment", routerPayment)
+
+// FOR LOAN PRODUCT
+router.use("/loan", routerLoan);
 
 // FOR SCHEDULER REPORT CUSTOMER WEEKLY
 router.post("/report-customer-weekly", SalesOrderController.runSchedulerReportCustomerWeekly);

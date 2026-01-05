@@ -3,6 +3,7 @@ const {
   wordingHistory,
   titleInfo,
   infoType,
+  infoTypeLoan,
 } = require("../../helpers/producWarehouse/wordingHistory");
 const { generateFilter } = require("../../helpers/queryGenerator");
 const { throwValidation } = require("../../helpers/responses");
@@ -27,7 +28,9 @@ const {
   Sales_Order,
   Purchase_Order,
   Pos_Transaction,
+  Stock_Loan_History,
 } = require("../../models");
+const stock_loan_history = require("../../models/stock_loan_history");
 const MasterDataWarehouseService = require("../masterData/MasterDataWarehouseService");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 
@@ -790,10 +793,89 @@ class ProductWarehouseService {
           // ...(query.productId && { productId: query.productId }),
           // ...(query.warehouseId && { warehouseId: query.warehouseId }),
           // ...(query.unitId && { unitId: query.unitId }),
-        }
-      })
+        },
+      });
 
       return findProduct ?? null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getHistoryLoanProductWarehouse({ id }) {
+    try {
+      const data = await Stock_Loan_History.findAll({
+        where: {
+          productWarehouseId: id,
+        },
+        order: [["id", "DESC"]],
+        include: [Master_User, Sales_Order],
+      });
+
+      const dataProduct = await Warehouse_Product.findOne({
+        where: {
+          id: id,
+        },
+        include: [
+          Master_Product,
+          Master_Unit,
+          Master_Warehouse,
+          Master_Warehouse_Rack,
+          {
+            model: Master_User,
+            attributes: ["id", "name"],
+            as: "deleter",
+          },
+        ],
+        paranoid: false,
+      });
+
+      const mappingHistory = [];
+
+      for (const item of data) {
+        if (dataProduct?.deletedAt) {
+          mappingHistory.push({
+            title: "Produk dihapus",
+            infoType: "Produk sudah di hapus",
+            deleted: true,
+            lastQuantity: dataProduct?.quantity,
+            date: formatDateWithTime(dataProduct?.deletedAt).split("-")[0],
+            time: formatDateWithTime(dataProduct?.deletedAt).split("-")[1],
+            createdBy: dataProduct?.deleter?.name,
+          });
+        }
+
+        mappingHistory.push({
+          title: infoTypeLoan(item),
+          titleInfo: titleInfo(item),
+          infoType: infoTypeLoan(item),
+          quantity: item?.quantity,
+          date: formatDateWithTime(item?.createdAt).split("-")[0],
+          time: formatDateWithTime(item?.createdAt).split("-")[1],
+          adjustmentType: item?.adjustmentType,
+          // SALES ORDER
+          ...(item?.info === "SALES ORDER LOAN" && {
+            salesOrder: `Sales Order Loan: ${item?.Sales_Order?.code}`,
+            description: item?.description,
+            notes: item?.Sales_Order?.notes,
+            salesOrderCode: item?.Sales_Order?.code,
+          }),
+          createdBy: item?.Master_User?.name,
+          lastQuantity: item?.lastQuantity,
+        });
+      }
+
+      const mappingProduct = {
+        productName: dataProduct?.Master_Product?.name,
+        unitName: dataProduct?.Master_Unit?.name,
+        rackName: dataProduct?.Master_Warehouse_Rack?.name,
+      };
+
+      const result = {
+        product: mappingProduct,
+        history: mappingHistory,
+      };
+      return result;
     } catch (error) {
       throw error;
     }
