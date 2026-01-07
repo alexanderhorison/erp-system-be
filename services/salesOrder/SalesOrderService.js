@@ -1318,6 +1318,11 @@ class SalesOrderService {
             ],
           },
         ],
+        where: {
+          quantity: {
+            [Op.gt]: 0
+          }
+        },
         order: [["createdAt", "DESC"]],
       });
 
@@ -1440,7 +1445,6 @@ class SalesOrderService {
         },
         { transaction }
       );
-      console.log('success')
 
       await transaction.commit();
       return
