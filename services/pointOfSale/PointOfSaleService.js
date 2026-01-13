@@ -101,7 +101,7 @@ class PointOfSaleService {
         include: [
           {
             model: Master_Product,
-            attributes: ["name", "companyId", "categoryId", "typeId"],
+            attributes: ["name", "companyId", "categoryId", "typeId", "description"],
             include: [
               {
                 model: Master_Company,
@@ -128,6 +128,7 @@ class PointOfSaleService {
         productId: item.productId,
         categoryId: item.Master_Product.categoryId,
         typeId: item.Master_Product.typeId,
+        description: item.Master_Product.description,
       }));
 
       return formatData;
