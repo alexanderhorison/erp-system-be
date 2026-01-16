@@ -136,8 +136,8 @@ class MasterDataProductPriceService {
       worksheet.columns = [
         { header: headers[0], key: "productName", width: 30 },
         { header: headers[1], key: "unitName", width: 20 },
-        { header: headers[2], key: "basePrice", width: 15 },
-        { header: headers[3], key: "basePricePos", width: 15 },
+        { header: headers[2], key: "basePrice", width: 15, style: { alignment: { horizontal: 'right' } } },
+        { header: headers[3], key: "basePricePos", width: 15, style: { alignment: { horizontal: 'right' } } },
       ];
 
       // Apply styling to headers
@@ -345,7 +345,7 @@ class MasterDataProductPriceService {
       // Create table rows for failed data
       const failedRows = dataFailed.map((item, index) => `
         <tr>
-          <td style="border:1px solid #ccc; padding:8px;">${index + 1}</td>
+          <td style="border:1px solid #ccc; padding:8px; text-align:center;">${index + 1}</td>
           <td style="border:1px solid #ccc; padding:8px;">${item.productName || '-'}</td>
           <td style="border:1px solid #ccc; padding:8px;">${item.unitName || '-'}</td>
           <td style="border:1px solid #ccc; padding:8px; text-align:right;">${item.basePrice || 0}</td>
@@ -356,35 +356,98 @@ class MasterDataProductPriceService {
       `).join('');
 
       const htmlBody = `
-        <p>Berikut hasil summary import data:</p>
-        <br>
-        <div style="margin-bottom: 20px;">
-          <p><strong>Data Process:</strong> ${totalProcessed}</p>
-          <p><strong>Data Success:</strong> ${successCount}</p>
-          <p><strong>Data Failed:</strong> ${failedCount}</p>
-        </div>
-        <br>
-        ${failedCount > 0 ? `
-          <p><strong>List Data Failed:</strong></p>
-          <table style="border-collapse:collapse; width:100%; font-family:Arial, sans-serif; font-size:12px;">
-            <thead>
-              <tr style="background-color:#f2f2f2;">
-                <th style="border:1px solid #ccc; padding:8px;">No</th>
-                <th style="border:1px solid #ccc; padding:8px;">Product Name</th>
-                <th style="border:1px solid #ccc; padding:8px;">Unit Name</th>
-                <th style="border:1px solid #ccc; padding:8px;">Base Price</th>
-                <th style="border:1px solid #ccc; padding:8px;">Base Price POS</th>
-                <th style="border:1px solid #ccc; padding:8px;">Message</th>
-                <th style="border:1px solid #ccc; padding:8px;">Row Number</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${failedRows}
-            </tbody>
-          </table>
-        ` : '<p><strong>Semua data berhasil diproses tanpa ada yang gagal.</strong></p>'}
-        <br>
-        <p>Email ini dikirim secara otomatis oleh sistem ERP.</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Import Summary - Product Price</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px;">📊 Import Summary Report</h2>
+              <p style="margin: 5px 0 0 0; opacity: 0.9;">Product Price Data Import</p>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; margin-bottom: 20px;">
+              <h3 style="margin-top: 0; color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 10px; text-align: center;">📈 Import Statistics</h3>
+              
+              <div style="display: flex; flex-wrap: wrap; gap: 40px; margin-top: 20px; justify-content: center; align-items: center; width: 100%;">
+                <div style="flex: 0 0 auto; width: 180px; background: white; padding: 25px; border-radius: 12px; border-left: 5px solid #28a745; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; margin: 10px;">
+                  <div style="font-size: 32px; font-weight: bold; color: #28a745; margin-bottom: 12px;">${totalProcessed}</div>
+                  <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Total Processed</div>
+                </div>
+                
+                <div style="flex: 0 0 auto; width: 180px; background: white; padding: 25px; border-radius: 12px; border-left: 5px solid #007bff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; margin: 10px;">
+                  <div style="font-size: 32px; font-weight: bold; color: #007bff; margin-bottom: 12px;">${successCount}</div>
+                  <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Successfully Updated</div>
+                </div>
+                
+                <div style="flex: 0 0 auto; width: 180px; background: white; padding: 25px; border-radius: 12px; border-left: 5px solid ${failedCount > 0 ? '#dc3545' : '#28a745'}; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; margin: 10px;">
+                  <div style="font-size: 32px; font-weight: bold; color: ${failedCount > 0 ? '#dc3545' : '#28a745'}; margin-bottom: 12px;">${failedCount}</div>
+                  <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Failed Records</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Success Message -->
+            ${failedCount === 0 ? `
+              <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center;">
+                  <span style="font-size: 20px; margin-right: 10px;">✅</span>
+                  <div>
+                    <strong>Import Completed Successfully!</strong><br>
+                    <span style="font-size: 14px;">All ${totalProcessed} records were processed without any errors.</span>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+            
+            <!-- Failed Records Section -->
+            ${failedCount > 0 ? `
+              <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #856404; display: flex; align-items: center;">
+                  <span style="margin-right: 8px;">⚠️</span>
+                  Failed Records Details
+                </h3>
+                <p style="margin-bottom: 15px; color: #856404;">The following records could not be processed. Please review and correct the data before re-importing.</p>
+                
+                <div style="overflow-x: auto;">
+                  <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; background: white; border-radius: 4px; overflow: hidden;">
+                    <thead>
+                      <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 600;">No</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 600;">Product Name</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 600;">Unit Name</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: right; font-weight: 600;">Base Price</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: right; font-weight: 600;">Base Price POS</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 600;">Error Message</th>
+                        <th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 600;">Row</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${failedRows}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ` : ''}
+            
+            <!-- Footer -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: center; border-top: 1px solid #dee2e6;">
+              <p style="margin: 0; font-size: 12px; color: #6c757d;">
+                <strong>ERP System Notification</strong><br>
+                This email was automatically generated on ${new Date().toLocaleString('id-ID')}<br>
+                Please do not reply to this email.
+              </p>
+            </div>
+            
+          </div>
+        </body>
+        </html>
       `;
 
       const transporterConnection = await transporter();
@@ -394,7 +457,7 @@ class MasterDataProductPriceService {
         to: process.env.EMAIL_RECEIVER, // list of receivers
         bcc: process.env.EMAIL_RECEIVER_BCC, // BCC email address
         subject: subjectText, // Subject line
-        text: `Berikut hasil summary import data Product Price. Data Process: ${totalProcessed}, Success: ${successCount}, Failed: ${failedCount}`, // plain text body
+        text: `Import Summary - Product Price Data. Total Processed: ${totalProcessed}, Success: ${successCount}, Failed: ${failedCount}`, // plain text body
         html: htmlBody,
       };
 
