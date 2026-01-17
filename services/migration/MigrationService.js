@@ -369,7 +369,85 @@ class MigrationService {
           }
           result.push({ dataSuccess, dataFailed });
           break;
+        
+        case "MIGRATION STOCKS":
+          console.log("masuk migrasi stocks");
+          /**
+           * 1. Find All from Master Produk and Fetch all Master Unit
+           * 2. For each product find in ProductWarehouse with each product id with different unit id (ONLY APPLY TO WAREHOUSE ID 6)
+           * 3. if ProductWarehouse exist, update quantity into 1000
+           * 4. if not exist create the productId with unit id and quantity 1000
+           *
+           */
 
+          // 1. Find all Master Products and Master Units
+          const allProducts = await Master_Product.findAll({
+            attributes: ['id', 'name'],
+            transaction
+          });
+
+          const allUnits = await Master_Unit.findAll({
+            attributes: ['id', 'name'],
+            transaction
+          });
+
+          console.log(`Found ${allProducts.length} products and ${allUnits.length} units`);
+
+          let processedCount = 0;
+          let createdCount = 0;
+          let updatedCount = 0;
+
+          // 2. For each product, check/create Warehouse_Product for each unit in warehouse ID 6
+          for (const product of allProducts) {
+            for (const unit of allUnits) {
+              // Check if Warehouse_Product exists for this product + unit + warehouse 6
+              const existingWarehouseProduct = await Warehouse_Product.findOne({
+                where: {
+                  productId: product.id,
+                  unitId: unit.id,
+                  warehouseId: 6
+                },
+                transaction
+              });
+
+              if (existingWarehouseProduct) {
+                // 3. If exists, update quantity to 1000
+                await Warehouse_Product.update(
+                  { quantity: 1000 },
+                  {
+                    where: { id: existingWarehouseProduct.id },
+                    transaction
+                  }
+                );
+                updatedCount++;
+                console.log(`Updated product ${product.name} (ID: ${product.id}) with unit ${unit.name} (ID: ${unit.id}) in warehouse 6`);
+              } else {
+                // 4. If not exist, create with quantity 1000
+                await Warehouse_Product.create({
+                  productId: product.id,
+                  unitId: unit.id,
+                  warehouseId: 6,
+                  quantity: 1000,
+                  warehouseRackId: 1
+                }, { transaction });
+                createdCount++;
+                console.log(`Created product ${product.name} (ID: ${product.id}) with unit ${unit.name} (ID: ${unit.id}) in warehouse 6`);
+              }
+
+              processedCount++;
+            }
+          }
+
+          result.push({
+            totalProducts: allProducts.length,
+            totalUnits: allUnits.length,
+            totalCombinations: allProducts.length * allUnits.length,
+            processedCount,
+            createdCount,
+            updatedCount,
+            message: `Migration completed for warehouse ID 6. Created ${createdCount} new warehouse products, updated ${updatedCount} existing ones.`
+          });
+          break;
         default:
           break;
       }
