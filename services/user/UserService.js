@@ -301,7 +301,7 @@ class UserService {
 
       // Validate decrypted body
       if (!body.email || !body.password) {
-        throw throwValidation(400, "Email dan password harus diisi");
+        throw throwValidation(400, "Email atau username dan password harus diisi");
       }
 
       // Sanitize email: trim and convert to lowercase
@@ -309,7 +309,10 @@ class UserService {
 
       const user = await Master_User.findOne({
         where: {
-          email: sanitizedEmail,
+          [Op.or]: [
+            { email: sanitizedEmail },
+            { userName: sanitizedEmail }
+          ]
         },
         attributes: [
           "id",
