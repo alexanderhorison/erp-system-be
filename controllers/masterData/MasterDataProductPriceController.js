@@ -66,6 +66,48 @@ class MasterDataProductPriceController {
         .json(responses(false, error.message || error));
     }
   }
+
+  static async downloadTemplate(req, res) {
+    try {
+      const { sheetName, file } = await MasterDataProductPriceService.downloadTemplate();
+
+      // Send Excel as response
+      res.set({
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${sheetName}"`,
+        "Access-Control-Expose-Headers": "Content-Disposition",
+      });
+
+      res.end(file);
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async importTemplate(req, res) {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json(responses(false, "File Excel harus diupload"));
+      }
+
+      const result = await MasterDataProductPriceService.importTemplate(req.file.buffer, req.user);
+      res
+        .status(200)
+        .json(responses(true, "Import template berhasil diproses", result));
+    } catch (error) {
+      console.log("masuk error", error)
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  
 }
 
 module.exports = MasterDataProductPriceController;
