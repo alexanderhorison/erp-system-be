@@ -134,6 +134,7 @@ class DashboardService {
       let result = [];
       if (getWarehouseProduct.length > 0) {
         result = getWarehouseProduct.map((item) => {
+          const lastHistory = item.Stock_Adjustment_Histories[0];
           return {
             productWarehouseId: item.id,
             productName: item.Master_Product.name,
@@ -147,15 +148,15 @@ class DashboardService {
             companyName: item?.Master_Product?.Master_Company?.name,
             createdAt: item?.createdAt,
             updatedAt: item?.updatedAt,
-            // dateUpdate: `${formatDate(item.updatedAt)} Jam ${formatTime(item.updatedAt)}`,
-            dateUpdate: `${formatDate(item.Stock_Adjustment_Histories[0]?.createdAt)} Jam ${formatTime(item.Stock_Adjustment_Histories[0]?.createdAt)}`,
-            lastUpdate: item.Stock_Adjustment_Histories[0],
+            dateUpdate: lastHistory ? `${formatDate(lastHistory.createdAt)} Jam ${formatTime(lastHistory.createdAt)}` : 'Tidak ada update',
+            lastUpdate: lastHistory,
             // lastUpdateinfo: item.Stock_Adjustment_Histories // FOR DEV
           };
         });
       }
-      result.sort((a, b) => a.lastUpdate.createdAt - b.lastUpdate.createdAt)
-      const finalResult = result.slice(0, 5);
+      const filteredResult = result.filter(item => item.lastUpdate);
+      filteredResult.sort((a, b) => new Date(a.lastUpdate.createdAt) - new Date(b.lastUpdate.createdAt));
+      const finalResult = filteredResult.slice(0, 5);
       return finalResult;
     } catch (error) {
       console.log(error);
