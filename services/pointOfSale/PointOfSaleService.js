@@ -192,12 +192,12 @@ class PointOfSaleService {
         return {
           id: item.id,
           isFavorite: item.isFavorite,
-          productName: item.Master_Product.name,
-          companyName: item.Master_Product.Master_Company.name,
-          companyId: item.Master_Product.companyId,
+          productName: item.Master_Product?.name ?? "",
+          companyName: item.Master_Product?.Master_Company?.name ?? "",
+          companyId: item.Master_Product?.companyId ?? null,
           productId: item.productId,
-          unitName: item.Master_Unit.name,
-          rackName: item.Master_Warehouse_Rack.name,
+          unitName: item.Master_Unit?.name ?? "",
+          rackName: item.Master_Warehouse_Rack?.name ?? "",
           quantity: item.quantity,
           basePrice,
         };
