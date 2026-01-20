@@ -27,6 +27,8 @@ router.get("/payment-type", PointOfSaleController.getPaymentType);
 
 router.post("/print-v3/:code", PointOfSaleController.printPos);
 
+router.post("/void/:code", PointOfSaleController.voidPointOfSale);
+
 router.get("/:code", PointOfSaleController.getDetailPointOfSale);
 
 module.exports = router;

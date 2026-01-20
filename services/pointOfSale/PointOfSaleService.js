@@ -629,6 +629,123 @@ class PointOfSaleService {
     }
   }
 
+  static async voidPointOfSale(code, adminUserId, pin, performedBy) {
+    const transaction = await sq.transaction();
+    try {
+      // Validate admin user and PIN early
+      const adminUser = await Master_User.findOne({ where: { id: adminUserId } });
+      if (!adminUser) {
+        throwValidation(400, "User tidak ditemukan");
+      }
+      if (Number(adminUser.roleId) !== 1) {
+        throwValidation(400, "User tidak memiliki akses admin");
+      }
+      if (String(adminUser.pin) !== String(pin)) {
+        throwValidation(400, "PIN salah");
+      }
+
+      // Find POS transaction
+      const pos = await Pos_Transaction.findOne({ where: { code: code } });
+      if (!pos) {
+        throwValidation(400, "Data tidak ditemukan");
+      }
+      if (pos.status === "VOID") {
+        throwValidation(400, "Transaksi sudah VOID");
+      }
+
+      // Get details
+      const details = await Pos_Transaction_Detail.findAll({
+        where: { posTransactionId: pos.id },
+      });
+
+      // Restore quantities and create stock adjustment histories
+      for (const item of details) {
+        if (item.warehouseProductId) {
+          const warehouseProduct = await Warehouse_Product.findOne({
+            where: { id: item.warehouseProductId },
+          });
+
+          if (!warehouseProduct) {
+            throwValidation(400, "Warehouse product tidak ditemukan");
+          }
+
+          const newQuantity = Number(warehouseProduct.quantity || 0) +
+            Number(item.quantity || 0);
+
+          await Warehouse_Product.update(
+            { quantity: newQuantity },
+            { where: { id: warehouseProduct.id }, transaction }
+          );
+
+          await Stock_Adjustment_History.create(
+            {
+              productWarehouseId: warehouseProduct.id,
+              quantity: item.quantity,
+              adjustmentType: "PLUS",
+              warehouseId: warehouseProduct.warehouseId,
+              userId: adminUserId,
+              info: "VOID POINT OF SALE",
+              posTransactionId: pos.id,
+              lastQuantity: newQuantity,
+            },
+            { transaction }
+          );
+        }
+      }
+
+      // Mark POS transaction as VOID
+      await Pos_Transaction.update(
+        { status: "VOID", updatedBy: adminUserId },
+        { where: { id: pos.id }, transaction }
+      );
+
+      // If transaction has customer, update dashboard summary
+      if (pos.customerId) {
+        const findExisting = await Dashboard_Summary_Pos_Customer.findOne({
+          where: { customerId: pos.customerId },
+          transaction,
+        });
+
+        if (findExisting) {
+          // Use stored fields to approximate values used during creation
+          const totalHargaBarangWithoutDebt = Number(pos.subTotal || 0);
+          const grandTotal = Number(pos.grandTotal || 0);
+          const totalPayment = Number(pos.totalPayment || 0);
+          const lastDebt = Number(pos.lastDebt || 0);
+
+          let amountDebt = totalHargaBarangWithoutDebt + lastDebt - totalPayment;
+          if (amountDebt <= 0) amountDebt = 0;
+
+          const paidAmount = totalPayment >= grandTotal ? grandTotal : totalPayment;
+
+          await Dashboard_Summary_Pos_Customer.update(
+            {
+              totalPos: Number(findExisting.totalPos) - 1,
+              totalAmountPos:
+                Number(findExisting.totalAmountPos) -
+                Number(totalHargaBarangWithoutDebt),
+              totalAmountPaidPos:
+                Number(findExisting.totalAmountPaidPos) -
+                Number(paidAmount),
+              totalAmountDebtPos: Math.max(
+                0,
+                Number(findExisting.totalAmountDebtPos) - Number(amountDebt)
+              ),
+            },
+            { where: { id: findExisting.id }, transaction }
+          );
+        }
+      }
+
+      await transaction.commit();
+
+      return { id: pos.id, code: pos.code, status: "VOID" };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   // CONVERT SEMUA DATA MENJADI STRING DAN DIPISAH MENGGUNAKAN \N
   static async printPosV3(code) {
     try {
