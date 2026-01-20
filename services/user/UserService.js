@@ -18,6 +18,10 @@ class UserService {
           .string()
           .email("Email tidak valid")
           .required("Email harus diisi"),
+        pin: yup
+          .string()
+          .matches(/^\d{4}$/, "Pin harus 4 digit")
+          .optional(),
         description: yup.string().optional(),
         password: yup.string().required("Password harus diisi"),
         userName: yup.string().required("Username harus diisi"),
@@ -39,6 +43,7 @@ class UserService {
         description,
         email,
         password,
+        pin,
         userName,
         roleId,
         warehouseId,
@@ -67,6 +72,7 @@ class UserService {
         email: sanitizedEmail,
         userName,
         password: decryptPassword,
+        pin: pin || '1234',
         roleId,
         warehouseId: warehouseId || null,
       });
@@ -93,6 +99,11 @@ class UserService {
           .string()
           .email("Email tidak valid")
           .required("Email harus diisi"),
+        pin: yup
+          .string()
+          .nullable()
+          .matches(/^\d{4}$/, "Pin harus 4 digit")
+          .optional(),
         description: yup.string().optional(),
         userName: yup.string().required("Username harus diisi"),
         roleId: yup.number().required("Otoritas harus diisi"),
@@ -116,6 +127,7 @@ class UserService {
         name,
         description,
         email,
+        pin,
         userName,
         roleId,
         warehouseId,
@@ -158,6 +170,7 @@ class UserService {
           password: decryptPassword,
           userName,
           roleId,
+          pin: pin || user.pin,
           warehouseId: roleId == 3 ? warehouseId : null,
         });
       } else {
@@ -167,6 +180,7 @@ class UserService {
           email: sanitizedEmail,
           userName,
           roleId,
+          pin: pin || user.pin,
           warehouseId: roleId == 3 ? warehouseId : null,
         });
       }
@@ -219,6 +233,7 @@ class UserService {
         attributes: [
           "id",
           "name",
+          "pin",
           "description",
           "email",
           "userName",
@@ -241,7 +256,7 @@ class UserService {
     try {
       const getUser = await Master_User.findOne({
         where: { id: req.params.userId },
-        attributes: ["name", "email", "userName", "roleId", "warehouseId"],
+        attributes: ["name", "email", "userName", "pin", "roleId", "warehouseId"],
       });
 
       if (!getUser) {

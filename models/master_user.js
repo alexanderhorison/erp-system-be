@@ -57,6 +57,21 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      pin: {
+        type: DataTypes.STRING(4),
+        allowNull: false,
+        defaultValue: '1234',
+        validate: {
+          notEmpty: {
+            args: true,
+            msg: `Pin tidak boleh kosong`,
+          },
+          is: {
+            args: /^\d{4}$/,
+            msg: 'Pin harus 4 digit',
+          },
+        },
+      },
       roleId: {
         type: DataTypes.INTEGER,
         validate: {
