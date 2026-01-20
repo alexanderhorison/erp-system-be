@@ -552,7 +552,7 @@ class PointOfSaleService {
             include: [
               {
                 model: Master_Product,
-                attributes: ["id", "name"],
+                attributes: ["id", "name", "description"],
                 include: [
                   {
                     model: Master_Company,
@@ -578,6 +578,8 @@ class PointOfSaleService {
           notes: item?.notes,
           unitName: item?.Warehouse_Product?.Master_Unit?.name ?? "",
           productName: item?.Warehouse_Product?.Master_Product?.name ?? "",
+          description:
+            item?.Warehouse_Product?.Master_Product?.description ?? "",
           companyName:
             item?.Warehouse_Product?.Master_Product?.Master_Company?.name ?? "",
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name ?? "",
@@ -797,7 +799,8 @@ class PointOfSaleService {
 
       // 🔹 LIST PRODUK
       data.listProducts.forEach((product) => {
-        let baseProductName = product?.productName || product?.title || "-";
+        let baseProductName =
+          product?.description || product?.productName || product?.title || "-";
         let productName = baseProductName;
         let addNewLineProduct = false;
         let newLineProduct = "";
