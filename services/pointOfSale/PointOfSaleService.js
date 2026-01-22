@@ -773,7 +773,9 @@ class PointOfSaleService {
 
       // 🔹 HEADER
       // Kode untuk Justify Center
-      printString += `\x1b\x61\x01\x1b\x21\x30${companyInfo.companyName}\n`;
+      // Use POS-specific company name when provided, otherwise fall back to main company name
+      const headerCompanyName = companyInfo.companyNamePos || companyInfo.companyName;
+      printString += `\x1b\x61\x01\x1b\x21\x30${headerCompanyName}\n`;
       // untuk center
       printString += `\x1b\x21\x00${companyInfo.address}\n`; // 🔹 Center (Normal Size)
       printString += `${companyInfo.phoneNumber}\n`;
