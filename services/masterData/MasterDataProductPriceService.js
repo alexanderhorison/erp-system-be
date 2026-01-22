@@ -156,8 +156,8 @@ class MasterDataProductPriceService {
         worksheet.columns = [
           { header: headers[0], key: "productName", width: 30 },
           { header: headers[1], key: "unitName", width: 20 },
-          { header: headers[2], key: "basePrice", width: 15, style: { alignment: { horizontal: 'right' } } },
-          { header: headers[3], key: "basePricePos", width: 15, style: { alignment: { horizontal: 'right' } } },
+          { header: headers[2], key: "basePrice", width: 20 },
+          { header: headers[3], key: "basePricePos", width: 20 },
         ];
 
         // Apply styling to headers
@@ -167,22 +167,38 @@ class MasterDataProductPriceService {
 
         // Add data rows for this company
         companiesData[companyName].forEach(productPrice => {
-          worksheet.addRow({
+          const dataRow = worksheet.addRow({
             productName: productPrice.Master_Product.name,
             unitName: productPrice.Master_Unit.name,
-            basePrice: productPrice.basePrice,
-            basePricePos: productPrice.basePricePos,
+            basePrice: "", // Set as empty first
+            basePricePos: "", // Set as empty first
           });
+
+          // Set values directly to cells after row creation
+          const basePriceCell = dataRow.getCell(3);
+          const basePricePosCell = dataRow.getCell(4);
+          
+          basePriceCell.value = Number(productPrice.basePrice) || 0;
+          basePricePosCell.value = Number(productPrice.basePricePos) || 0;
+
+          // Apply currency formatting to Base Price and Base Price POS columns (C and D)
+          for (let col = 1; col <= 4; col++) {
+            const cell = dataRow.getCell(col);
+            cell.border = styleBorder;
+
+            // Apply Rupiah formatting to Base Price (column 3) and Base Price POS (column 4)
+            if (col === 3 || col === 4) {
+              cell.alignment = { horizontal: 'right', vertical: 'middle' };
+              // Try a simpler Rupiah format
+              cell.numFmt = '"Rp. "#,##0';
+            }
+          }
         });
 
-        // Apply borders to all cells with data
-        const lastRow = worksheet.rowCount;
-        for (let i = 1; i <= lastRow; i++) {
-          const row = worksheet.getRow(i);
-          for (let j = 1; j <= 4; j++) {
-            const cell = row.getCell(j);
-            cell.border = styleBorder;
-          }
+        // Apply borders to header row
+        for (let j = 1; j <= 4; j++) {
+          const cell = headerRow.getCell(j);
+          cell.border = styleBorder;
         }
       });
 
@@ -280,8 +296,22 @@ class MasterDataProductPriceService {
           
           const productName = row.getCell(1).value?.toString().trim();
           const unitName = row.getCell(2).value?.toString().trim();
-          const basePrice = parseFloat(row.getCell(3).value) || 0;
-          const basePricePos = parseFloat(row.getCell(4).value) || 0;
+          
+          // Enhanced price parsing to handle formatted currency values
+          const parsePriceValue = (cellValue) => {
+            if (!cellValue) return 0;
+            
+            // If it's already a number, return it
+            if (typeof cellValue === 'number') return cellValue;
+            
+            // Convert to string and remove currency symbols and formatting
+            const stringValue = cellValue.toString().trim();
+            const cleanValue = stringValue.replace(/[Rp.,\s]/g, '');
+            return parseFloat(cleanValue) || 0;
+          };
+          
+          const basePrice = parsePriceValue(row.getCell(3).value);
+          const basePricePos = parsePriceValue(row.getCell(4).value);
 
           // Skip invalid or zero-price rows
           if (!productName || !unitName || (basePrice === 0 && basePricePos === 0)) {
@@ -447,6 +477,12 @@ class MasterDataProductPriceService {
     try {
       const subjectText = `Summary Import Data Product Price - ${new Date().toLocaleDateString('id-ID')}`;
 
+      // Helper function to format price as Rupiah
+      const formatRupiah = (amount) => {
+        if (!amount || amount === 0) return 'Rp. 0';
+        return 'Rp. ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      };
+
       // Create table rows for failed data
       const failedRows = dataFailed.map((item, index) => `
         <tr>
@@ -454,8 +490,8 @@ class MasterDataProductPriceService {
           <td style="border:1px solid #ccc; padding:8px;">${item.sheet || '-'}</td>
           <td style="border:1px solid #ccc; padding:8px;">${item.productName || '-'}</td>
           <td style="border:1px solid #ccc; padding:8px;">${item.unitName || '-'}</td>
-          <td style="border:1px solid #ccc; padding:8px; text-align:right;">${item.basePrice || 0}</td>
-          <td style="border:1px solid #ccc; padding:8px; text-align:right;">${item.basePricePos || 0}</td>
+          <td style="border:1px solid #ccc; padding:8px; text-align:right;">${formatRupiah(item.basePrice)}</td>
+          <td style="border:1px solid #ccc; padding:8px; text-align:right;">${formatRupiah(item.basePricePos)}</td>
           <td style="border:1px solid #ccc; padding:8px;">${item.message || '-'}</td>
           <td style="border:1px solid #ccc; padding:8px; text-align:center;">${item.row || '-'}</td>
         </tr>
