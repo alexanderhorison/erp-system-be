@@ -256,68 +256,70 @@ class PointOfSaleService {
       );
 
       const createPosProducts = [];
-      const listProduct = data?.listProduct;
+      const listProduct = Array.isArray(data?.listProduct) ? data.listProduct : [];
 
       let totalHargaBarangWithoutDebt = 0;
 
+      const warehouseProductIdsToLock = listProduct
+        .filter((it) => it.warehouseProductId)
+        .map((it) => it.warehouseProductId);
+
+      const lockedWarehouseProducts = {};
+
+      if (warehouseProductIdsToLock.length > 0) {
+
+        const warehouseProducts = await Warehouse_Product.findAll({
+          where: { id: warehouseProductIdsToLock },
+          attributes: ["id", "quantity", "warehouseId", "productId", "unitId"],
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+
+        warehouseProducts.forEach((wp) => {
+          lockedWarehouseProducts[wp.id] = wp;
+        });
+
+        const productIds = Array.from(new Set(warehouseProducts.map((w) => w.productId).filter(Boolean)));
+        const unitIds = Array.from(new Set(warehouseProducts.map((w) => w.unitId).filter(Boolean)));
+
+        const products = productIds.length > 0 ? await Master_Product.findAll({ where: { id: productIds }, attributes: ["id", "name"], transaction }) : [];
+        const units = unitIds.length > 0 ? await Master_Unit.findAll({ where: { id: unitIds }, attributes: ["id", "name"], transaction }) : [];
+
+        const productMap = {};
+        products.forEach(p => { productMap[p.id] = p.name });
+        const unitMap = {};
+        units.forEach(u => { unitMap[u.id] = u.name });
+
+        for (const item of listProduct) {
+          if (item.warehouseProductId) {
+            const wp = lockedWarehouseProducts[item.warehouseProductId];
+            if (!wp) {
+              throwValidation(400, "Salah satu product warehouse tidak ditemukan");
+            }
+            if (Number(wp.quantity || 0) < Number(item.quantity || 0)) {
+              const productName = productMap[wp.productId] || "Produk";
+              const unitName = unitMap[wp.unitId] || "unit";
+              throwValidation(
+                400,
+                `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${wp.quantity}`
+              );
+            }
+          }
+        }
+      }
+
       for (const item of listProduct) {
-        // Jika produk memiliki warehouseProductId
         if (item.warehouseProductId) {
-          const warehouseProduct = await Warehouse_Product.findOne({
-            where: {
-              id: item.warehouseProductId,
-            },
-            include: [
-              {
-                model: Master_Product,
-                attributes: ["name"],
-              },
-              {
-                model: Master_Unit,
-                attributes: ["name"],
-              },
-              {
-                model: Master_Warehouse,
-                attributes: ["name"],
-              },
-            ],
-            transaction,
-          });
+          const warehouseProduct = lockedWarehouseProducts[item.warehouseProductId];
 
           if (!warehouseProduct) {
-            throwValidation(
-              400,
-              "Salah satu product warehouse tidak ditemukan"
-            );
+            throwValidation(400, "Salah satu product warehouse tidak ditemukan");
           }
 
-          // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup
-          if (warehouseProduct.quantity < item.quantity) {
-            const productName =
-              warehouseProduct.Master_Product?.name || "Produk";
-            const unitName = warehouseProduct.Master_Unit?.name || "unit";
-            throwValidation(
-              400,
-              `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${warehouseProduct.quantity}`
-            );
-          }
+          const newWarehouseQuantity = Number(warehouseProduct.quantity || 0) - Number(item.quantity || 0);
 
-          const newWarehouseQuantity =
-            warehouseProduct?.quantity - item?.quantity;
+          await warehouseProduct.update({ quantity: newWarehouseQuantity }, { transaction });
 
-          // Kurangi stok product di warehouse
-          await Warehouse_Product.update(
-            {
-              quantity: newWarehouseQuantity,
-            },
-            {
-              where: {
-                id: item?.warehouseProductId,
-              },
-              transaction,
-            }
-          );
-          // catat stock adjustment histories
           await Stock_Adjustment_History.create(
             {
               productWarehouseId: item?.warehouseProductId,
@@ -332,12 +334,11 @@ class PointOfSaleService {
             { transaction }
           );
         }
-        // calculated total harga barang tanpa hutang
+
         if (!item.isDebt) {
           totalHargaBarangWithoutDebt += item.subTotal;
         }
 
-        // push pos products
         createPosProducts.push({
           title: item.title || "",
           posTransactionId: createdPointOfSale.id,
