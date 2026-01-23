@@ -223,17 +223,31 @@ class PointOfSaleService {
 
       let totalQuantity = 0;
       let totalItems = 0;
-      // Count total quantity
+
       data.listProduct?.forEach((item) => {
         totalQuantity += item.quantity;
       });
 
-      // Count total item
       data.listProduct?.forEach((item) => {
         totalItems += 1;
       });
 
       // create point of sale
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+
+      const maxQueue = await Pos_Transaction.max("queueNumber", {
+        where: {
+          createdAt: { [Op.between]: [startOfToday, endOfToday] },
+          createdBy: user.id,
+        },
+        transaction,
+      });
+
+      const nextQueueNumber = (Number(maxQueue) || 0) + 1;
+
       const createdPointOfSale = await Pos_Transaction.create(
         {
           customerId: data.customerId,
@@ -251,6 +265,7 @@ class PointOfSaleService {
           totalQuantity: totalQuantity,
           totalItems: totalItems,
           lastDebt: data.totalDebt || 0,
+          queueNumber: nextQueueNumber,
         },
         { transaction }
       );
@@ -424,6 +439,7 @@ class PointOfSaleService {
         id: createdPointOfSale.id,
         code: createdPointOfSale.code,
         status: createdPointOfSale.status,
+        queueNumber: createdPointOfSale.queueNumber,
       };
     } catch (error) {
       await transaction.rollback();
@@ -497,6 +513,7 @@ class PointOfSaleService {
           warehouseName: item?.Master_Warehouse?.name ?? "",
           totalQuantity: item?.totalQuantity,
           totalItems: item?.totalItems,
+          queueNumber: item?.queueNumber,
         };
       });
 
@@ -621,6 +638,7 @@ class PointOfSaleService {
         notes: detail?.notes,
         createdBy: detail?.creator?.name ?? "",
         createdAt: detail?.createdAt,
+        queueNumber: detail.queueNumber,
         listProducts: listProduct,
         totalQuantity: detail?.totalQuantity,
         totalItems: detail?.totalItems,
@@ -794,6 +812,11 @@ class PointOfSaleService {
         `Order ID`,
         printerSetting.col / 2
       )}${justifyRight(data.code, printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Queue`,
+        printerSetting.col / 2
+      )}${justifyRight(String(data.queueNumber || "-"), printerSetting.col / 2)}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
       printString += `${justifyLeft(
         `Customer Name`,
         printerSetting.col / 2
