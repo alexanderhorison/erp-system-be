@@ -184,12 +184,13 @@ class PointOfSaleService {
       prices.forEach((price) => {
         priceMap[`${price.productId}_${price.unitId}`] = price.basePricePos;
       });
+      const formatData = [];
 
       // Format the data using the pre-fetched price map
-      const formatData = data.map((item) => {
+      data.forEach((item) => {
         const basePrice = priceMap[`${item.productId}_${item.unitId}`] || 0;
 
-        return {
+        let data = {
           id: item.id,
           isFavorite: item.isFavorite,
           productName: item.Master_Product?.name ?? "",
@@ -201,6 +202,15 @@ class PointOfSaleService {
           quantity: item.quantity,
           basePrice,
         };
+
+        // Push SLOP in front
+        if (item.Master_Unit?.name == "SLOP" && !item.Master_Product?.name.toUpperCase().includes("KALENG")) {
+          formatData.unshift(data);
+        } else if (item.Master_Product?.name.toUpperCase().includes("KALENG")) {
+          formatData.unshift(data);
+        } else {
+          formatData.push(data);
+        }
       });
 
       return formatData;
