@@ -251,13 +251,14 @@ class PointOfSaleController {
       });
 
       const targetPrinter = req.body;
+      const isCopy = req.body.isCopy || false;
 
       const params = await yupSchemaValidation(req.params, schemaParams);
 
       const code = params.code;
 
       //? KIRIM STRING YANG SUDAH DI FORMAT DENGAN \N
-      const data = await PointOfSaleService.printPosV3(code);
+      const data = await PointOfSaleService.printPosV3(code, isCopy);
 
       const printerServerSetting = await ConfigService.get({
         query: {
