@@ -778,7 +778,7 @@ class PointOfSaleService {
   }
 
   // CONVERT SEMUA DATA MENJADI STRING DAN DIPISAH MENGGUNAKAN \N
-  static async printPosV3(code) {
+  static async printPosV3(code, isCopy = false) {
     try {
       // CONFIG PRINTER
       const configPrinter = await ConfigService.get({
@@ -826,7 +826,19 @@ class PointOfSaleService {
         `Queue`,
         printerSetting.col / 2
       )}${justifyRight(String(data.queueNumber || "-"), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Kasir`,
+        printerSetting.col / 2
+      )}${justifyRight(data?.createdBy || "-", printerSetting.col / 2)}\n`;
       printString += `${addLine(printerSetting.col)}\n`;
+
+      // Add "THIS IS A COPY" if it's a copy
+      if (isCopy) {
+        printString += `\x1b\x61\x01\x1b\x21\x30THIS IS A COPY\n`; // Center + Bold
+        printString += `\x1b\x61\x00\x1b\x21\x00`; // Reset to left align + normal size
+        printString += `${addLine(printerSetting.col)}\n`;
+      }
+
       printString += `${justifyLeft(
         `Customer Name`,
         printerSetting.col / 2
