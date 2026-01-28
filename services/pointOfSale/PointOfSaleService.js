@@ -203,13 +203,13 @@ class PointOfSaleService {
           basePrice,
         };
 
-        // Push SLOP in front
-        if (item.Master_Unit?.name == "SLOP" && !item.Master_Product?.name.toUpperCase().includes("KALENG")) {
-          formatData.unshift(data);
-        } else if (item.Master_Product?.name.toUpperCase().includes("KALENG")) {
-          formatData.unshift(data);
+        // Priority order: 1) KALENG products with KALENG unit first, 2) SLOP unit second, 3) others last
+        if (item.Master_Product?.name.toUpperCase().includes("KALENG") && item.Master_Unit?.name == "KALENG") {
+          formatData.unshift(data); // KALENG product with KALENG unit gets highest priority
+        } else if (item.Master_Unit?.name == "SLOP") {
+          formatData.unshift(data); // SLOP unit gets second priority
         } else {
-          formatData.push(data);
+          formatData.push(data); // Everything else goes last
         }
       });
 
