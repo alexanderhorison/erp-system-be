@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
       totalQuantity: DataTypes.INTEGER,
       totalItems: DataTypes.INTEGER,
       lastDebt: DataTypes.BIGINT,
+      queueNumber: DataTypes.INTEGER,
     },
     {
       sequelize,

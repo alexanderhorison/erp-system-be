@@ -184,23 +184,33 @@ class PointOfSaleService {
       prices.forEach((price) => {
         priceMap[`${price.productId}_${price.unitId}`] = price.basePricePos;
       });
+      const formatData = [];
 
       // Format the data using the pre-fetched price map
-      const formatData = data.map((item) => {
+      data.forEach((item) => {
         const basePrice = priceMap[`${item.productId}_${item.unitId}`] || 0;
 
-        return {
+        let data = {
           id: item.id,
           isFavorite: item.isFavorite,
-          productName: item.Master_Product.name,
-          companyName: item.Master_Product.Master_Company.name,
-          companyId: item.Master_Product.companyId,
+          productName: item.Master_Product?.name ?? "",
+          companyName: item.Master_Product?.Master_Company?.name ?? "",
+          companyId: item.Master_Product?.companyId ?? null,
           productId: item.productId,
-          unitName: item.Master_Unit.name,
-          rackName: item.Master_Warehouse_Rack.name,
+          unitName: item.Master_Unit?.name ?? "",
+          rackName: item.Master_Warehouse_Rack?.name ?? "",
           quantity: item.quantity,
           basePrice,
         };
+
+        // Priority order: 1) KALENG products with KALENG unit first, 2) SLOP unit second, 3) others last
+        if (item.Master_Product?.name.toUpperCase().includes("KALENG") && item.Master_Unit?.name == "KALENG") {
+          formatData.unshift(data); // KALENG product with KALENG unit gets highest priority
+        } else if (item.Master_Unit?.name == "SLOP") {
+          formatData.unshift(data); // SLOP unit gets second priority
+        } else {
+          formatData.push(data); // Everything else goes last
+        }
       });
 
       return formatData;
@@ -223,17 +233,31 @@ class PointOfSaleService {
 
       let totalQuantity = 0;
       let totalItems = 0;
-      // Count total quantity
+
       data.listProduct?.forEach((item) => {
         totalQuantity += item.quantity;
       });
 
-      // Count total item
       data.listProduct?.forEach((item) => {
         totalItems += 1;
       });
 
       // create point of sale
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+
+      const maxQueue = await Pos_Transaction.max("queueNumber", {
+        where: {
+          createdAt: { [Op.between]: [startOfToday, endOfToday] },
+          createdBy: user.id,
+        },
+        transaction,
+      });
+
+      const nextQueueNumber = (Number(maxQueue) || 0) + 1;
+
       const createdPointOfSale = await Pos_Transaction.create(
         {
           customerId: data.customerId,
@@ -251,73 +275,76 @@ class PointOfSaleService {
           totalQuantity: totalQuantity,
           totalItems: totalItems,
           lastDebt: data.totalDebt || 0,
+          queueNumber: nextQueueNumber,
         },
         { transaction }
       );
 
       const createPosProducts = [];
-      const listProduct = data?.listProduct;
+      const listProduct = Array.isArray(data?.listProduct) ? data.listProduct : [];
 
       let totalHargaBarangWithoutDebt = 0;
 
+      const warehouseProductIdsToLock = listProduct
+        .filter((it) => it.warehouseProductId)
+        .map((it) => it.warehouseProductId);
+
+      const lockedWarehouseProducts = {};
+
+      if (warehouseProductIdsToLock.length > 0) {
+
+        const warehouseProducts = await Warehouse_Product.findAll({
+          where: { id: warehouseProductIdsToLock },
+          attributes: ["id", "quantity", "warehouseId", "productId", "unitId"],
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+
+        warehouseProducts.forEach((wp) => {
+          lockedWarehouseProducts[wp.id] = wp;
+        });
+
+        const productIds = Array.from(new Set(warehouseProducts.map((w) => w.productId).filter(Boolean)));
+        const unitIds = Array.from(new Set(warehouseProducts.map((w) => w.unitId).filter(Boolean)));
+
+        const products = productIds.length > 0 ? await Master_Product.findAll({ where: { id: productIds }, attributes: ["id", "name"], transaction }) : [];
+        const units = unitIds.length > 0 ? await Master_Unit.findAll({ where: { id: unitIds }, attributes: ["id", "name"], transaction }) : [];
+
+        const productMap = {};
+        products.forEach(p => { productMap[p.id] = p.name });
+        const unitMap = {};
+        units.forEach(u => { unitMap[u.id] = u.name });
+
+        for (const item of listProduct) {
+          if (item.warehouseProductId) {
+            const wp = lockedWarehouseProducts[item.warehouseProductId];
+            if (!wp) {
+              throwValidation(400, "Salah satu product warehouse tidak ditemukan");
+            }
+            if (Number(wp.quantity || 0) < Number(item.quantity || 0)) {
+              const productName = productMap[wp.productId] || "Produk";
+              const unitName = unitMap[wp.unitId] || "unit";
+              throwValidation(
+                400,
+                `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${wp.quantity}`
+              );
+            }
+          }
+        }
+      }
+
       for (const item of listProduct) {
-        // Jika produk memiliki warehouseProductId
         if (item.warehouseProductId) {
-          const warehouseProduct = await Warehouse_Product.findOne({
-            where: {
-              id: item.warehouseProductId,
-            },
-            include: [
-              {
-                model: Master_Product,
-                attributes: ["name"],
-              },
-              {
-                model: Master_Unit,
-                attributes: ["name"],
-              },
-              {
-                model: Master_Warehouse,
-                attributes: ["name"],
-              },
-            ],
-            transaction,
-          });
+          const warehouseProduct = lockedWarehouseProducts[item.warehouseProductId];
 
           if (!warehouseProduct) {
-            throwValidation(
-              400,
-              "Salah satu product warehouse tidak ditemukan"
-            );
+            throwValidation(400, "Salah satu product warehouse tidak ditemukan");
           }
 
-          // Lakukan pengecekan stock quantity dengan stok di product warehouse apakah cukup
-          if (warehouseProduct.quantity < item.quantity) {
-            const productName =
-              warehouseProduct.Master_Product?.name || "Produk";
-            const unitName = warehouseProduct.Master_Unit?.name || "unit";
-            throwValidation(
-              400,
-              `Stok product ${productName} - ${unitName} kurang, saat ini berjumlah ${warehouseProduct.quantity}`
-            );
-          }
+          const newWarehouseQuantity = Number(warehouseProduct.quantity || 0) - Number(item.quantity || 0);
 
-          const newWarehouseQuantity =
-            warehouseProduct?.quantity - item?.quantity;
+          await warehouseProduct.update({ quantity: newWarehouseQuantity }, { transaction });
 
-          // Kurangi stok product di warehouse
-          await Warehouse_Product.update(
-            {
-              quantity: newWarehouseQuantity,
-            },
-            {
-              where: {
-                id: item?.warehouseProductId,
-              },
-              transaction,
-            }
-          );
-          // catat stock adjustment histories
           await Stock_Adjustment_History.create(
             {
               productWarehouseId: item?.warehouseProductId,
@@ -332,12 +359,11 @@ class PointOfSaleService {
             { transaction }
           );
         }
-        // calculated total harga barang tanpa hutang
+
         if (!item.isDebt) {
           totalHargaBarangWithoutDebt += item.subTotal;
         }
 
-        // push pos products
         createPosProducts.push({
           title: item.title || "",
           posTransactionId: createdPointOfSale.id,
@@ -423,6 +449,7 @@ class PointOfSaleService {
         id: createdPointOfSale.id,
         code: createdPointOfSale.code,
         status: createdPointOfSale.status,
+        queueNumber: createdPointOfSale.queueNumber,
       };
     } catch (error) {
       await transaction.rollback();
@@ -496,6 +523,7 @@ class PointOfSaleService {
           warehouseName: item?.Master_Warehouse?.name ?? "",
           totalQuantity: item?.totalQuantity,
           totalItems: item?.totalItems,
+          queueNumber: item?.queueNumber,
         };
       });
 
@@ -552,7 +580,7 @@ class PointOfSaleService {
             include: [
               {
                 model: Master_Product,
-                attributes: ["id", "name"],
+                attributes: ["id", "name", "description"],
                 include: [
                   {
                     model: Master_Company,
@@ -578,6 +606,8 @@ class PointOfSaleService {
           notes: item?.notes,
           unitName: item?.Warehouse_Product?.Master_Unit?.name ?? "",
           productName: item?.Warehouse_Product?.Master_Product?.name ?? "",
+          description:
+            item?.Warehouse_Product?.Master_Product?.description ?? "",
           companyName:
             item?.Warehouse_Product?.Master_Product?.Master_Company?.name ?? "",
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name ?? "",
@@ -618,6 +648,7 @@ class PointOfSaleService {
         notes: detail?.notes,
         createdBy: detail?.creator?.name ?? "",
         createdAt: detail?.createdAt,
+        queueNumber: detail.queueNumber,
         listProducts: listProduct,
         totalQuantity: detail?.totalQuantity,
         totalItems: detail?.totalItems,
@@ -629,8 +660,125 @@ class PointOfSaleService {
     }
   }
 
+  static async voidPointOfSale(code, adminUserId, pin, performedBy) {
+    const transaction = await sq.transaction();
+    try {
+      // Validate admin user and PIN early
+      const adminUser = await Master_User.findOne({ where: { id: adminUserId } });
+      if (!adminUser) {
+        throwValidation(400, "User tidak ditemukan");
+      }
+      if (Number(adminUser.roleId) !== 1) {
+        throwValidation(400, "User tidak memiliki akses admin");
+      }
+      if (String(adminUser.pin) !== String(pin)) {
+        throwValidation(400, "PIN salah");
+      }
+
+      // Find POS transaction
+      const pos = await Pos_Transaction.findOne({ where: { code: code } });
+      if (!pos) {
+        throwValidation(400, "Data tidak ditemukan");
+      }
+      if (pos.status === "VOID") {
+        throwValidation(400, "Transaksi sudah VOID");
+      }
+
+      // Get details
+      const details = await Pos_Transaction_Detail.findAll({
+        where: { posTransactionId: pos.id },
+      });
+
+      // Restore quantities and create stock adjustment histories
+      for (const item of details) {
+        if (item.warehouseProductId) {
+          const warehouseProduct = await Warehouse_Product.findOne({
+            where: { id: item.warehouseProductId },
+          });
+
+          if (!warehouseProduct) {
+            throwValidation(400, "Warehouse product tidak ditemukan");
+          }
+
+          const newQuantity = Number(warehouseProduct.quantity || 0) +
+            Number(item.quantity || 0);
+
+          await Warehouse_Product.update(
+            { quantity: newQuantity },
+            { where: { id: warehouseProduct.id }, transaction }
+          );
+
+          await Stock_Adjustment_History.create(
+            {
+              productWarehouseId: warehouseProduct.id,
+              quantity: item.quantity,
+              adjustmentType: "PLUS",
+              warehouseId: warehouseProduct.warehouseId,
+              userId: adminUserId,
+              info: "VOID POINT OF SALE",
+              posTransactionId: pos.id,
+              lastQuantity: newQuantity,
+            },
+            { transaction }
+          );
+        }
+      }
+
+      // Mark POS transaction as VOID
+      await Pos_Transaction.update(
+        { status: "VOID", updatedBy: adminUserId },
+        { where: { id: pos.id }, transaction }
+      );
+
+      // If transaction has customer, update dashboard summary
+      if (pos.customerId) {
+        const findExisting = await Dashboard_Summary_Pos_Customer.findOne({
+          where: { customerId: pos.customerId },
+          transaction,
+        });
+
+        if (findExisting) {
+          // Use stored fields to approximate values used during creation
+          const totalHargaBarangWithoutDebt = Number(pos.subTotal || 0);
+          const grandTotal = Number(pos.grandTotal || 0);
+          const totalPayment = Number(pos.totalPayment || 0);
+          const lastDebt = Number(pos.lastDebt || 0);
+
+          let amountDebt = totalHargaBarangWithoutDebt + lastDebt - totalPayment;
+          if (amountDebt <= 0) amountDebt = 0;
+
+          const paidAmount = totalPayment >= grandTotal ? grandTotal : totalPayment;
+
+          await Dashboard_Summary_Pos_Customer.update(
+            {
+              totalPos: Number(findExisting.totalPos) - 1,
+              totalAmountPos:
+                Number(findExisting.totalAmountPos) -
+                Number(totalHargaBarangWithoutDebt),
+              totalAmountPaidPos:
+                Number(findExisting.totalAmountPaidPos) -
+                Number(paidAmount),
+              totalAmountDebtPos: Math.max(
+                0,
+                Number(findExisting.totalAmountDebtPos) - Number(amountDebt)
+              ),
+            },
+            { where: { id: findExisting.id }, transaction }
+          );
+        }
+      }
+
+      await transaction.commit();
+
+      return { id: pos.id, code: pos.code, status: "VOID" };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   // CONVERT SEMUA DATA MENJADI STRING DAN DIPISAH MENGGUNAKAN \N
-  static async printPosV3(code) {
+  static async printPosV3(code, isCopy = false) {
     try {
       // CONFIG PRINTER
       const configPrinter = await ConfigService.get({
@@ -654,7 +802,9 @@ class PointOfSaleService {
 
       // 🔹 HEADER
       // Kode untuk Justify Center
-      printString += `\x1b\x61\x01\x1b\x21\x30${companyInfo.companyName}\n`;
+      // Use POS-specific company name when provided, otherwise fall back to main company name
+      const headerCompanyName = companyInfo.companyNamePos || companyInfo.companyName;
+      printString += `\x1b\x61\x01\x1b\x21\x30${headerCompanyName}\n`;
       // untuk center
       printString += `\x1b\x21\x00${companyInfo.address}\n`; // 🔹 Center (Normal Size)
       printString += `${companyInfo.phoneNumber}\n`;
@@ -673,6 +823,23 @@ class PointOfSaleService {
         printerSetting.col / 2
       )}${justifyRight(data.code, printerSetting.col / 2)}\n`;
       printString += `${justifyLeft(
+        `Queue`,
+        printerSetting.col / 2
+      )}${justifyRight(String(data.queueNumber || "-"), printerSetting.col / 2)}\n`;
+      printString += `${justifyLeft(
+        `Kasir`,
+        printerSetting.col / 2
+      )}${justifyRight(data?.createdBy || "-", printerSetting.col / 2)}\n`;
+      printString += `${addLine(printerSetting.col)}\n`;
+
+      // Add "THIS IS A COPY" if it's a copy
+      if (isCopy) {
+        printString += `\x1b\x61\x01\x1b\x21\x30THIS IS A COPY\n`; // Center + Bold
+        printString += `\x1b\x61\x00\x1b\x21\x00`; // Reset to left align + normal size
+        printString += `${addLine(printerSetting.col)}\n`;
+      }
+
+      printString += `${justifyLeft(
         `Customer Name`,
         printerSetting.col / 2
       )}${justifyRight(data?.customer?.name || "-", printerSetting.col / 2)}\n`;
@@ -680,7 +847,8 @@ class PointOfSaleService {
 
       // 🔹 LIST PRODUK
       data.listProducts.forEach((product) => {
-        let baseProductName = product?.productName || product?.title || "-";
+        let baseProductName =
+          product?.description || product?.productName || product?.title || "-";
         let productName = baseProductName;
         let addNewLineProduct = false;
         let newLineProduct = "";

@@ -42,12 +42,15 @@ const titleInfo = (item) => {
     case "POINT OF SALE":
       result = "Point Of Sale"
       break;
+    case "VOID POINT OF SALE":
+      result = "Void Point Of Sale"
+      break;
     case "SALES ORDER LOAN":
       result = "Sales Order Loan"
       break;
     case "PAYMENT LOAN STOCK":
       result = "Pembayaran Loan Stock"
-    break;
+      break;
     default:
       result = "Penyesuaian Stock Product"
   }

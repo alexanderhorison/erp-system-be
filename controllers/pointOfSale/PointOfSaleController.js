@@ -183,6 +183,42 @@ class PointOfSaleController {
     }
   }
 
+  static async voidPointOfSale(req, res) {
+    try {
+      const params = req.params;
+
+      const schemaParams = yup
+        .string()
+        .required("Code point of sale harus diisi");
+
+      const schemaBody = yup.object({
+        adminUserId: yup.number().required("Admin user id harus diisi"),
+        pin: yup
+          .string()
+          .matches(/^\d{4}$/, "Pin harus 4 digit")
+          .required("Pin harus diisi"),
+      });
+
+      const code = await yupSchemaValidation(params.code, schemaParams);
+      const body = await yupSchemaValidation(req.body, schemaBody);
+
+      const performedBy = req.userData?.id;
+
+      const data = await PointOfSaleService.voidPointOfSale(
+        code,
+        body.adminUserId,
+        body.pin,
+        performedBy
+      );
+
+      res.status(200).json(responses(true, "Transaksi berhasil di-VOID", data));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
   static async getAllPointOfSaleByCustomerId(req, res) {
     try {
       const schemaParams = yup.object({
@@ -215,13 +251,14 @@ class PointOfSaleController {
       });
 
       const targetPrinter = req.body;
+      const isCopy = req.body.isCopy || false;
 
       const params = await yupSchemaValidation(req.params, schemaParams);
 
       const code = params.code;
 
       //? KIRIM STRING YANG SUDAH DI FORMAT DENGAN \N
-      const data = await PointOfSaleService.printPosV3(code);
+      const data = await PointOfSaleService.printPosV3(code, isCopy);
 
       const printerServerSetting = await ConfigService.get({
         query: {
