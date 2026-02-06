@@ -808,6 +808,33 @@ class PointOfSaleService {
         }
       }
 
+      // Reduce Pos User Shift totals if transaction was linked to a shift
+      if (pos.posUserShiftId) {
+        const userShift = await Pos_User_Shift.findByPk(pos.posUserShiftId, {
+          transaction,
+        });
+
+        if (userShift) {
+          await Pos_User_Shift.update(
+            {
+              totalTransaction: Math.max(
+                0,
+                Number(userShift.totalTransaction || 0) - 1
+              ),
+              grandTotalTransaction: Math.max(
+                0,
+                Number(userShift.grandTotalTransaction || 0) -
+                  Number(pos.grandTotal || 0)
+              ),
+            },
+            {
+              where: { id: userShift.id },
+              transaction,
+            }
+          );
+        }
+      }
+
       await transaction.commit();
 
       return { id: pos.id, code: pos.code, status: "VOID" };
