@@ -23,6 +23,7 @@ class ExportPointOfSaleService {
         { header: "Grand Total", key: "grandTotal", width: 25 },
         { header: "Catatan", key: "notes", width: 20 },
         { header: "Kasir", key: "createdBy", width: 20 },
+        { header: "Shift", key: "shiftName", width: 20 },
       ];
 
       // Apply styling to headers Sheet 1
@@ -43,6 +44,10 @@ class ExportPointOfSaleService {
             }`
           : "";
 
+        const shiftName = pos.Pos_User_Shift && pos.Pos_User_Shift.Master_Shift
+          ? pos.Pos_User_Shift.Master_Shift.name
+          : "-";
+
         worksheet.addRow({
           customerName: name,
           code: pos.code,
@@ -55,6 +60,7 @@ class ExportPointOfSaleService {
           grandTotal: pos.grandTotal,
           notes: pos.notes,
           createdBy: pos.creator.name || "",
+          shiftName: shiftName,
         });
       }
       const filePath = `./Report_Point_Of_Sale.xlsx`;

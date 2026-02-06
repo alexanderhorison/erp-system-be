@@ -3,7 +3,7 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
-      "User_Shifts",
+      "Pos_User_Shifts",
       {
         id: {
           allowNull: false,
@@ -78,6 +78,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("User_Shifts");
+    await queryInterface.dropTable("Pos_User_Shifts");
   },
 };

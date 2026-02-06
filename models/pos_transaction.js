@@ -33,6 +33,9 @@ module.exports = (sequelize, DataTypes) => {
       Pos_Transaction.belongsTo(models.Master_Warehouse, {
         foreignKey: "warehouseId",
       });
+      Pos_Transaction.belongsTo(models.Pos_User_Shift, {
+        foreignKey: "posUserShiftId",
+      });
     }
   }
   Pos_Transaction.init(
@@ -54,6 +57,7 @@ module.exports = (sequelize, DataTypes) => {
       totalItems: DataTypes.INTEGER,
       lastDebt: DataTypes.BIGINT,
       queueNumber: DataTypes.INTEGER,
+      posUserShiftId: DataTypes.INTEGER,
     },
     {
       sequelize,

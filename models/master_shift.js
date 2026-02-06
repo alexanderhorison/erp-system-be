@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class Master_Shift extends Model {
     static associate(models) {
       // define association here
-      Master_Shift.hasMany(models.User_Shift, {
+      Master_Shift.hasMany(models.Pos_User_Shift, {
         foreignKey: "masterShiftId",
       });
     }

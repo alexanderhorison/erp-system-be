@@ -19,6 +19,8 @@ const {
   Master_Customer,
   Master_Rank,
   Dashboard_Summary_Pos_Customer,
+  Pos_User_Shift,
+  Master_Shift,
 } = require("../../models");
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
@@ -258,6 +260,27 @@ class PointOfSaleService {
 
       const nextQueueNumber = (Number(maxQueue) || 0) + 1;
 
+      // Get current active shift for the user
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const activeUserShift = await Pos_User_Shift.findOne({
+        where: {
+          userId: user.id,
+          endShift: null,
+          createdAt: {
+            [Op.between]: [today, endOfDay],
+          },
+        },
+        transaction,
+      });
+
+      if (!activeUserShift) {
+        throwValidation(400, "User tidak memiliki shift aktif hari ini");
+      }
+
       const createdPointOfSale = await Pos_Transaction.create(
         {
           customerId: data.customerId,
@@ -276,6 +299,7 @@ class PointOfSaleService {
           totalItems: totalItems,
           lastDebt: data.totalDebt || 0,
           queueNumber: nextQueueNumber,
+          posUserShiftId: activeUserShift ? activeUserShift.id : null,
         },
         { transaction }
       );
@@ -442,6 +466,22 @@ class PointOfSaleService {
             { transaction }
           );
         }
+      }
+
+      // Update Pos User Shift totals if transaction is linked to a shift
+      if (activeUserShift) {
+        await Pos_User_Shift.update(
+          {
+            totalTransaction: Number(activeUserShift.totalTransaction || 0) + 1,
+            grandTotalTransaction:
+              Number(activeUserShift.grandTotalTransaction || 0) +
+              Number(data.grandTotal || 0),
+          },
+          {
+            where: { id: activeUserShift.id },
+            transaction,
+          }
+        );
       }
 
       await transaction.commit();
@@ -1041,6 +1081,16 @@ class PointOfSaleService {
               {
                 model: Pos_Payment_Type,
                 attributes: ["id", "label", "code", "description"],
+              },
+            ],
+          },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
               },
             ],
           },

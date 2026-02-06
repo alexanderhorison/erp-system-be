@@ -1,5 +1,5 @@
 const { throwValidation } = require("../../helpers/responses");
-const { Master_Shift, User_Shift } = require("../../models");
+const { Master_Shift, Pos_User_Shift } = require("../../models");
 
 class MasterDataShiftService {
   static async create(data, user) {
@@ -67,7 +67,7 @@ class MasterDataShiftService {
       }
 
       // Check if there are user shifts using this master shift
-      const existingUserShift = await User_Shift.findOne({
+      const existingUserShift = await Pos_User_Shift.findOne({
         where: { masterShiftId: id },
       });
 

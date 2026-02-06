@@ -2,22 +2,22 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class User_Shift extends Model {
+  class Pos_User_Shift extends Model {
     static associate(models) {
       // define association here
-      User_Shift.belongsTo(models.Master_User, {
+      Pos_User_Shift.belongsTo(models.Master_User, {
         foreignKey: "userId",
       });
-      User_Shift.belongsTo(models.Master_Shift, {
+      Pos_User_Shift.belongsTo(models.Master_Shift, {
         foreignKey: "masterShiftId",
       });
-      User_Shift.hasMany(models.Pos_Transaction, {
+      Pos_User_Shift.hasMany(models.Pos_Transaction, {
         foreignKey: "posUserShiftId",
       });
     }
   }
 
-  User_Shift.init(
+  Pos_User_Shift.init(
     {
       startShift: {
         type: DataTypes.TIME,
@@ -66,11 +66,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "User_Shift",
-      tableName: "User_Shifts",
+      modelName: "Pos_User_Shift",
+      tableName: "Pos_User_Shifts",
       paranoid: true,
     }
   );
 
-  return User_Shift;
+  return Pos_User_Shift;
 };

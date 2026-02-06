@@ -27,6 +27,7 @@ const routerEquity = require("./equity/index");
 const routerProductRequestOrder = require("./productRequestOrder/index");
 const MasterDataCustomerController = require("../controllers/masterData/MasterDataCustomerController");
 const routerHealthCheck = require("./healthCheck/index");
+const routerUserShift = require("./userShift/index");
 
 
 router.get("/", (req, res) => {
@@ -105,5 +106,8 @@ router.use("/equity", routerEquity);
 router.use("/product-request-order", routerProductRequestOrder);
 
 router.use("/health-check", routerHealthCheck);
+
+// User Shift
+router.use("/user-shift", routerUserShift);
 
 module.exports = router;
