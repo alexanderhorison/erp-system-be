@@ -9,22 +9,23 @@ class UserShiftService {
       const userId = user.id;
 
       // Check if user already has an active shift today
-      const today = moment().format('YYYY-MM-DD');
+      const today = moment().format("YYYY-MM-DD");
       const existingActiveShift = await Pos_User_Shift.findOne({
         where: {
           userId: userId,
           endShift: null,
           createdAt: {
-            [Op.gte]: moment(today).startOf('day').toDate(),
-            [Op.lte]: moment(today).endOf('day').toDate(),
-          }
-        }
+            [Op.gte]: moment(today).startOf("day").toDate(),
+            [Op.lte]: moment(today).endOf("day").toDate(),
+          },
+        },
       });
 
       if (existingActiveShift) {
         throw {
           code: 400,
-          message: "User sudah memiliki shift aktif hari ini. Silakan selesaikan shift terlebih dahulu.",
+          message:
+            "User sudah memiliki shift aktif hari ini. Silakan selesaikan shift terlebih dahulu.",
         };
       }
 
@@ -38,7 +39,7 @@ class UserShiftService {
       }
 
       // Create new user shift
-      const currentTime = moment().format('HH:mm:ss');
+      const currentTime = moment().format("HH:mm:ss");
       const newUserShift = await Pos_User_Shift.create({
         userId: userId,
         masterShiftId: masterShiftId,
@@ -53,13 +54,13 @@ class UserShiftService {
         include: [
           {
             model: Master_User,
-            attributes: ['id', 'name', 'userName']
+            attributes: ["id", "name", "userName"],
           },
           {
             model: Master_Shift,
-            attributes: ['id', 'name', 'startShift', 'endShift']
-          }
-        ]
+            attributes: ["id", "name", "startShift", "endShift"],
+          },
+        ],
       });
 
       return result;
@@ -71,30 +72,60 @@ class UserShiftService {
   static async getCurrentShift(user) {
     try {
       const userId = user.id;
-      const today = moment().format('YYYY-MM-DD');
+      const today = moment().format("YYYY-MM-DD");
 
-      const currentShift = await Pos_User_Shift.findOne({
+      // First, check for active shift today
+      let currentShift = await Pos_User_Shift.findOne({
         where: {
           userId: userId,
           endShift: null,
           createdAt: {
-            [Op.gte]: moment(today).startOf('day').toDate(),
-            [Op.lte]: moment(today).endOf('day').toDate(),
-          }
+            [Op.gte]: moment(today).startOf("day").toDate(),
+            [Op.lte]: moment(today).endOf("day").toDate(),
+          },
         },
         include: [
           {
             model: Master_User,
-            attributes: ['id', 'name', 'userName']
+            attributes: ["id", "name", "userName"],
           },
           {
             model: Master_Shift,
-            attributes: ['id', 'name', 'startShift', 'endShift']
-          }
-        ]
+            attributes: ["id", "name", "startShift", "endShift"],
+          },
+        ],
       });
 
+      // If no shift today, check for active shift from previous days
       if (!currentShift) {
+        const previousShift = await Pos_User_Shift.findOne({
+          where: {
+            userId: userId,
+            endShift: null,
+            createdAt: {
+              [Op.lt]: moment(today).startOf("day").toDate(),
+            },
+          },
+          include: [
+            {
+              model: Master_User,
+              attributes: ["id", "name", "userName"],
+            },
+            {
+              model: Master_Shift,
+              attributes: ["id", "name", "startShift", "endShift"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+        });
+
+        // If found previous shift, it's from a different day
+        // According to Case 2: user must select new shift
+        if (previousShift) {
+          // Return null to indicate user needs to select a new shift
+          return null;
+        }
+
         throw {
           code: 404,
           message: "Tidak ada shift aktif untuk hari ini",
@@ -110,7 +141,7 @@ class UserShiftService {
   static async endShift(user) {
     try {
       const userId = user.id;
-      const today = moment().format('YYYY-MM-DD');
+      const today = moment().format("YYYY-MM-DD");
 
       // Find active shift
       const activeShift = await Pos_User_Shift.findOne({
@@ -118,10 +149,10 @@ class UserShiftService {
           userId: userId,
           endShift: null,
           createdAt: {
-            [Op.gte]: moment(today).startOf('day').toDate(),
-            [Op.lte]: moment(today).endOf('day').toDate(),
-          }
-        }
+            [Op.gte]: moment(today).startOf("day").toDate(),
+            [Op.lte]: moment(today).endOf("day").toDate(),
+          },
+        },
       });
 
       if (!activeShift) {
@@ -132,7 +163,7 @@ class UserShiftService {
       }
 
       // End the shift - only record the end time
-      const currentTime = moment().format('HH:mm:ss');
+      const currentTime = moment().format("HH:mm:ss");
       const updatedShift = await activeShift.update({
         endShift: currentTime,
       });
@@ -142,13 +173,13 @@ class UserShiftService {
         include: [
           {
             model: Master_User,
-            attributes: ['id', 'name', 'userName']
+            attributes: ["id", "name", "userName"],
           },
           {
             model: Master_Shift,
-            attributes: ['id', 'name', 'startShift', 'endShift']
-          }
-        ]
+            attributes: ["id", "name", "startShift", "endShift"],
+          },
+        ],
       });
 
       return result;
@@ -169,14 +200,14 @@ class UserShiftService {
         include: [
           {
             model: Master_User,
-            attributes: ['id', 'name', 'userName']
+            attributes: ["id", "name", "userName"],
           },
           {
             model: Master_Shift,
-            attributes: ['id', 'name', 'startShift', 'endShift']
-          }
+            attributes: ["id", "name", "startShift", "endShift"],
+          },
         ],
-        order: [['createdAt', 'DESC']],
+        order: [["createdAt", "DESC"]],
         limit: limit,
         offset: offset,
       });
@@ -187,8 +218,71 @@ class UserShiftService {
           total: count,
           page: page,
           limit: limit,
-          totalPages: Math.ceil(count / limit)
-        }
+          totalPages: Math.ceil(count / limit),
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAvailableShifts() {
+    try {
+      const shifts = await Master_Shift.findAll({
+        order: [["startShift", "ASC"]],
+        attributes: ["id", "name", "startShift", "endShift"],
+      });
+
+      return shifts;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getShiftSummary(user) {
+    try {
+      const userId = user.id;
+      const today = moment().format("YYYY-MM-DD");
+
+      // Find active shift
+      const activeShift = await Pos_User_Shift.findOne({
+        where: {
+          userId: userId,
+          endShift: null,
+          createdAt: {
+            [Op.gte]: moment(today).startOf("day").toDate(),
+            [Op.lte]: moment(today).endOf("day").toDate(),
+          },
+        },
+        include: [
+          {
+            model: Master_User,
+            attributes: ["id", "name", "userName"],
+          },
+          {
+            model: Master_Shift,
+            attributes: ["id", "name", "startShift", "endShift"],
+          },
+        ],
+      });
+
+      if (!activeShift) {
+        throw {
+          code: 404,
+          message: "Tidak ada shift aktif untuk diakhiri",
+        };
+      }
+
+      // Return shift summary with transaction totals
+      return {
+        id: activeShift.id,
+        shiftName: activeShift.Master_Shift?.name,
+        masterShiftStartTime: activeShift.Master_Shift?.startShift,
+        masterShiftEndTime: activeShift.Master_Shift?.endShift,
+        actualStartTime: activeShift.startShift,
+        totalTransaction: activeShift.totalTransaction || 0,
+        grandTotalTransaction: activeShift.grandTotalTransaction || 0,
+        createdAt: activeShift.createdAt,
       };
     } catch (error) {
       throw error;

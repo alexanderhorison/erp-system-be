@@ -70,12 +70,42 @@ class UserShiftController {
       const shiftHistory = await UserShiftService.getShiftHistory(
         user,
         query.page,
-        query.limit
+        query.limit,
       );
 
       res
         .status(200)
         .json(responses(true, "Success get shift history", shiftHistory));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getAvailableShifts(req, res) {
+    try {
+      const availableShifts = await UserShiftService.getAvailableShifts();
+
+      res
+        .status(200)
+        .json(responses(true, "Success get available shifts", availableShifts));
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async getShiftSummary(req, res) {
+    try {
+      const user = req.userData;
+
+      const summary = await UserShiftService.getShiftSummary(user);
+
+      res
+        .status(200)
+        .json(responses(true, "Success get shift summary", summary));
     } catch (error) {
       res
         .status(error.code || 500)
