@@ -604,6 +604,16 @@ class PointOfSaleService {
               },
             ],
           },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
+              },
+            ]
+          }
         ],
       });
 
@@ -692,6 +702,12 @@ class PointOfSaleService {
         listProducts: listProduct,
         totalQuantity: detail?.totalQuantity,
         totalItems: detail?.totalItems,
+        shift: detail?.Pos_User_Shift ? {
+          id: detail?.Pos_User_Shift?.id,
+          startShift: detail?.Pos_User_Shift?.startShift,
+          endShift: detail?.Pos_User_Shift?.endShift,
+          shiftName: detail?.Pos_User_Shift?.Master_Shift?.name,
+        } : null
       };
 
       return sendData;
