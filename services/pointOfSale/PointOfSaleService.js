@@ -539,6 +539,16 @@ class PointOfSaleService {
             attributes: ["name"],
             paranoid: true,
           },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
+              },
+            ]
+          }
         ],
         order: [["createdAt", "DESC"]],
       });
@@ -564,6 +574,12 @@ class PointOfSaleService {
           totalQuantity: item?.totalQuantity,
           totalItems: item?.totalItems,
           queueNumber: item?.queueNumber,
+          shift: item?.Pos_User_Shift ? {
+            id: item?.Pos_User_Shift?.id,
+            startShift: item?.Pos_User_Shift?.startShift,
+            endShift: item?.Pos_User_Shift?.endShift,
+            shiftName: item?.Pos_User_Shift?.Master_Shift?.name,
+          } : null,
         };
       });
 
