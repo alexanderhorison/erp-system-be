@@ -43,7 +43,6 @@ class DailyCostService {
       });
 
       if (existingDailyCost) {
-        await transaction.rollback();
         throw {
           code: 400,
           message: "Daily cost untuk tanggal ini sudah ada",
@@ -158,7 +157,6 @@ class DailyCostService {
       });
 
       if (!existingDailyCost) {
-        await transaction.rollback();
         throw {
           code: 404,
           message: "Daily cost tidak ditemukan",
