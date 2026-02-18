@@ -99,6 +99,40 @@ class ProductWarehouseTransformationService {
 
       let result = {}
 
+      // VALIDASI: Cek transformationData ada
+      if (!transformationData) {
+        throwValidation(400, "Data transformasi tidak ditemukan");
+      }
+
+      // VALIDASI: Cek originProduct ada
+      if (!originProduct) {
+        throwValidation(400, "Produk asal tidak ditemukan di warehouse");
+      }
+
+      // VALIDASI: qtyTransformation harus minimal 1 amountFrom
+      if (Number(data.qtyTransformation) < Number(transformationData.amountFrom)) {
+        throwValidation(
+          400,
+          `Jumlah transformasi minimal ${transformationData.amountFrom} unit untuk dapat dikonversi`
+        );
+      }
+
+      // VALIDASI: qtyTransformation harus kelipatan amountFrom
+      if (Number(data.qtyTransformation) % Number(transformationData.amountFrom) !== 0) {
+        throwValidation(
+          400,
+          `Jumlah transformasi harus kelipatan ${transformationData.amountFrom}`
+        );
+      }
+
+      // VALIDASI: Stok unit asal harus cukup untuk ditransformasi
+      if (Number(originProduct.quantity) < Number(data.qtyTransformation)) {
+        throwValidation(
+          400,
+          `Stok unit asal tidak cukup untuk ditransformasi. Stok saat ini: ${originProduct.quantity}, dibutuhkan: ${data.qtyTransformation}`
+        );
+      }
+
       // KURANGI PRODUCT AWAL
       originProduct.quantity -= data.qtyTransformation
       await originProduct.save({ transaction });
