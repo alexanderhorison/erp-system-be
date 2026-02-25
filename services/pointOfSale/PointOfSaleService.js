@@ -139,6 +139,93 @@ class PointOfSaleService {
     }
   }
 
+  static async validatePrice(listProduct) {
+    try {
+      const masterProductPriceIds = listProduct
+        .map((item) => item.MasterProductPriceId)
+        .filter(Boolean);
+
+      const prices = await Master_Product_Price.findAll({
+        where: { id: masterProductPriceIds },
+        include: [
+          { model: Master_Product, attributes: ["name"] },
+          { model: Master_Unit, attributes: ["name"] },
+        ],
+      });
+
+      const priceMap = {};
+      prices.forEach((price) => {
+        priceMap[price.id] = price;
+      });
+
+      const warehouseProductIds = listProduct
+        .map((item) => item.warehouseProductId)
+        .filter(Boolean);
+
+      const warehouseProducts =
+        warehouseProductIds.length > 0
+          ? await Warehouse_Product.findAll({
+              where: { id: warehouseProductIds },
+              attributes: ["id", "productId", "unitId"],
+              include: [
+                { model: Master_Product, attributes: ["name"] },
+                { model: Master_Unit, attributes: ["name"] },
+              ],
+            })
+          : [];
+
+      const warehouseProductMap = {};
+      warehouseProducts.forEach((wp) => {
+        warehouseProductMap[wp.id] = wp;
+      });
+
+      const result = listProduct.map((item) => {
+        const priceRecord = priceMap[item.MasterProductPriceId];
+        const warehouseProduct = item.warehouseProductId
+          ? warehouseProductMap[item.warehouseProductId]
+          : null;
+
+        const backendPrice = priceRecord
+          ? Number(priceRecord.basePricePos)
+          : null;
+        const cartPrice = Number(item.price);
+        const cartSubTotal = Number(item.subTotal);
+        const backendSubTotal =
+          backendPrice !== null ? backendPrice * Number(item.quantity) : null;
+        const isPriceDifferent =
+          backendPrice !== null ? cartPrice !== backendPrice : false;
+
+        const productName =
+          warehouseProduct?.Master_Product?.name ||
+          priceRecord?.Master_Product?.name ||
+          item.title ||
+          "-";
+
+        const unitName =
+          warehouseProduct?.Master_Unit?.name ||
+          priceRecord?.Master_Unit?.name ||
+          "-";
+
+        return {
+          warehouseProductId: item.warehouseProductId || null,
+          MasterProductPriceId: item.MasterProductPriceId,
+          productName,
+          unitName,
+          quantity: item.quantity,
+          cartPrice,
+          backendPrice,
+          cartSubTotal,
+          backendSubTotal,
+          isPriceDifferent,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getAllProductByProductId({ warehouseId, productId }) {
     try {
       const data = await Warehouse_Product.findAll({
@@ -184,13 +271,18 @@ class PointOfSaleService {
       // Build a map for quick price lookup
       const priceMap = {};
       prices.forEach((price) => {
-        priceMap[`${price.productId}_${price.unitId}`] = price.basePricePos;
+        priceMap[`${price.productId}_${price.unitId}`] = {
+          basePricePos: price.basePricePos,
+          MasterProductPriceId: price.id,
+        }
       });
       const formatData = [];
 
       // Format the data using the pre-fetched price map
       data.forEach((item) => {
-        const basePrice = priceMap[`${item.productId}_${item.unitId}`] || 0;
+        const prices = priceMap[`${item.productId}_${item.unitId}`];
+        const basePrice = prices?.basePricePos || 0;
+        const MasterProductPriceId = prices?.MasterProductPriceId || null;
 
         let data = {
           id: item.id,
@@ -199,10 +291,12 @@ class PointOfSaleService {
           companyName: item.Master_Product?.Master_Company?.name ?? "",
           companyId: item.Master_Product?.companyId ?? null,
           productId: item.productId,
+          unitId: item.unitId,
           unitName: item.Master_Unit?.name ?? "",
           rackName: item.Master_Warehouse_Rack?.name ?? "",
           quantity: item.quantity,
           basePrice,
+          MasterProductPriceId
         };
 
         // Priority order: 1) KALENG products with KALENG unit first, 2) SLOP unit second, 3) others last
