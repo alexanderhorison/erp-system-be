@@ -108,9 +108,6 @@ class PointOfSaleController {
       const body = await yupSchemaValidation(req.body, schema);
 
       const user = req.userData;
-      // console.log(json.stringify(body));
-      throw "something";
-
       const data = await PointOfSaleService.createPointOfSale({
         data: body,
         user,
