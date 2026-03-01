@@ -338,7 +338,11 @@ class PointOfSaleController {
               isDebt: yup.boolean().optional(),
               debtDate: yup.string().optional(),
               totalDebt: yup.number().optional(),
-              MasterProductPriceId: yup.number().required("Master Product Price Id harus diisi"),
+              MasterProductPriceId: yup.number().optional().nullable(),
+              productName: yup.string().optional(),
+              unitName: yup.string().optional(),
+              cartIndex: yup.number().optional(),
+              isPriceUpdated: yup.boolean().optional(),
             }),
           )
           .required("List point of sale produk harus ada"),

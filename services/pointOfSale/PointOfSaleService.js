@@ -185,30 +185,31 @@ class PointOfSaleService {
           ? warehouseProductMap[item.warehouseProductId]
           : null;
 
-        const backendPrice = priceRecord
-          ? Number(priceRecord.basePricePos)
-          : null;
-        const cartPrice = Number(item.price);
-        const cartSubTotal = Number(item.subTotal);
-        const backendSubTotal =
-          backendPrice !== null ? backendPrice * Number(item.quantity) : null;
-        const isPriceDifferent =
-          backendPrice !== null ? cartPrice !== backendPrice : false;
+        // If no MasterProductPriceId or record not found, backendPrice is 0
+        const backendPrice = priceRecord ? Number(priceRecord.basePricePos) : 0;
+        const cartPrice = Number(item.price || 0);
+        const cartSubTotal = Number(item.subTotal || 0);
+        const backendSubTotal = backendPrice * Number(item.quantity || 0);
+        const isPriceDifferent = cartPrice !== backendPrice;
 
         const productName =
+          item.productName ||
           warehouseProduct?.Master_Product?.name ||
           priceRecord?.Master_Product?.name ||
           item.title ||
           "-";
 
         const unitName =
+          item.unitName ||
           warehouseProduct?.Master_Unit?.name ||
           priceRecord?.Master_Unit?.name ||
-          "-";
+          "";
 
         return {
           warehouseProductId: item.warehouseProductId || null,
-          MasterProductPriceId: item.MasterProductPriceId,
+          MasterProductPriceId: item.MasterProductPriceId || null,
+          cartIndex: item.cartIndex ?? null,
+          isPriceUpdated: item.isPriceUpdated ?? false,
           productName,
           unitName,
           quantity: item.quantity,
@@ -217,6 +218,7 @@ class PointOfSaleService {
           cartSubTotal,
           backendSubTotal,
           isPriceDifferent,
+          notes: item.notes
         };
       });
 
