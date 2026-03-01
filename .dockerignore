@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Claude / IDE
+.claude
+.vscode
+.idea
+
+# Docs
+README.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
