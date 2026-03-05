@@ -33,6 +33,6 @@ jobs:
             sleep 10
 
             echo "==> Running database migrations..."
-            docker exec ${CONTAINER_NAME:-erp-system-be} npm run db:migrate
+            docker exec ${CONTAINER_NAME:-dev-erp-system-be} npm run db:migrate
 
             echo "==> Deployment complete!"
