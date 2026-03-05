@@ -190,7 +190,11 @@ class PointOfSaleService {
         const cartPrice = Number(item.price || 0);
         const cartSubTotal = Number(item.subTotal || 0);
         const backendSubTotal = backendPrice * Number(item.quantity || 0);
-        const isPriceDifferent = cartPrice !== backendPrice;
+        let isPriceDifferent = false
+        // If there is no price than no need to be change
+        if (item.MasterProductPriceId){
+          isPriceDifferent = cartPrice !== backendPrice; 
+        }
 
         const productName =
           item.productName ||
