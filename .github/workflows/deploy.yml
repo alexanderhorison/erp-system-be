@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - development-v2
+    tags:
+      - 'v*'
 
 jobs:
   deploy:
@@ -12,6 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            BASE=$(node -p "const v=require('./package.json').version.split('.');v.slice(0,2).join('.')")
+            VERSION="${BASE}.${{ github.run_number }}"
+          fi
+          echo "value=$VERSION" >> $GITHUB_OUTPUT
+          echo "==> Version: $VERSION"
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -19,6 +37,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
+          envs: VERSION
           script: |
             set -e
             cd ${{ secrets.SERVER_DEPLOY_PATH }}
@@ -26,8 +45,8 @@ jobs:
             echo "==> Pulling latest code..."
             git pull origin development-v2
 
-            echo "==> Rebuilding and restarting container..."
-            docker compose up -d --build
+            echo "==> Building version $VERSION..."
+            VERSION=$VERSION docker compose up -d --build
 
             echo "==> Waiting for container to be healthy..."
             sleep 10
@@ -35,4 +54,6 @@ jobs:
             echo "==> Running database migrations..."
             docker exec ${CONTAINER_NAME:-dev-erp-system-be} npm run db:migrate
 
-            echo "==> Deployment complete!"
+            echo "==> Deployment complete! Version: $VERSION"
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
