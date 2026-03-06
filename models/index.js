@@ -17,8 +17,6 @@ const db = {};
 // } 
 // ENV Already define at /config/database.js
 
-config.logging = false
-
 let sequelize = new Sequelize(config.database, config.username, config.password, config);
 
 fs
