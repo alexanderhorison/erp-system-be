@@ -1,5 +1,6 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { throwValidation } = require("../../helpers/responses");
+const { ROLES } = require("../../const/roles");
 const {
   sequelize: sq,
   Warehouse_Product,
@@ -616,7 +617,7 @@ class PointOfSaleService {
       };
 
       // Only add createdBy filter if user is not admin (roleId !== 1)
-      if (roleId !== 1) {
+      if (roleId !== ROLES.ADMIN) {
         whereClause.createdBy = userId;
       }
 

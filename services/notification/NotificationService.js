@@ -1,6 +1,7 @@
 "use strict";
 
 const { Op } = require("sequelize");
+const { ROLES } = require("../../const/roles");
 const {
   Sales_Order,
   Purchase_Order,
@@ -21,7 +22,7 @@ class NotificationService {
    *  44 - Product Request Order
    */
   static async getPendingCounts({ user }) {
-    const isAdmin = Number(user.roleId) === 1;
+    const isAdmin = Number(user.roleId) === ROLES.ADMIN;
     const warehouseId = user.warehouseId;
 
     const warehouseFilter = isAdmin ? {} : { warehouseId };

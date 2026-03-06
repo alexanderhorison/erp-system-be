@@ -1,90 +1,46 @@
-const {
-  Delivery_Order,
-  Stock_Opname,
-  Adjustment_Goods_Out,
-  Adjustment_Goods_In,
-  Internal_Transfer,
-  Delivery_Order_Receipt,
-  Delivery_Order_Receipt_Outstanding,
-  Sales_Order,
-  Purchase_Order,
-  Pos_Transaction,
-  Pr_Orders
-} = require("../models");
+const models = require("../models");
+
+// Prefix -> Model name mapping
+const PREFIX_MODEL_MAP = {
+  TBA: "Delivery_Order",
+  STO: "Stock_Opname",
+  GDO: "Adjustment_Goods_Out",
+  GDI: "Adjustment_Goods_In",
+  IT: "Internal_Transfer",
+  DOR: "Delivery_Order_Receipt",
+  DOO: "Delivery_Order_Receipt_Outstanding",
+  SO: "Sales_Order",
+  PO: "Purchase_Order",
+  POS: "Pos_Transaction",
+  PRO: "Pr_Orders",
+};
 
 async function codeGenerator(digits = 8, prefix = "TBA") {
-  try {
-    const minNumber = Math.pow(10, digits - 1);
-    const maxNumber = Math.pow(10, digits) - 1;
-    let notDuplicate = true;
-    let generatedCode = "";
-    do {
-      let tempId = Math.floor(
-        minNumber + Math.random() * (maxNumber - minNumber + 1)
-      );
-      let exsisting = false;
-      generatedCode = `${prefix}-${tempId}`;
-      if (prefix === "TBA") {
-        exsisting = await Delivery_Order.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "STO") {
-        exsisting = await Stock_Opname.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "GDO") {
-        exsisting = await Adjustment_Goods_Out.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "GDI") {
-        exsisting = await Adjustment_Goods_In.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "IT") {
-        exsisting = await Internal_Transfer.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "DOR") {
-        exsisting = await Delivery_Order_Receipt.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "DOO") {
-        exsisting = await Delivery_Order_Receipt_Outstanding.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "SO") {
-        exsisting = await Sales_Order.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "PO") {
-        exsisting = await Purchase_Order.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "POS") {
-        exsisting = await Pos_Transaction.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      if (prefix === "PRO") {
-        exsisting = await Pr_Orders.findOne({
-          where: { code: generatedCode },
-        });
-      }
-      exsisting ? (notDuplicate = true) : (notDuplicate = false);
-    } while (notDuplicate);
-    return generatedCode;
-  } catch (error) {
-    throw error;
+  const modelName = PREFIX_MODEL_MAP[prefix];
+  if (!modelName) throw new Error(`Unknown prefix: ${prefix}`);
+
+  const Model = models[modelName];
+  const minNumber = Math.pow(10, digits - 1);
+  const maxNumber = Math.pow(10, digits) - 1;
+
+  const MAX_ATTEMPTS = 5;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const tempId = Math.floor(
+      minNumber + Math.random() * (maxNumber - minNumber + 1)
+    );
+    const generatedCode = `${prefix}-${tempId}`;
+
+    const existing = await Model.findOne({
+      where: { code: generatedCode },
+      attributes: ["id"],
+    });
+
+    if (!existing) return generatedCode;
   }
+
+  // Fallback: timestamp-based guaranteed unique
+  const timestamp = Date.now().toString().slice(-digits);
+  return `${prefix}-${timestamp}`;
 }
 
 module.exports = {

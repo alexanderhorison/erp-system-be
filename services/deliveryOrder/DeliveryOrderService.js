@@ -17,6 +17,7 @@ const { throwValidation } = require("../../helpers/responses");
 const StockAdjustmentHistoryService = require("../stockAdjustmentHistory/StockAdjustmentHistoryService");
 const { formatDate } = require("../../helpers/formatDate");
 const { codeGenerator } = require("../../helpers/codeGenerator");
+const { ROLES } = require("../../const/roles");
 
 class DeliveryOrderService {
   static async createDeliveryOrder(payload, t = null) {
@@ -147,7 +148,7 @@ class DeliveryOrderService {
         order: [["createdAt", "DESC"]],
       };
 
-      if (payload.user.roleId == 3) {
+      if (payload.user.roleId == ROLES.ADMIN_GUDANG) {
         queryOption.where = {
           warehouseDestinationId: payload.user.warehouseId,
         };

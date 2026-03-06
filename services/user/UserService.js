@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const { auditTrailLog } = require("../../helpers/logger");
 const decrypt = require("../../helpers/decrypt");
 const { generateFilter } = require("../../helpers/queryGenerator");
+const { ROLES } = require("../../const/roles");
 
 class UserService {
   static async createUser(req, res) {
@@ -60,7 +61,7 @@ class UserService {
       await UserService.checkUser({ email: sanitizedEmail, userName });
 
       // Validation if Role id admin gudang
-      if (roleId == 3 && warehouseId) {
+      if (roleId == ROLES.ADMIN_GUDANG && warehouseId) {
         const checkWarehouse = await Master_Warehouse.findByPk(warehouseId);
         if (!checkWarehouse)
           throw throwValidation(400, "Gudang Tidak ditemukan");
@@ -143,7 +144,7 @@ class UserService {
       const user = await Master_User.findByPk(userId);
 
       // Validation if Role id admin gudang
-      if (roleId == 3 && warehouseId) {
+      if (roleId == ROLES.ADMIN_GUDANG && warehouseId) {
         const checkWarehouse = await Master_Warehouse.findByPk(warehouseId);
         if (!checkWarehouse)
           throw throwValidation(400, "Gudang Tidak ditemukan");
@@ -171,7 +172,7 @@ class UserService {
           userName,
           roleId,
           pin: pin || user.pin,
-          warehouseId: roleId == 3 ? warehouseId : null,
+          warehouseId: roleId == ROLES.ADMIN_GUDANG ? warehouseId : null,
         });
       } else {
         await user.update({
@@ -181,7 +182,7 @@ class UserService {
           userName,
           roleId,
           pin: pin || user.pin,
-          warehouseId: roleId == 3 ? warehouseId : null,
+          warehouseId: roleId == ROLES.ADMIN_GUDANG ? warehouseId : null,
         });
       }
 
@@ -202,7 +203,7 @@ class UserService {
         throw throwValidation(404, "User tidak ditemukan");
       }
 
-      if (user.roleId === 1) {
+      if (user.roleId === ROLES.ADMIN) {
         throw throwValidation(400, "User administrator tidak bisa dihapus");
       }
 

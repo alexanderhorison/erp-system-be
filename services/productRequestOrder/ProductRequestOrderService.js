@@ -15,6 +15,7 @@ const { formatDate } = require("../../helpers/formatDate");
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { STATUS } = require("../../helpers/statusHelper");
 const DeliveryOrderService = require("../deliveryOrder/DeliveryOrderService");
+const { ROLES } = require("../../const/roles");
 
 class ProductRequestOrderService {
   static async createProductRequest(payload) {
@@ -100,7 +101,7 @@ class ProductRequestOrderService {
       }
 
       // Add createdBy filter if isPosLayout is true and user is not admin
-      if (isPosLayout && payload.userData?.id && payload.userData?.roleId !== 1) {
+      if (isPosLayout && payload.userData?.id && payload.userData?.roleId !== ROLES.ADMIN) {
         queryOption.where.createdBy = payload.userData?.id;
       }
 

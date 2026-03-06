@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { Master_User } = require("../models");
 const { responses, throwValidation } = require("./responses");
+const { ROLES } = require("../const/roles");
 
 class Auth {
   static async Authentication(req, res, next) {
@@ -60,7 +61,7 @@ class Auth {
         where: { email: data.email },
       });
 
-      if (user.roleId != 1) {
+      if (user.roleId !== ROLES.ADMIN) {
         throw throwValidation(403, "Fitur ini hanya bisa diakses oleh admin");
       }
 
@@ -89,7 +90,7 @@ class Auth {
         where: { email: data.email },
       });
 
-      if (user.roleId != 2) {
+      if (user.roleId !== ROLES.KEPALA_GUDANG) {
         throw throwValidation(
           403,
           "Fitur ini hanya bisa diakses oleh kepala gudang"
@@ -122,7 +123,7 @@ class Auth {
       });
 
       // Jika user adalah admin dan kepala gudang authorized
-      if ([1, 2].includes(user.roleId)) {
+      if ([ROLES.ADMIN, ROLES.KEPALA_GUDANG].includes(user.roleId)) {
         next();
       } else {
         // Master_User role bukan admin dan kepala gudang
@@ -141,7 +142,7 @@ class Auth {
       const user = req.userData;
       
       // Jika user adalah admin dan kepala gudang authorized
-      if ([1, 3].includes(user.roleId)) {
+      if ([ROLES.ADMIN, ROLES.ADMIN_GUDANG].includes(user.roleId)) {
         next();
       } else {
         // Master_User role bukan Admin Gudang

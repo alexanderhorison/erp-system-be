@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const router = require("./routers");
 const { sequelize } = require("./models");
 
@@ -22,6 +23,28 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json({ limit: '10mb', }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Global rate limiter: 100 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: "Too many requests, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter rate limiter for auth routes: 10 attempts per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: "Too many login attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api", globalLimiter);
+app.use("/api/user/login", authLimiter);
+app.use("/api/user/auth/me", authLimiter);
 
 // Health check endpoint with DB connectivity
 app.get("/api/health", async (req, res) => {

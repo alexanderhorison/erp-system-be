@@ -18,7 +18,19 @@ const routerPointOfSale = require("./pointOfSale");
 const EmailController = require("../controllers/email/EmailController");
 const routerExport = require("./export/index");
 const multer = require("multer");
-const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
+const ALLOWED_FILE_TYPES = /jpeg|jpg|png|pdf|xlsx|xls/;
+const upload = multer({
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = ALLOWED_FILE_TYPES.test(file.originalname.toLowerCase().split(".").pop());
+    const mime = ALLOWED_FILE_TYPES.test(file.mimetype.split("/").pop());
+    if (ext || mime) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only .jpg, .jpeg, .png, .pdf, .xlsx, .xls files are allowed"));
+    }
+  },
+});
 const routerConfig = require("./config/index");
 const routerDailyCost = require("./dailyCost/index");
 const routerAsset = require("./asset/index");
