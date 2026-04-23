@@ -331,6 +331,9 @@ class PointOfSaleService {
         throwValidation(400, "Customer harus diisi jika terdapat sisa hutang");
       }
 
+      // Sort Product so debt is the last transaction
+      data.listProduct.sort((a, b) => a.isDebt - b.isDebt);
+
       const generateCode = await codeGenerator(8, "POS");
 
       let totalQuantity = 0;
