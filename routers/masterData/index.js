@@ -13,6 +13,7 @@ const routerMasterDataModal = require("./masterDataModalRouter");
 const routerMasterDataCar = require("./masterDataCarRouter");
 const routerMasterDataUnexpectedCostCategory = require("./masterDataUnexpectedCostCategoryRouter");
 const routerMasterDataEmployee = require("./masterDataEmployeeRouter");
+const routerMasterDataShift = require("./masterDataShiftRouter");
 const Auth = require("../../helpers/auth");
 
 // router.use(Auth.KepalaGudang);
@@ -30,5 +31,6 @@ router.use("/modal", routerMasterDataModal);
 router.use("/car", routerMasterDataCar);
 router.use("/unexpected-cost-category", routerMasterDataUnexpectedCostCategory);
 router.use("/employee", routerMasterDataEmployee);
+router.use("/shift", routerMasterDataShift);
 
 module.exports = router;

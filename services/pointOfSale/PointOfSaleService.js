@@ -19,6 +19,8 @@ const {
   Master_Customer,
   Master_Rank,
   Dashboard_Summary_Pos_Customer,
+  Pos_User_Shift,
+  Master_Shift,
 } = require("../../models");
 const { Op } = require("sequelize");
 const ConfigService = require("../config/configService");
@@ -137,6 +139,99 @@ class PointOfSaleService {
     }
   }
 
+  static async validatePrice(listProduct) {
+    try {
+      const masterProductPriceIds = listProduct
+        .map((item) => item.MasterProductPriceId)
+        .filter(Boolean);
+
+      const prices = await Master_Product_Price.findAll({
+        where: { id: masterProductPriceIds },
+        include: [
+          { model: Master_Product, attributes: ["name"] },
+          { model: Master_Unit, attributes: ["name"] },
+        ],
+      });
+
+      const priceMap = {};
+      prices.forEach((price) => {
+        priceMap[price.id] = price;
+      });
+
+      const warehouseProductIds = listProduct
+        .map((item) => item.warehouseProductId)
+        .filter(Boolean);
+
+      const warehouseProducts =
+        warehouseProductIds.length > 0
+          ? await Warehouse_Product.findAll({
+              where: { id: warehouseProductIds },
+              attributes: ["id", "productId", "unitId"],
+              include: [
+                { model: Master_Product, attributes: ["name"] },
+                { model: Master_Unit, attributes: ["name"] },
+              ],
+            })
+          : [];
+
+      const warehouseProductMap = {};
+      warehouseProducts.forEach((wp) => {
+        warehouseProductMap[wp.id] = wp;
+      });
+
+      const result = listProduct.map((item) => {
+        const priceRecord = priceMap[item.MasterProductPriceId];
+        const warehouseProduct = item.warehouseProductId
+          ? warehouseProductMap[item.warehouseProductId]
+          : null;
+
+        // If no MasterProductPriceId or record not found, backendPrice is 0
+        const backendPrice = priceRecord ? Number(priceRecord.basePricePos) : 0;
+        const cartPrice = Number(item.price || 0);
+        const cartSubTotal = Number(item.subTotal || 0);
+        const backendSubTotal = backendPrice * Number(item.quantity || 0);
+        let isPriceDifferent = false
+        // If there is no price than no need to be change
+        if (item.MasterProductPriceId){
+          isPriceDifferent = cartPrice !== backendPrice; 
+        }
+
+        const productName =
+          item.productName ||
+          warehouseProduct?.Master_Product?.name ||
+          priceRecord?.Master_Product?.name ||
+          item.title ||
+          "-";
+
+        const unitName =
+          item.unitName ||
+          warehouseProduct?.Master_Unit?.name ||
+          priceRecord?.Master_Unit?.name ||
+          "";
+
+        return {
+          warehouseProductId: item.warehouseProductId || null,
+          MasterProductPriceId: item.MasterProductPriceId || null,
+          cartIndex: item.cartIndex ?? null,
+          isPriceUpdated: item.isPriceUpdated ?? false,
+          productName,
+          unitName,
+          quantity: item.quantity,
+          cartPrice,
+          backendPrice,
+          cartSubTotal,
+          backendSubTotal,
+          isPriceDifferent,
+          notes: item.notes
+        };
+      });
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getAllProductByProductId({ warehouseId, productId }) {
     try {
       const data = await Warehouse_Product.findAll({
@@ -182,13 +277,18 @@ class PointOfSaleService {
       // Build a map for quick price lookup
       const priceMap = {};
       prices.forEach((price) => {
-        priceMap[`${price.productId}_${price.unitId}`] = price.basePricePos;
+        priceMap[`${price.productId}_${price.unitId}`] = {
+          basePricePos: price.basePricePos,
+          MasterProductPriceId: price.id,
+        }
       });
       const formatData = [];
 
       // Format the data using the pre-fetched price map
       data.forEach((item) => {
-        const basePrice = priceMap[`${item.productId}_${item.unitId}`] || 0;
+        const prices = priceMap[`${item.productId}_${item.unitId}`];
+        const basePrice = prices?.basePricePos || 0;
+        const MasterProductPriceId = prices?.MasterProductPriceId || null;
 
         let data = {
           id: item.id,
@@ -197,10 +297,12 @@ class PointOfSaleService {
           companyName: item.Master_Product?.Master_Company?.name ?? "",
           companyId: item.Master_Product?.companyId ?? null,
           productId: item.productId,
+          unitId: item.unitId,
           unitName: item.Master_Unit?.name ?? "",
           rackName: item.Master_Warehouse_Rack?.name ?? "",
           quantity: item.quantity,
           basePrice,
+          MasterProductPriceId
         };
 
         // Priority order: 1) KALENG products with KALENG unit first, 2) SLOP unit second, 3) others last
@@ -258,6 +360,27 @@ class PointOfSaleService {
 
       const nextQueueNumber = (Number(maxQueue) || 0) + 1;
 
+      // Get current active shift for the user
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const activeUserShift = await Pos_User_Shift.findOne({
+        where: {
+          userId: user.id,
+          endShift: null,
+          createdAt: {
+            [Op.between]: [today, endOfDay],
+          },
+        },
+        transaction,
+      });
+
+      if (!activeUserShift) {
+        throwValidation(400, "User tidak memiliki shift aktif hari ini");
+      }
+
       const createdPointOfSale = await Pos_Transaction.create(
         {
           customerId: data.customerId,
@@ -276,6 +399,7 @@ class PointOfSaleService {
           totalItems: totalItems,
           lastDebt: data.totalDebt || 0,
           queueNumber: nextQueueNumber,
+          posUserShiftId: activeUserShift ? activeUserShift.id : null,
         },
         { transaction }
       );
@@ -444,6 +568,22 @@ class PointOfSaleService {
         }
       }
 
+      // Update Pos User Shift totals if transaction is linked to a shift
+      if (activeUserShift) {
+        await Pos_User_Shift.update(
+          {
+            totalTransaction: Number(activeUserShift.totalTransaction || 0) + 1,
+            grandTotalTransaction:
+              Number(activeUserShift.grandTotalTransaction || 0) +
+              Number(data.grandTotal || 0),
+          },
+          {
+            where: { id: activeUserShift.id },
+            transaction,
+          }
+        );
+      }
+
       await transaction.commit();
       return {
         id: createdPointOfSale.id,
@@ -499,6 +639,16 @@ class PointOfSaleService {
             attributes: ["name"],
             paranoid: true,
           },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
+              },
+            ]
+          }
         ],
         order: [["createdAt", "DESC"]],
       });
@@ -524,6 +674,12 @@ class PointOfSaleService {
           totalQuantity: item?.totalQuantity,
           totalItems: item?.totalItems,
           queueNumber: item?.queueNumber,
+          shift: item?.Pos_User_Shift ? {
+            id: item?.Pos_User_Shift?.id,
+            startShift: item?.Pos_User_Shift?.startShift,
+            endShift: item?.Pos_User_Shift?.endShift,
+            shiftName: item?.Pos_User_Shift?.Master_Shift?.name,
+          } : null,
         };
       });
 
@@ -564,6 +720,16 @@ class PointOfSaleService {
               },
             ],
           },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
+              },
+            ]
+          }
         ],
       });
 
@@ -652,6 +818,12 @@ class PointOfSaleService {
         listProducts: listProduct,
         totalQuantity: detail?.totalQuantity,
         totalItems: detail?.totalItems,
+        shift: detail?.Pos_User_Shift ? {
+          id: detail?.Pos_User_Shift?.id,
+          startShift: detail?.Pos_User_Shift?.startShift,
+          endShift: detail?.Pos_User_Shift?.endShift,
+          shiftName: detail?.Pos_User_Shift?.Master_Shift?.name,
+        } : null
       };
 
       return sendData;
@@ -764,6 +936,33 @@ class PointOfSaleService {
               ),
             },
             { where: { id: findExisting.id }, transaction }
+          );
+        }
+      }
+
+      // Reduce Pos User Shift totals if transaction was linked to a shift
+      if (pos.posUserShiftId) {
+        const userShift = await Pos_User_Shift.findByPk(pos.posUserShiftId, {
+          transaction,
+        });
+
+        if (userShift) {
+          await Pos_User_Shift.update(
+            {
+              totalTransaction: Math.max(
+                0,
+                Number(userShift.totalTransaction || 0) - 1
+              ),
+              grandTotalTransaction: Math.max(
+                0,
+                Number(userShift.grandTotalTransaction || 0) -
+                  Number(pos.grandTotal || 0)
+              ),
+            },
+            {
+              where: { id: userShift.id },
+              transaction,
+            }
           );
         }
       }
@@ -1041,6 +1240,16 @@ class PointOfSaleService {
               {
                 model: Pos_Payment_Type,
                 attributes: ["id", "label", "code", "description"],
+              },
+            ],
+          },
+          {
+            model: Pos_User_Shift,
+            attributes: ["id", "startShift", "endShift"],
+            include: [
+              {
+                model: Master_Shift,
+                attributes: ["id", "name"],
               },
             ],
           },

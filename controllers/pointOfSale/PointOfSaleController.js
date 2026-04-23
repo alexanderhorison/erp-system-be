@@ -100,7 +100,7 @@ class PointOfSaleController {
               isDebt: yup.boolean().optional(),
               debtDate: yup.string().optional(),
               totalDebt: yup.number().optional(),
-            })
+            }),
           )
           .required("List point of sale produk harus ada"),
       });
@@ -108,7 +108,6 @@ class PointOfSaleController {
       const body = await yupSchemaValidation(req.body, schema);
 
       const user = req.userData;
-
       const data = await PointOfSaleService.createPointOfSale({
         data: body,
         user,
@@ -143,14 +142,14 @@ class PointOfSaleController {
 
       const warehouseId = await yupSchemaValidation(
         params.warehouseId,
-        schemaParams
+        schemaParams,
       );
 
       // saat ini tidak ada params dlu
       const data = await PointOfSaleService.getAllPointOfSaleByWarehouseId(
         warehouseId,
         req.userData.id,
-        req.userData.roleId
+        req.userData.roleId,
       );
 
       res.status(200).json(responses(true, `Sukses Get All Data`, data));
@@ -171,9 +170,8 @@ class PointOfSaleController {
 
       const code = await yupSchemaValidation(params.code, schemaParams);
 
-      const getDetail = await PointOfSaleService.getDetailPointOfSaleByCode(
-        code
-      );
+      const getDetail =
+        await PointOfSaleService.getDetailPointOfSaleByCode(code);
 
       res.status(200).json(responses(true, "Berhasil", getDetail));
     } catch (error) {
@@ -208,7 +206,7 @@ class PointOfSaleController {
         code,
         body.adminUserId,
         body.pin,
-        performedBy
+        performedBy,
       );
 
       res.status(200).json(responses(true, "Transaksi berhasil di-VOID", data));
@@ -232,9 +230,8 @@ class PointOfSaleController {
 
       const customerId = params.customerId;
 
-      const data = await PointOfSaleService.getAllPointOfSaleByCustomerId(
-        customerId
-      );
+      const data =
+        await PointOfSaleService.getAllPointOfSaleByCustomerId(customerId);
 
       res.status(200).json(responses(true, "Sukses Get All Data", data));
     } catch (error) {
@@ -292,7 +289,7 @@ class PointOfSaleController {
         responses(true, "Print job sent successfully", {
           printResult,
           timing: printResult.timing,
-        })
+        }),
       );
     } catch (error) {
       console.error(error);
@@ -311,9 +308,51 @@ class PointOfSaleController {
           responses(
             true,
             runScheduler?.message || "Berhasil",
-            runScheduler?.data || []
-          )
+            runScheduler?.data || [],
+          ),
         );
+    } catch (error) {
+      res
+        .status(error.code || 500)
+        .json(responses(false, error.message || error));
+    }
+  }
+
+  static async validatePrice(req, res) {
+    try {
+      const schema = yup.object({
+        listProduct: yup
+          .array()
+          .of(
+            yup.object({
+              warehouseProductId: yup.number().when("title", (data, schema) => {
+                return data[0]
+                  ? schema.nullable()
+                  : schema.required("Id product warehouse harus diisi");
+              }),
+              price: yup.number().required("Price product harus diisi"),
+              quantity: yup.number().required("Quantity harus diisi"),
+              subTotal: yup.number().required("Sub Total Product harus diisi"),
+              notes: yup.string().optional(),
+              title: yup.string().optional(),
+              isDebt: yup.boolean().optional(),
+              debtDate: yup.string().optional(),
+              totalDebt: yup.number().optional(),
+              MasterProductPriceId: yup.number().optional().nullable(),
+              productName: yup.string().optional(),
+              unitName: yup.string().optional(),
+              cartIndex: yup.number().optional(),
+              isPriceUpdated: yup.boolean().optional(),
+            }),
+          )
+          .required("List point of sale produk harus ada"),
+      });
+
+      const body = await yupSchemaValidation(req.body, schema);
+
+      const data = await PointOfSaleService.validatePrice(body.listProduct);
+
+      res.status(200).json(responses(true, "Berhasil validasi harga", data));
     } catch (error) {
       res
         .status(error.code || 500)

@@ -88,6 +88,8 @@ ID MENU : NAMA
 44. Product Request Order
 45. Configuration Setting
 46. Loan Stock
+47. Pos Transactions
+48. Shift
 ```
 
 ### API Migration (15 Agustus 2024)

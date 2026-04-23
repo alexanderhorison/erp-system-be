@@ -10,6 +10,11 @@ router.get(
   PointOfSaleController.getAllProductByProductId
 );
 
+router.post(
+  "/validate-price",
+  PointOfSaleController.validatePrice
+)
+
 // FOR SCHEDULER REPORT POIN OF SALE 24 HOUR
 router.post("/report-pos-last-day", PointOfSaleController.runSchedulerReportPos)
 

@@ -15,19 +15,20 @@ const routerDashboard = require("./dashboard");
 const routerSalesOrder = require("./salesOrder");
 const routerPurchaseOrder = require("./purchaseOrder");
 const routerPointOfSale = require("./pointOfSale");
-const EmailController = require('../controllers/email/EmailController');
+const EmailController = require("../controllers/email/EmailController");
 const routerExport = require("./export/index");
-const multer = require('multer');
+const multer = require("multer");
 const upload = multer({ limits: { fileSize: 20 * 1024 * 1024 } });
 const routerConfig = require("./config/index");
 const routerDailyCost = require("./dailyCost/index");
-const routerAsset = require("./asset/index")
+const routerAsset = require("./asset/index");
 const routerLiabilities = require("./liabilities/index");
 const routerEquity = require("./equity/index");
 const routerProductRequestOrder = require("./productRequestOrder/index");
 const MasterDataCustomerController = require("../controllers/masterData/MasterDataCustomerController");
 const routerHealthCheck = require("./healthCheck/index");
-
+const routerUserShift = require("./userShift/index");
+const routerNotification = require("./notification/index");
 
 router.get("/", (req, res) => {
   res.status(200).json({ page: "Home", project: "Inventory System" });
@@ -87,10 +88,14 @@ router.use("/export", routerExport);
 // Daily Cost
 router.use("/daily-cost", routerDailyCost);
 
-router.post("/send-email", upload.single('pdf'), EmailController.sendEmail)
-router.post("/send-email-pos", upload.single('pdf'), EmailController.sendEmailPos)
+router.post("/send-email", upload.single("pdf"), EmailController.sendEmail);
+router.post(
+  "/send-email-pos",
+  upload.single("pdf"),
+  EmailController.sendEmailPos,
+);
 
-router.use("/config", routerConfig)
+router.use("/config", routerConfig);
 
 // Asset Management
 router.use("/asset", routerAsset);
@@ -105,5 +110,11 @@ router.use("/equity", routerEquity);
 router.use("/product-request-order", routerProductRequestOrder);
 
 router.use("/health-check", routerHealthCheck);
+
+// User Shift
+router.use("/user-shift", routerUserShift);
+
+// Notification (pending counts per menu)
+router.use("/notification", routerNotification);
 
 module.exports = router;
