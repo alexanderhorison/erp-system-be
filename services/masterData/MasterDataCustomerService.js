@@ -147,11 +147,11 @@ class MasterDataCustomerService {
         gender: customer.gender,
         address: customer.address,
         email: customer.email,
-        notes: customer.notes,
+        notes: customer.notes ?? "",
         phoneNumber: customer.phoneNumber,
         rankId: customer.rankId,
         rankName: customer.Master_Rank ? customer.Master_Rank?.name : "",
-        alias: customer.alias,
+        alias: customer.alias ?? "",
         level: customer.Master_Rank ? customer.Master_Rank?.level : 0,
         isPosCustomer: customer.isPosCustomer,
       };
