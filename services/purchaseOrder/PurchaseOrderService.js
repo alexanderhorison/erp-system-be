@@ -824,6 +824,7 @@ class PurchaseOrderService {
           rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
           warehouseProductId: item?.Warehouse_Product?.id,
           qty: item?.Warehouse_Product?.quantity,
+          minimumStock: item?.Warehouse_Product?.minimumStock,
           warehouseName: item?.Warehouse_Product?.Master_Warehouse?.name || "",
           warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
           isNewModal: item?.isNewModal,
@@ -846,6 +847,7 @@ class PurchaseOrderService {
             rackName: item?.Warehouse_Product?.Master_Warehouse_Rack?.name,
             warehouseProductId: item?.Warehouse_Product?.id,
             qty: item?.Warehouse_Product?.quantity,
+            minimumStock: item?.Warehouse_Product?.minimumStock,
             warehouseName:
               item?.Warehouse_Product?.Master_Warehouse?.name || "",
             warehouseId: item?.Warehouse_Product?.Master_Warehouse?.id || "",
