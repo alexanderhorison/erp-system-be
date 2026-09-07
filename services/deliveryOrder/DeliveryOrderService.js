@@ -219,6 +219,7 @@ class DeliveryOrderService {
           productName: `${item.Master_Product.name} - ${item.Master_Unit.name}`,
           categoryName: item.Master_Product.Master_Category.name,
           quantity: item.quantity,
+          minimumStock: item.minimumStock,
           masterProductId: item.Master_Product.id,
           masterUnitId: item.Master_Unit.id,
           rackName: item.Master_Warehouse_Rack.name,

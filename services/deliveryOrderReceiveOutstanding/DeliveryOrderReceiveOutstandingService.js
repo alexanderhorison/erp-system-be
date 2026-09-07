@@ -158,7 +158,6 @@ class DeliveryOrderReceiveOutstandingService {
                       {
                         model: Master_Warehouse_Rack,
                         attributes: ["id", "name"],
-                        as: "mwr"
                       },
                     ],
                   },
@@ -209,7 +208,7 @@ class DeliveryOrderReceiveOutstandingService {
             productName: item?.Delivery_Order_Product?.Warehouse_Product?.Master_Product?.name,
             unitName: item?.Delivery_Order_Product?.Warehouse_Product?.Master_Unit?.name,
             status: item?.status,
-            rackName: item?.Delivery_Order_Product?.Warehouse_Product?.mwr?.name
+            rackName: item?.Delivery_Order_Product?.Warehouse_Product?.Master_Warehouse_Rack?.name
           }
         }),
         notes: data?.notes
