@@ -1,6 +1,9 @@
 const PointOfSaleService = require("../../services/pointOfSale/PointOfSaleService");
 const { responses } = require("../../helpers/responses");
-const { yupSchemaValidation } = require("../../helpers/yupSchemaValidation");
+const {
+  yupSchemaValidation,
+  yupSchemaValidationStrict,
+} = require("../../helpers/yupSchemaValidation");
 const yup = require("yup");
 const ConfigService = require("../../services/config/configService");
 
@@ -145,14 +148,32 @@ class PointOfSaleController {
         schemaParams,
       );
 
-      // saat ini tidak ada params dlu
+      const schemaQuery = yup.object({
+        page: yup.string().default("1"),
+        limit: yup.string().default("10"),
+        search: yup.string().optional(),
+        status: yup.string().optional(),
+        orderBy: yup.string().default("createdAt").oneOf(["createdAt"]),
+        orderType: yup.string().default("DESC").oneOf(["ASC", "DESC"]),
+        dateFrom: yup.string().optional(),
+        dateTo: yup.string().optional(),
+        paginate: yup.boolean().default(false),
+      });
+
+      const query = await yupSchemaValidationStrict(req.query, schemaQuery);
+
       const data = await PointOfSaleService.getAllPointOfSaleByWarehouseId(
         warehouseId,
         req.userData.id,
         req.userData.roleId,
+        query,
       );
 
-      res.status(200).json(responses(true, `Sukses Get All Data`, data));
+      res
+        .status(200)
+        .json(
+          responses(true, `Sukses Get All Data`, data.data, data.pagination),
+        );
     } catch (error) {
       res
         .status(error.code || 500)

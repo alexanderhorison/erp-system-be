@@ -1,6 +1,10 @@
 const { codeGenerator } = require("../../helpers/codeGenerator");
 const { throwValidation } = require("../../helpers/responses");
 const {
+  buildQueryOptions,
+  buildPaginationResponse,
+} = require("../../helpers/queryBuilderHelper");
+const {
   sequelize: sq,
   Warehouse_Product,
   Master_Product,
@@ -612,19 +616,31 @@ class PointOfSaleService {
     }
   }
 
-  static async getAllPointOfSaleByWarehouseId(warehouseId, userId, roleId) {
+  static async getAllPointOfSaleByWarehouseId(
+    warehouseId,
+    userId,
+    roleId,
+    query = {},
+  ) {
     try {
-      const whereClause = {
-        warehouseId,
-      };
+      const additionalWhere = { warehouseId };
 
       // Only add createdBy filter if user is not admin (roleId !== 1)
       if (roleId !== 1) {
-        whereClause.createdBy = userId;
+        additionalWhere.createdBy = userId;
       }
 
-      const getAllPosTransaction = await Pos_Transaction.findAll({
-        where: whereClause,
+      const queryOptions = buildQueryOptions(query, {
+        searchFields: ["code"],
+        statusField: "status",
+        dateField: "createdAt",
+        enableDate:
+          query?.date || query?.dateFrom || query?.dateTo ? true : false,
+        additionalWhere,
+      });
+
+      const getAllPosTransaction = await Pos_Transaction.findAndCountAll({
+        ...queryOptions,
         include: [
           {
             model: Master_User,
@@ -653,10 +669,9 @@ class PointOfSaleService {
             ]
           }
         ],
-        order: [["createdAt", "DESC"]],
       });
 
-      const all = getAllPosTransaction.map((item) => {
+      const all = getAllPosTransaction.rows.map((item) => {
         return {
           id: item.id,
           code: item.code,
@@ -686,7 +701,10 @@ class PointOfSaleService {
         };
       });
 
-      return all;
+      return {
+        data: all,
+        pagination: buildPaginationResponse(getAllPosTransaction, query),
+      };
     } catch (error) {
       throw error;
     }
