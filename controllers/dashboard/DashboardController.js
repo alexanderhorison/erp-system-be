@@ -8,12 +8,12 @@ class DashboardController {
   static async minimumStock(req, res) {
     try {
       const { query } = req;
-      const getMiminumWarehouseProduct = await DashboardService.minimumStock({
+      const { result, totalCount } = await DashboardService.minimumStock({
         query,
       });
       res
         .status(200)
-        .json(responses(true, "Berhasil", getMiminumWarehouseProduct));
+        .json(responses(true, "Berhasil", result, null, { totalCount }));
     } catch (error) {
       res
         .status(error.code || 500)
@@ -23,10 +23,12 @@ class DashboardController {
   // 2
   static async slowStock(req, res) {
     try {
-      const getSlowStock = await DashboardService.slowStock({
+      const { result, totalCount } = await DashboardService.slowStock({
         query: req.query,
       });
-      res.status(200).json(responses(true, "Berhasil", getSlowStock));
+      res
+        .status(200)
+        .json(responses(true, "Berhasil", result, null, { totalCount }));
     } catch (error) {
       res
         .status(error.code || 500)

@@ -140,13 +140,22 @@ class DashboardSalesOrderService {
   // 6. DashboardSo6: List 10 SO yang sudah lewat due date nya → pagination
   static async getDashboardSo6({ query }) {
     try {
-      const defaultQuery = {
-        limit: query?.limit || 10,
-        offset: (query?.page || 1 - 1) * 10,
-      };
-      const dateNow = moment(new Date()).format("DD/MM/yyyy");
-      const data = await Sales_Order.findAndCountAll({
-        where: { status: "PENDING" },
+      const limit = query?.limit || 10;
+      const page = query?.page || 1;
+      const now = moment().startOf("day");
+
+      // `dueDate` is a plain "DD/MM/YYYY" string column, so "already overdue"
+      // can't be expressed as a SQL where-clause — every PENDING order
+      // (matching the search) is fetched, filtered/sorted in JS, and THEN
+      // paginated in JS, so totalData/totalPage always match the rows
+      // actually returned for a page (unlike filtering after a SQL-level
+      // limit/offset, which can return fewer — or zero — rows than the
+      // reported total once the overdue filter is applied).
+      const data = await Sales_Order.findAll({
+        where: {
+          status: "PENDING",
+          ...(query?.search && { code: { [Op.iLike]: `%${query.search}%` } }),
+        },
         include: [
           {
             model: Master_Customer,
@@ -164,32 +173,32 @@ class DashboardSalesOrderService {
             ],
           },
         ],
-        limit: defaultQuery.limit,
-        offset: defaultQuery.offset,
-        order: [["dueDate", "ASC"]],
       });
 
       let result = [];
-      data?.rows?.forEach((item) => {
-        const tempDate = item?.dueDate?.split("/");
-        const dueDate = `${tempDate[1]}/${tempDate[0]}/${tempDate[2]}`;
-        if (dueDate > dateNow) {
+      data?.forEach((item) => {
+        const dueDateMoment = moment(item?.dueDate, "DD/MM/YYYY");
+        if (dueDateMoment.isValid() && dueDateMoment.isBefore(now)) {
           result.push({
             id: item.id,
             code: item.code,
-            dueDate: dueDate,
+            dueDate: dueDateMoment.format("MM/DD/YYYY"),
             creatorName: item?.creator?.name,
             creatorRole: item?.creator?.Master_Role?.name,
             createdAt: item?.createdAt,
           });
         }
       });
-      result = result?.sort((a, b) => new Date(a.dueDate) - new Date()) || [];
-      const totalPages = Math.ceil(data?.count / defaultQuery.limit);
+      result = result?.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)) || [];
+
+      const totalData = result.length;
+      const totalPages = Math.ceil(totalData / limit);
+      const pagedResult = result.slice((page - 1) * limit, (page - 1) * limit + limit);
+
       return {
         totalPage: totalPages,
-        totalData: data?.count,
-        data: result,
+        totalData,
+        data: pagedResult,
       };
     } catch (error) {
       throwValidation(error.code, error.message);

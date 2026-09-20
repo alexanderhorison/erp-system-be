@@ -9,7 +9,6 @@ const {
   sequelize: sq,
 } = require("../../models");
 const { Op } = require("sequelize");
-const moment = require("moment");
 const { formatDateFromString } = require("../../helpers/formatDate");
 
 // 1. DashboardPo1: Top 5 Vendor yang total nominal PO nya paling bnyk
@@ -140,13 +139,20 @@ class DashboardPurchaseOrderService {
   // 6. DashboardPo6: List 10 PO yang sudah lewat due date nya → pagination
   static async getDashboardPo6({ query }) {
     try {
-      const defaultQuery = {
-        limit: query?.limit || 10,
-        offset: (query?.page || 1 - 1) * 10,
-      };
-      const dateNow = moment(new Date()).format("DD/MM/yyyy");
-      const data = await Purchase_Order.findAndCountAll({
-        where: { status: "PENDING" },
+      const limit = query?.limit || 10;
+      const page = query?.page || 1;
+
+      // `dueDate` is a plain "DD/MM/YYYY" string column, so "already overdue"
+      // can't be expressed as a SQL where-clause (this is why SQL-level
+      // limit/offset were disabled below) — every PENDING order (matching
+      // the search) is fetched, filtered/sorted in JS, and THEN paginated in
+      // JS, so totalData/totalPage always match the rows actually returned
+      // for a page.
+      const data = await Purchase_Order.findAll({
+        where: {
+          status: "PENDING",
+          ...(query?.search && { code: { [Op.iLike]: `%${query.search}%` } }),
+        },
         include: [
           {
             model: Master_Vendor,
@@ -167,11 +173,10 @@ class DashboardPurchaseOrderService {
         //! Disable karena datenya masih string
         // limit: defaultQuery.limit,
         // offset: defaultQuery.offset,
-        order: [["dueDate", "ASC"]],
       });
 
       let result = [];
-      data?.rows?.forEach((item) => {
+      data?.forEach((item) => {
         const dueDate = formatDateFromString(item?.dueDate);
         if (new Date(dueDate) < new Date()) {
           result.push({
@@ -185,17 +190,20 @@ class DashboardPurchaseOrderService {
         }
       });
 
-      const totalPages = Math.ceil(data?.count / defaultQuery.limit);
-
       result = result.sort((a, b) => {
         const dateA = new Date(a.dueDate); // Parses MM/DD/YYYY correctly
         const dateB = new Date(b.dueDate); // Parses MM/DD/YYYY correctly
         return dateA - dateB; // Ascending order
       });
 
+      const totalData = result.length;
+      const totalPages = Math.ceil(totalData / limit);
+      const pagedResult = result.slice((page - 1) * limit, (page - 1) * limit + limit);
+
       return {
         totalPage: totalPages,
-        data: result,
+        totalData,
+        data: pagedResult,
       };
     } catch (error) {
       throwValidation(error.code, error.message);

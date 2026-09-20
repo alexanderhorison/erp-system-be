@@ -30,13 +30,15 @@ class DashboardService {
   // 1.⁠ ⁠Daftar barang habis -> DONE
   static async minimumStock({ query }) {
     try {
-      const getWarehouseProduct = await Warehouse_Product.findAll({
-        where: {
-          quantity: {
-            [Op.lte]: sq.col("minimumStock"),
-          },
-          ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+      const where = {
+        quantity: {
+          [Op.lte]: sq.col("minimumStock"),
         },
+        ...(query.warehouseId != 0 && { warehouseId: query.warehouseId }),
+      };
+
+      const getWarehouseProduct = await Warehouse_Product.findAll({
+        where,
         attributes: ["id", "quantity", "minimumStock"],
         include: [
           {
@@ -74,7 +76,12 @@ class DashboardService {
         });
       }
 
-      return result;
+      const totalCount = await Warehouse_Product.count({
+        where,
+        include: [{ model: Master_Warehouse, attributes: [], required: true }],
+      });
+
+      return { result, totalCount };
     } catch (error) {
       throwValidation(error.code, error.message);
     }
@@ -157,7 +164,7 @@ class DashboardService {
       const filteredResult = result.filter(item => item.lastUpdate);
       filteredResult.sort((a, b) => new Date(a.lastUpdate.createdAt) - new Date(b.lastUpdate.createdAt));
       const finalResult = filteredResult.slice(0, 5);
-      return finalResult;
+      return { result: finalResult, totalCount: filteredResult.length };
     } catch (error) {
       console.log(error);
       throwValidation(error.code, error.message);
